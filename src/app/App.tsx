@@ -5,8 +5,8 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, Circle, Info, ScanLine,
 } from "lucide-react";
 
-/** Mobile + tablet stacked layout below this width (desktop bento at ≥1200). */
-const COMPACT_BREAKPOINT = 1200;
+/** Mobile + tablet stacked layout below this width (desktop bento at ≥1024). */
+const COMPACT_BREAKPOINT = 1024;
 
 function useIsCompact() {
   const [compact, setCompact] = useState(() =>
