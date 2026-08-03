@@ -1,9 +1,37 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Search, Plus, Settings, HelpCircle, FileDown, LayoutGrid, X,
   CheckCircle, AlertTriangle, XCircle, TrendingUp, BarChart3,
-  ChevronLeft, ChevronRight, Circle, Info,
+  ChevronLeft, ChevronRight, ChevronDown, Circle, Info, ScanLine,
 } from "lucide-react";
+
+/** Mobile + tablet stacked layout below this width (desktop bento at ≥1200). */
+const COMPACT_BREAKPOINT = 1200;
+
+function useIsCompact() {
+  const [compact, setCompact] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < COMPACT_BREAKPOINT : false
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${COMPACT_BREAKPOINT - 1}px)`);
+    const onChange = () => setCompact(mql.matches);
+    onChange();
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+  return compact;
+}
+
+const MOBILE_WIDGET_ORDER = ["recent", "tasks", "search", "calendar", "timelines"] as const;
+type MobileWidgetId = (typeof MOBILE_WIDGET_ORDER)[number];
+
+const MOBILE_DEFAULT_OPEN: Record<MobileWidgetId, boolean> = {
+  recent: true,
+  tasks: true,
+  search: false,
+  calendar: true,
+  timelines: false,
+};
 
 // ─── STSX Design Tokens ──────────────────────────────────────────────────────
 const C = {
@@ -730,17 +758,19 @@ function TaskbarBtn({
   onClick,
   primary = false,
   active  = false,
+  grow = false,
 }: {
   icon: React.ElementType;
   label: string;
   onClick?: () => void;
   primary?: boolean;
   active?:  boolean;
+  grow?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1 px-4 py-1.5 rounded-md transition-all"
+      className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-md transition-all"
       style={{
         background: active  ? C.primary
                   : primary ? `${C.primary}1a`
@@ -752,7 +782,8 @@ function TaskbarBtn({
                   : primary ? `0.8px solid ${C.primary}55`
                   :           `0.8px solid transparent`,
         cursor:     "pointer",
-        minWidth:   68,
+        minWidth:   grow ? 0 : 68,
+        flex:       grow ? 1 : undefined,
       }}
     >
       <Icon size={18} strokeWidth={1.8} />
@@ -772,14 +803,169 @@ function TaskbarBtn({
   );
 }
 
+// ─── Compact (mobile / tablet) stacked layout ─────────────────────────────────
+function CompactStatStrip() {
+  return (
+    <div
+      className="grid grid-cols-2 sm:grid-cols-4 gap-2"
+    >
+      {STATS.map((s) => {
+        const { Icon } = s;
+        return (
+          <div
+            key={s.id}
+            className="rounded-lg p-3 flex flex-col gap-1.5 min-w-0"
+            style={{
+              background: C.surface,
+              border: `0.8px solid ${C.border}`,
+            }}
+          >
+            <div className="flex items-center justify-between gap-1">
+              <span
+                className="truncate"
+                style={{
+                  fontFamily: "'Lato', sans-serif",
+                  fontSize: 10,
+                  color: C.textMuted,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                {s.label}
+              </span>
+              <Icon size={14} color={s.color} strokeWidth={1.8} className="shrink-0" />
+            </div>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 24, color: C.text, lineHeight: 1 }}>
+              {s.value}
+            </p>
+            <p className="truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 10, color: s.color }}>
+              {s.sub}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CompactCollapsible({
+  id,
+  open,
+  onToggle,
+}: {
+  id: MobileWidgetId;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const title = PANEL_META[id].title;
+  return (
+    <div
+      className="rounded-lg overflow-hidden flex flex-col"
+      style={{
+        background: C.surface,
+        border: `0.8px solid ${C.border}`,
+      }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex-none flex items-center justify-between gap-3 px-4 py-3 w-full text-left"
+        style={{
+          background: C.surfaceAlt,
+          borderBottom: open ? `0.8px solid ${C.border}` : "none",
+          cursor: "pointer",
+          minHeight: 44,
+        }}
+        aria-expanded={open}
+      >
+        <span
+          style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 11,
+            fontWeight: 500,
+            color: C.text,
+            letterSpacing: "0.07em",
+            textTransform: "uppercase",
+          }}
+        >
+          {title}
+        </span>
+        <ChevronDown
+          size={16}
+          color={C.textMuted}
+          strokeWidth={1.8}
+          style={{
+            transform: open ? "rotate(0deg)" : "rotate(-90deg)",
+            transition: "transform 180ms ease",
+            flexShrink: 0,
+          }}
+        />
+      </button>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateRows: open ? "1fr" : "0fr",
+          transition: "grid-template-rows 220ms ease",
+        }}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div
+            className="overflow-hidden"
+            style={{
+              maxHeight: id === "recent" || id === "tasks" ? 320 : id === "calendar" ? 360 : 280,
+            }}
+          >
+            <div className="h-full" style={{ minHeight: id === "search" ? 180 : 200 }}>
+              <PanelContent id={id} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompactDashboard() {
+  const [openMap, setOpenMap] = useState<Record<MobileWidgetId, boolean>>(MOBILE_DEFAULT_OPEN);
+
+  const toggle = (id: MobileWidgetId) =>
+    setOpenMap((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  return (
+    <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-3 pb-3">
+      <div className="flex flex-col gap-2.5 max-w-3xl mx-auto">
+        <CompactStatStrip />
+        {MOBILE_WIDGET_ORDER.map((id) => (
+          <CompactCollapsible
+            key={id}
+            id={id}
+            open={openMap[id]}
+            onToggle={() => toggle(id)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
+  const isCompact = useIsCompact();
   const [isEditing, setIsEditing] = useState(false);
   const [panels, setPanels]       = useState<PanelDef[]>(INIT);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [activeId, setActiveId]   = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+
+  // Leave edit mode when switching to compact viewport
+  useEffect(() => {
+    if (isCompact && isEditing) {
+      setIsEditing(false);
+      setDraggingId(null);
+      setHoveredId(null);
+    }
+  }, [isCompact, isEditing]);
 
   // Click: open/close info tooltip
   const handlePanelClick = useCallback(
@@ -894,8 +1080,8 @@ export default function App() {
       className="h-screen flex flex-col select-none"
       style={{ background: C.bg }}
     >
-      {/* Edit mode banner */}
-      {isEditing && (
+      {/* Edit mode banner — desktop only */}
+      {isEditing && !isCompact && (
         <div
           className="flex-none flex items-center justify-center gap-2 py-1.5"
           style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: "0.06em" }}
@@ -905,83 +1091,95 @@ export default function App() {
         </div>
       )}
 
-      {/* Bento grid area */}
-      <div className="flex-1 min-h-0 overflow-hidden p-4 pb-3" onClick={handleGridClick}>
-        <div
-          ref={gridRef}
-          className="relative grid h-full"
-          style={{
-            gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-            gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-            gap: GAP,
-          }}
-        >
-          {/* Column + row overlay in edit mode */}
-          {isEditing && (
-            <div
-              className="absolute inset-0 grid pointer-events-none"
-              style={{
-                gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-                gap: GAP,
-                zIndex: 0,
-              }}
-            >
-              {Array.from({ length: COLS * ROWS }).map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-md"
-                  style={{ background: `${C.primary}06`, border: `1px dashed ${C.primary}18` }}
+      {isCompact ? (
+        <CompactDashboard />
+      ) : (
+        /* Bento grid area — desktop */
+        <div className="flex-1 min-h-0 overflow-hidden p-4 pb-3" onClick={handleGridClick}>
+          <div
+            ref={gridRef}
+            className="relative grid h-full"
+            style={{
+              gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+              gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+              gap: GAP,
+            }}
+          >
+            {isEditing && (
+              <div
+                className="absolute inset-0 grid pointer-events-none"
+                style={{
+                  gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+                  gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+                  gap: GAP,
+                  zIndex: 0,
+                }}
+              >
+                {Array.from({ length: COLS * ROWS }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="rounded-md"
+                    style={{ background: `${C.primary}06`, border: `1px dashed ${C.primary}18` }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {panels.map((panel) => {
+              const isHovered = hoveredId === panel.id;
+              const isGhosted = anyHovered && !isHovered && !isEditing;
+              const isActive  = activeId === panel.id;
+              return (
+                <BentoPanel
+                  key={panel.id}
+                  panel={panel}
+                  isEditing={isEditing}
+                  isHovered={isHovered}
+                  isGhosted={isGhosted}
+                  isActive={isActive}
+                  isDragging={draggingId === panel.id}
+                  onMouseEnter={() => !isEditing && setHoveredId(panel.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  onClick={(e) => handlePanelClick(e, panel.id)}
+                  onCloseInfo={handleCloseInfo}
+                  onStartResize={startResize}
+                  onStartMove={startMove}
                 />
-              ))}
-            </div>
-          )}
-
-          {/* Panels */}
-          {panels.map((panel) => {
-            const isHovered = hoveredId === panel.id;
-            const isGhosted = anyHovered && !isHovered && !isEditing;
-            const isActive  = activeId === panel.id;
-            return (
-              <BentoPanel
-                key={panel.id}
-                panel={panel}
-                isEditing={isEditing}
-                isHovered={isHovered}
-                isGhosted={isGhosted}
-                isActive={isActive}
-                isDragging={draggingId === panel.id}
-                onMouseEnter={() => !isEditing && setHoveredId(panel.id)}
-                onMouseLeave={() => setHoveredId(null)}
-                onClick={(e) => handlePanelClick(e, panel.id)}
-                onCloseInfo={handleCloseInfo}
-                onStartResize={startResize}
-                onStartMove={startMove}
-              />
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Fixed taskbar — light green, buttons equally spaced and centered */}
+      {/* Fixed taskbar */}
       <div
-        className="flex-none flex items-center justify-center gap-3 px-6"
+        className="flex-none flex items-center justify-center gap-2 px-3 sm:px-6"
         style={{
           height: 75,
           background: C.positiveBg,
           borderTop: `0.8px solid ${C.border}`,
         }}
       >
-        <TaskbarBtn icon={Settings}   label="Settings"      />
-        <TaskbarBtn icon={HelpCircle} label="FAQ & Support" />
-        <TaskbarBtn icon={Plus}       label="Add New Job"   primary />
-        <TaskbarBtn icon={FileDown}   label="Report PDF"    />
-        <TaskbarBtn
-          icon={isEditing ? X : LayoutGrid}
-          label={isEditing ? "Exit Edit" : "Edit Dashboard"}
-          onClick={toggleEdit}
-          active={isEditing}
-        />
+        {isCompact ? (
+          <>
+            <TaskbarBtn icon={HelpCircle} label="FAQ & Support" grow />
+            <TaskbarBtn icon={ScanLine}   label="New Scan" primary grow />
+            <TaskbarBtn icon={Settings}   label="Settings" grow />
+          </>
+        ) : (
+          <>
+            <TaskbarBtn icon={Settings}   label="Settings"      />
+            <TaskbarBtn icon={HelpCircle} label="FAQ & Support" />
+            <TaskbarBtn icon={Plus}       label="Add New Job"   primary />
+            <TaskbarBtn icon={FileDown}   label="Report PDF"    />
+            <TaskbarBtn
+              icon={isEditing ? X : LayoutGrid}
+              label={isEditing ? "Exit Edit" : "Edit Dashboard"}
+              onClick={toggleEdit}
+              active={isEditing}
+            />
+          </>
+        )}
       </div>
     </div>
   );
