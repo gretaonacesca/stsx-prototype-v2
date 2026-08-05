@@ -923,8 +923,8 @@ function LoadInfoRow({
         <div
           className="flex-1 min-w-0"
           style={{
-            background: highlight ? "#F7E56A" : C.surfaceAlt,
-            border: `1px solid ${highlight ? "#E0C83A" : C.border}`,
+            background: highlight ? "#D4E3F2" : C.surfaceAlt,
+            border: `1px solid ${highlight ? "#ADBFD8" : C.border}`,
             borderRadius: 4,
             height: 28,
             display: "flex",
@@ -2005,6 +2005,26 @@ const INIT_JOB_FORM: AddJobFormState = {
   defaultLabelLaseFormat: "<None>",
 };
 
+const EXISTING_JOBS = [
+  { number: "092356", customer: "P2PROG", name: "P2 Programs" },
+  { number: "1234A", customer: "P2PROG", name: "P2 Programs" },
+  { number: "1234B", customer: "P2PROG", name: "P2 Programs" },
+  { number: "1234C", customer: "P2PROG", name: "P2 Programs" },
+  { number: "1234D", customer: "P2PROG", name: "P2 Programs" },
+  { number: "1234E", customer: "P2PROG", name: "P2 Programs" },
+  { number: "1234F", customer: "P2PROG", name: "P2 Programs" },
+  { number: "1234G", customer: "P2PROG", name: "P2 Programs" },
+  { number: "1234H", customer: "P2PROG", name: "P2 Programs" },
+  { number: "1234J", customer: "P2PROG", name: "P2 Programs" },
+  { number: "1234_SHOP", customer: "P2PROG", name: "P2 Programs" },
+  { number: "2247", customer: "P2PROG", name: "P2 Programs" },
+  { number: "2255", customer: "P2PROG", name: "P2 Programs" },
+  { number: "2310", customer: "P2PROG", name: "P2 Programs" },
+  { number: "2319_PUSH", customer: "P2PROG", name: "P2 Programs" },
+  { number: "2319_SHOP", customer: "P2PROG", name: "P2 Programs" },
+  { number: "TEST", customer: "P2PROG", name: "P2 Programs" },
+];
+
 function AddNewJobModal({
   open,
   isCompact,
@@ -2015,7 +2035,15 @@ function AddNewJobModal({
   onClose: () => void;
 }) {
   const [form, setForm] = useState<AddJobFormState>(INIT_JOB_FORM);
-  const [activeTab, setActiveTab] = useState<"general" | "load">("general");
+  const [selectedJob, setSelectedJob] = useState(EXISTING_JOBS[0]?.number ?? null);
+  const [showClosed, setShowClosed] = useState(false);
+  const [metricJob, setMetricJob] = useState(false);
+  const [checks, setChecks] = useState({
+    keepMinors: false,
+    validateHeats: false,
+    validatePipes: false,
+    validateFittings: false,
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -2028,199 +2056,176 @@ function AddNewJobModal({
 
   if (!open) return null;
 
-  const labelStyle: React.CSSProperties = {
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 9,
-    color: "#556578",
-    textTransform: "uppercase",
-    letterSpacing: "0.045em",
-  };
-
   const inputStyle: React.CSSProperties = {
-    height: 28,
-    borderRadius: 4,
-    border: "1px solid #b8cbe0",
-    background: "#bcd0e5",
-    padding: "0 8px",
-    fontFamily: "'Lato', sans-serif",
-    fontSize: 11,
-    color: "#2f3f52",
+    width: "100%",
+    height: "100%",
+    border: "none",
+    background: "transparent",
     outline: "none",
+    fontFamily: "'Lato', sans-serif",
+    fontSize: 12,
+    color: C.text,
   };
-
-  const leftRows = [
-    "092356", "1234A", "1234B", "1234C", "1234D", "1234E", "1234F", "1234G",
-    "1234H", "1234J", "1234_SHOP", "2247", "2255", "2310", "2319_PUSH", "2319_SHOP", "TEST",
-  ];
 
   const renderField = (
     key: keyof AddJobFormState,
     label: string,
     opts?: { select?: string[]; metric?: boolean; lbs?: boolean }
   ) => (
-    <div className="flex flex-col gap-1">
-      <label style={labelStyle}>{label}</label>
+    <LoadInfoRow
+      label={label}
+      trailing={
+        opts?.metric || opts?.lbs ? (
+          <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
+            {opts?.lbs && (
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted }}>lbs</span>
+            )}
+            {opts?.metric && (
+              <label className="flex items-center gap-1.5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
+                <input type="checkbox" checked={metricJob} onChange={(e) => setMetricJob(e.target.checked)} />
+                Metric Job
+              </label>
+            )}
+          </div>
+        ) : undefined
+      }
+    >
       {opts?.select ? (
         <select
-          style={inputStyle}
+          style={{ ...inputStyle, cursor: "pointer" }}
           value={form[key]}
           onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
         >
           {opts.select.map((opt) => (
-            <option key={opt}>{opt}</option>
+            <option key={opt || "__empty"} value={opt}>{opt || " "}</option>
           ))}
         </select>
       ) : (
-        <div className="flex items-center gap-1.5">
-          <input
-            style={{ ...inputStyle, flex: 1 }}
-            value={form[key]}
-            onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-          />
-          {opts?.lbs && <span style={{ ...labelStyle, fontSize: 8 }}>lbs</span>}
-          {opts?.metric && (
-            <label className="flex items-center gap-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 10, color: "#435368" }}>
-              <input type="checkbox" />
-              Metric Job
-            </label>
-          )}
-        </div>
+        <input
+          style={inputStyle}
+          value={form[key]}
+          onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+        />
       )}
-    </div>
+    </LoadInfoRow>
   );
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
       style={{ background: `${C.text}4d` }}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="w-full overflow-hidden"
+        className="w-full overflow-hidden flex flex-col"
         style={{
-          maxWidth: isCompact ? "98vw" : 920,
-          background: "#d2e1f1",
-          border: "1px solid #a5bdd7",
-          borderRadius: isCompact ? "14px 14px 0 0" : 12,
-          boxShadow: `0 26px 58px ${C.text}35`,
-          maxHeight: "90vh",
-          margin: isCompact ? "0" : "20px",
+          maxWidth: isCompact ? "100%" : 1080,
+          height: isCompact ? "90vh" : "min(780px, 88vh)",
+          background: C.surface,
+          border: `1px solid ${C.border}`,
+          borderRadius: isCompact ? "16px 16px 0 0" : 12,
+          boxShadow: `0 24px 60px ${C.text}2e`,
+          margin: isCompact ? 0 : 20,
         }}
       >
         <div
-          className="flex items-center justify-between px-4 sm:px-5 py-2.5"
-          style={{ borderBottom: "1px solid #0f7f66", background: "#0d856c" }}
+          className="flex-none flex items-center justify-between px-4 py-3"
+          style={{ background: C.primary, color: C.primaryFg }}
         >
-          <div className="flex items-center gap-2">
-            <span
-              style={{
-                fontFamily: "'Lato', sans-serif",
-                fontSize: 26,
-                letterSpacing: "0",
-                color: "#eef9f6",
-                lineHeight: 1.1,
-              }}
-            >
-              Add New Job - Job Information
-            </span>
-          </div>
-          <button onClick={onClose} style={{ color: "#d7efe8", cursor: "pointer" }}>
-            <X size={16} />
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 18 }}>
+            Add New Job
+          </span>
+          <button type="button" onClick={onClose} style={{ color: C.primaryFg, cursor: "pointer", lineHeight: 0 }}>
+            <X size={18} />
           </button>
         </div>
 
-        <div className="flex items-end gap-2 px-3 pt-2" style={{ borderBottom: "1px solid #bccfe3" }}>
-          <button
-            type="button"
-            onClick={() => setActiveTab("general")}
-            className="px-4 py-1"
-            style={{
-              ...labelStyle,
-              fontSize: 10,
-              background: activeTab === "general" ? "#d2e1f1" : "transparent",
-              color: activeTab === "general" ? "#0f7f66" : "#465a71",
-              borderBottom: activeTab === "general" ? "2px solid #0f7f66" : "2px solid transparent",
-            }}
+        <div className={`flex-1 min-h-0 grid ${isCompact ? "grid-rows-2" : "grid-cols-[minmax(280px,0.95fr)_1.2fr]"}`}>
+          {/* Left: existing jobs */}
+          <div
+            className="min-h-0 flex flex-col overflow-hidden"
+            style={{ borderRight: isCompact ? "none" : `1px solid ${C.border}`, borderBottom: isCompact ? `1px solid ${C.border}` : "none" }}
           >
-            General
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("load")}
-            className="px-4 py-1"
-            style={{
-              ...labelStyle,
-              fontSize: 10,
-              background: activeTab === "load" ? "#d2e1f1" : "transparent",
-              color: activeTab === "load" ? "#0f7f66" : "#465a71",
-              borderBottom: activeTab === "load" ? "2px solid #0f7f66" : "2px solid transparent",
-            }}
-          >
-            Load Details
-          </button>
-        </div>
-
-        <form
-          id="add-new-job-form"
-          className="overflow-y-auto"
-          style={{ maxHeight: "calc(90vh - 142px)" }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            onClose();
-          }}
-        >
-          <div className={`grid ${isCompact ? "grid-cols-1" : "grid-cols-[230px_1fr]"}`}>
-            <div style={{ borderRight: isCompact ? "none" : "1px solid #bccfe3", minHeight: 520 }}>
-              <div className="px-2 py-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <button
-                    type="button"
-                    className="px-2.5 py-1 rounded-sm flex items-center gap-1"
-                    style={{
-                      background: "#dce9f6",
-                      color: "#3d5570",
-                      border: "1px solid #9fb6ce",
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: 9,
-                    }}
-                  >
-                    Edit Existing Job
-                  </button>
-                  <label className="flex items-center gap-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: "#44576d" }}>
-                    <input type="checkbox" />
-                    Show Closed Jobs
-                  </label>
-                </div>
-                <p style={{ fontFamily: "'Lato', sans-serif", color: "#213248", fontSize: 14, lineHeight: 1.25 }}>
-                  Job Number84Customer No.72Name
-                </p>
-              </div>
-
-              <div style={{ borderTop: "1px solid #b8cbe0", maxHeight: 420, overflowY: "auto" }}>
-                {leftRows.map((row, i) => (
+            <div className="flex-none flex items-center justify-between gap-2 px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                Edit Jobs
+              </span>
+              <label className="flex items-center gap-1.5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textSub }}>
+                <input type="checkbox" checked={showClosed} onChange={(e) => setShowClosed(e.target.checked)} />
+                Show Closed Jobs
+              </label>
+            </div>
+            <div className="flex-none flex px-4 py-1.5" style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}>
+              {["Job Number", "Customer No.", "Name"].map((h) => (
+                <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
+              ))}
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              {EXISTING_JOBS.map((job, i) => {
+                const selected = selectedJob === job.number;
+                return (
                   <div
-                    key={row}
-                    className="grid grid-cols-3 px-2 py-1.5"
+                    key={job.number}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      setSelectedJob(job.number);
+                      setForm((f) => ({ ...f, jobNumber: job.number, customer: `${job.name}#${job.customer}` }));
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        setSelectedJob(job.number);
+                        setForm((f) => ({ ...f, jobNumber: job.number, customer: `${job.name}#${job.customer}` }));
+                      }
+                    }}
+                    className="flex px-4 py-2"
                     style={{
-                      fontFamily: "'Lato', sans-serif",
-                      fontSize: 10,
-                      color: i === 0 ? "#e7f6f2" : "#39516b",
-                      background: i === 0 ? "#0d856c" : i % 2 === 0 ? "#d8e6f4" : "#d2e1f1",
-                      borderBottom: "1px solid #bccfe3",
+                      borderBottom: `0.8px solid ${C.border}`,
+                      background: selected ? `${C.primary}18` : i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55`,
+                      cursor: "pointer",
+                      outline: selected ? `1px solid ${C.primary}44` : "none",
                     }}
                   >
-                    <span>{row}</span>
-                    <span>P2PROG</span>
-                    <span>P2 Programs</span>
+                    <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary }}>{job.number}</div>
+                    <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted }}>{job.customer}</div>
+                    <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{job.name}</div>
                   </div>
-                ))}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right: new job fields (tab content area) */}
+          <div className="min-h-0 flex flex-col overflow-hidden" style={{ background: C.bg }}>
+            <div
+              className="flex-none flex items-end gap-1 px-3 pt-2"
+              style={{ borderBottom: `1px solid ${C.border}`, background: C.surface }}
+            >
+              <div
+                className="px-3 py-2 whitespace-nowrap"
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 10,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  color: C.primary,
+                  borderBottom: `2px solid ${C.primary}`,
+                }}
+              >
+                Job Information
               </div>
             </div>
-
-            <div className="px-3 py-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-2.5">
+            <form
+              className="flex-1 min-h-0 overflow-y-auto p-4"
+              style={{ background: C.surface }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                onClose();
+              }}
+            >
+              <div className="flex flex-col gap-2 max-w-3xl">
                 {renderField("jobNumber", "Job Number")}
                 {renderField("customer", "Customer #")}
                 {renderField("useBarCodeForm", "Use Bar Code Form")}
@@ -2229,6 +2234,7 @@ function AddNewJobModal({
                 {renderField("division", "Division", { select: ["SHOP", "FIELD", "FAB"] })}
                 {renderField("jobStatus", "Job Status", { select: ["Open", "Closed", "Hold"] })}
                 {renderField("shipTo", "Ship To", { select: ["", "Main Yard", "Site A", "Site B"] })}
+                {renderField("billTo", "Bill To", { select: ["", "Main Yard", "Site A", "Site B"] })}
                 {renderField("jobTitle", "Job Title")}
                 {renderField("projectYear", "Project Year")}
                 {renderField("jobStructure", "Job Structure")}
@@ -2239,45 +2245,63 @@ function AddNewJobModal({
                 {renderField("rfInterface", "RF Interface", { select: ["PowerFab", "FieldOps"] })}
                 {renderField("jobPo", "Job PO #")}
                 {renderField("jobRelease", "Job Release #")}
-              </div>
-
-              <div className="mt-3 grid gap-2">
                 {renderField("defaultAdhesiveBarCodeLabelFormat", "Default Adhesive Bar Code Label Format #", { select: ["<None>", "STD-01", "STD-02"] })}
                 {renderField("defaultLabelLaseFormat", "Default LabelLase Label Format #", { select: ["<None>", "LASER-A", "LASER-B"] })}
-              </div>
 
-              <div className="mt-3 pt-2 border-t" style={{ borderColor: "#bccfe3" }}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {["Keep Minors on Import (Prefix=No)", "Validate Heats", "Validate Pipes", "Validate Fittings"].map((item) => (
-                    <label key={item} className="flex items-center gap-1.5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: "#43576d" }}>
-                      <input type="checkbox" />
-                      {item}
+                <div className="mt-2 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2" style={{ borderTop: `1px solid ${C.border}` }}>
+                  {([
+                    ["keepMinors", "Keep Minors on Import (Prefix=No)"],
+                    ["validateHeats", "Validate Heats"],
+                    ["validatePipes", "Validate Pipes"],
+                    ["validateFittings", "Validate Fittings"],
+                  ] as const).map(([key, label]) => (
+                    <label key={key} className="flex items-center gap-1.5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
+                      <input
+                        type="checkbox"
+                        checked={checks[key]}
+                        onChange={(e) => setChecks((c) => ({ ...c, [key]: e.target.checked }))}
+                      />
+                      {label}
                     </label>
                   ))}
                 </div>
-              </div>
-            </div>
-          </div>
-        </form>
 
-        <div
-          className="flex items-center justify-end gap-2 px-4 sm:px-5 py-2.5"
-          style={{ borderTop: "1px solid #b8cbe0", background: "#d2e1f1" }}
-        >
-          <button
-            type="submit"
-            form="add-new-job-form"
-            className="px-2.5 py-1 rounded-sm flex items-center gap-1"
-            style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: 9,
-              border: "1px solid #0c7560",
-              color: "#ecfaf6",
-              background: "#0d856c",
-            }}
-          >
-            <Plus size={10} /> Add Job
-          </button>
+                <div className="flex flex-wrap justify-end gap-2 mt-4 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-3 py-1.5 rounded-sm"
+                    style={{
+                      fontFamily: "'Lato', sans-serif",
+                      fontSize: 12,
+                      minWidth: 110,
+                      cursor: "pointer",
+                      background: C.surfaceAlt,
+                      color: C.textMuted,
+                      border: `1px solid ${C.border}`,
+                    }}
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-3 py-1.5 rounded-sm flex items-center justify-center gap-1.5"
+                    style={{
+                      fontFamily: "'Lato', sans-serif",
+                      fontSize: 12,
+                      minWidth: 110,
+                      cursor: "pointer",
+                      background: C.primary,
+                      color: C.primaryFg,
+                      border: `1px solid ${C.primary}`,
+                    }}
+                  >
+                    <Plus size={12} /> Add Job
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
