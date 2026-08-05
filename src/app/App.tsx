@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Search, Plus, Settings, HelpCircle, FileDown, LayoutGrid, X,
   CheckCircle, AlertTriangle, XCircle, TrendingUp, BarChart3,
-  ChevronLeft, ChevronRight, ChevronDown, Circle, ScanLine,
+  ChevronLeft, ChevronRight, ChevronDown, Circle, Clock, ScanLine,
   Truck, Users, ArrowLeftRight, Package, Moon, Sun,
 } from "lucide-react";
 
@@ -295,16 +295,24 @@ const SCANS = [
   { id: "SC-2833", part: "PT-3802",   desc: "Column Base",        qty:  8, time: "07:10", status: "passed" },
 ];
 
-const INIT_TASKS = [
-  { id: 1, done: false, text: "Review PT-1042-A inspection report",  priority: "high"   },
-  { id: 2, done: false, text: "Sign off SC-2840 batch",               priority: "normal" },
-  { id: 3, done: true,  text: "Update material certs for J-0912",     priority: "normal" },
-  { id: 4, done: false, text: "Call supplier re: delayed shipment",   priority: "high"   },
-  { id: 5, done: false, text: "Submit weekly compliance report",       priority: "normal" },
-  { id: 6, done: false, text: "Calibration check — scanner unit 3",  priority: "normal" },
-  { id: 7, done: true,  text: "Archive SC-2800 to SC-2830 records",   priority: "normal" },
-  { id: 8, done: false, text: "Review and approve quotes for J-1056", priority: "normal" },
+type TaskStatus = "todo" | "progress" | "done";
+
+const INIT_TASKS: { id: number; status: TaskStatus; text: string; priority: "high" | "normal" }[] = [
+  { id: 1, status: "todo",     text: "Review PT-1042-A inspection report",  priority: "high"   },
+  { id: 2, status: "todo",     text: "Sign off SC-2840 batch",               priority: "normal" },
+  { id: 3, status: "done",     text: "Update material certs for J-0912",     priority: "normal" },
+  { id: 4, status: "todo",     text: "Call supplier re: delayed shipment",   priority: "high"   },
+  { id: 5, status: "todo",     text: "Submit weekly compliance report",       priority: "normal" },
+  { id: 6, status: "todo",     text: "Calibration check — scanner unit 3",  priority: "normal" },
+  { id: 7, status: "done",     text: "Archive SC-2800 to SC-2830 records",   priority: "normal" },
+  { id: 8, status: "todo",     text: "Review and approve quotes for J-1056", priority: "normal" },
 ];
+
+const TASK_STATUS_CYCLE: Record<TaskStatus, TaskStatus> = {
+  todo: "progress",
+  progress: "done",
+  done: "todo",
+};
 
 const PROJECTS = [
   { name: "J-0912  Steel Frame", progress: 80, due: "Aug 15", status: "on-track" },
@@ -566,7 +574,9 @@ function QuickSearchContent() {
 function TasksContent() {
   const [tasks, setTasks] = useState(INIT_TASKS);
   const toggle = (id: number) =>
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, status: TASK_STATUS_CYCLE[t.status] } : t))
+    );
   return (
     <div className="flex flex-col overflow-hidden h-full">
       <div
@@ -574,7 +584,7 @@ function TasksContent() {
         style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}
       >
         <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textMuted }}>
-          {tasks.filter((t) => t.done).length}/{tasks.length} complete
+          {tasks.filter((t) => t.status === "done").length}/{tasks.length} complete
         </span>
         <button
           className="flex items-center gap-1 px-2 py-1 rounded"
@@ -584,21 +594,39 @@ function TasksContent() {
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {tasks.map((t) => (
-          <div key={t.id} className="flex items-start gap-3 px-4 py-2.5" style={{ borderBottom: `0.8px solid ${C.border}` }}>
-            <button onClick={() => toggle(t.id)} className="mt-0.5 flex-none" style={{ cursor: "pointer", color: t.done ? C.primary : C.border }}>
-              {t.done ? <CheckCircle size={14} /> : <Circle size={14} />}
-            </button>
-            <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: t.done ? C.textMuted : C.text, textDecoration: t.done ? "line-through" : "none", flex: 1, lineHeight: 1.5 }}>
-              {t.text}
-            </span>
-            {t.priority === "high" && !t.done && (
-              <span className="flex-none px-1.5 py-0.5 rounded" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.warning, background: C.warningBg, border: `0.8px solid ${C.warning}44` }}>
-                HIGH
+        {tasks.map((t) => {
+          const isDone = t.status === "done";
+          const isProgress = t.status === "progress";
+          return (
+            <div key={t.id} className="flex items-start gap-3 px-4 py-2.5" style={{ borderBottom: `0.8px solid ${C.border}` }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggle(t.id);
+                }}
+                className="mt-0.5 flex-none"
+                style={{
+                  cursor: "pointer",
+                  color: isDone ? C.primary : isProgress ? C.warning : C.border,
+                  lineHeight: 0,
+                }}
+                title={isDone ? "Done" : isProgress ? "In progress" : "To do"}
+                aria-label={isDone ? "Mark to do" : isProgress ? "Mark done" : "Mark in progress"}
+              >
+                {isDone ? <CheckCircle size={14} /> : isProgress ? <Clock size={14} /> : <Circle size={14} />}
+              </button>
+              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: isDone ? C.textMuted : C.text, textDecoration: isDone ? "line-through" : "none", flex: 1, lineHeight: 1.5 }}>
+                {t.text}
               </span>
-            )}
-          </div>
-        ))}
+              {t.priority === "high" && !isDone && (
+                <span className="flex-none px-1.5 py-0.5 rounded" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.warning, background: C.warningBg, border: `0.8px solid ${C.warning}44` }}>
+                  HIGH
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
