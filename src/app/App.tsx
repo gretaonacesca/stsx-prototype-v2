@@ -833,8 +833,8 @@ type DetailTab = { id: string; label: string };
 
 const WIDGET_DETAIL_TABS: Record<string, DetailTab[]> = {
   "active-loads": [
-    { id: "info", label: "View Load Information" },
-    { id: "status", label: "Edit Status" },
+    { id: "info", label: "Load Information" },
+    { id: "status", label: "Status Summary Info" },
     { id: "piecemark", label: "Piecemark Info" },
   ],
   employees: [
@@ -895,6 +895,230 @@ function detailField(label: string, value: string) {
   );
 }
 
+function LoadInfoRow({
+  label,
+  children,
+  trailing,
+  highlight = false,
+}: {
+  label: string;
+  children: React.ReactNode;
+  trailing?: React.ReactNode;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <label
+        className="shrink-0 text-right"
+        style={{
+          width: 118,
+          fontFamily: "'Lato', sans-serif",
+          fontSize: 12,
+          color: C.textSub,
+        }}
+      >
+        {label}
+      </label>
+      <div className="flex-1 min-w-0 flex items-center gap-3">
+        <div
+          className="flex-1 min-w-0"
+          style={{
+            background: highlight ? "#F7E56A" : C.surfaceAlt,
+            border: `1px solid ${highlight ? "#E0C83A" : C.border}`,
+            borderRadius: 4,
+            height: 28,
+            display: "flex",
+            alignItems: "center",
+            padding: "0 8px",
+          }}
+        >
+          {children}
+        </div>
+        {trailing}
+      </div>
+    </div>
+  );
+}
+
+function LoadInfoSelect({
+  value,
+  options,
+}: {
+  value: string;
+  options?: string[];
+}) {
+  return (
+    <select
+      defaultValue={value}
+      style={{
+        width: "100%",
+        height: "100%",
+        border: "none",
+        background: "transparent",
+        outline: "none",
+        fontFamily: "'Lato', sans-serif",
+        fontSize: 12,
+        color: C.text,
+        cursor: "pointer",
+      }}
+    >
+      {(options ?? [value, ""]).filter((o, i, arr) => arr.indexOf(o) === i).map((o) => (
+        <option key={o || "__empty"} value={o}>{o || " "}</option>
+      ))}
+    </select>
+  );
+}
+
+function LoadInfoInput({ value }: { value: string }) {
+  return (
+    <input
+      defaultValue={value}
+      style={{
+        width: "100%",
+        height: "100%",
+        border: "none",
+        background: "transparent",
+        outline: "none",
+        fontFamily: "'Lato', sans-serif",
+        fontSize: 12,
+        color: C.text,
+      }}
+    />
+  );
+}
+
+function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
+  const jobNumber = load.id.replace("LD-", "J-");
+  const totalMarks = load.piecemarks.length;
+  const totalPieces = load.pieces;
+  const [hideEmpty, setHideEmpty] = useState(false);
+  const [includeMinor, setIncludeMinor] = useState(false);
+
+  const fieldStyle = {
+    fontFamily: "'Lato', sans-serif" as const,
+    fontSize: 12,
+    color: C.textSub,
+  };
+
+  return (
+    <div className="h-full overflow-y-auto p-4" style={{ background: C.surface }}>
+      <div className="flex flex-col gap-2 max-w-3xl">
+        <LoadInfoRow label="Job Number" highlight>
+          <LoadInfoSelect value={jobNumber} options={[jobNumber, "J-0912", "J-1034", "J-1056"]} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Job Title">
+          <LoadInfoInput value={load.dest.includes("Bal") ? "Bal Harbour Shops - Expansion" : `${load.dest} Job`} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Customer #">
+          <LoadInfoSelect value="P2PROG" options={["P2PROG", "ACME01", "SITE22"]} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Customer Name">
+          <LoadInfoInput value="P2 Programs" />
+        </LoadInfoRow>
+        <LoadInfoRow
+          label="Location"
+          trailing={
+            <label className="flex items-center gap-1.5 shrink-0 whitespace-nowrap" style={fieldStyle}>
+              <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} />
+              Hide Empty Columns
+            </label>
+          }
+        >
+          <LoadInfoSelect value={load.dest} options={[load.dest, "Shop Dock A", "Yard Bay 3", "Port Melbourne"]} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Parent Piecemark">
+          <LoadInfoSelect value={load.piecemarks[0]?.mark ?? ""} options={["", ...load.piecemarks.map((p) => p.mark)]} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Status">
+          <LoadInfoSelect value={load.status} options={["Staging", "Loading", "In transit", "Arriving", "Delivered", "On hold"]} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Sheet #">
+          <LoadInfoSelect value="" options={["", "S-01", "S-02", "S-03"]} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Seq #">
+          <LoadInfoSelect value="" options={["", "1", "2", "3", "4"]} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Lot #">
+          <LoadInfoSelect value="" options={["", "LOT-A", "LOT-B"]} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Bndl #">
+          <LoadInfoSelect value="" options={["", "BND-1", "BND-2"]} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Load #">
+          <LoadInfoSelect value={load.id} options={ACTIVE_LOADS.map((l) => l.id)} />
+        </LoadInfoRow>
+        <LoadInfoRow
+          label="Load Rel"
+          trailing={
+            <label className="flex items-center gap-1.5 shrink-0 whitespace-nowrap" style={fieldStyle}>
+              <input type="checkbox" checked={includeMinor} onChange={(e) => setIncludeMinor(e.target.checked)} />
+              Include Minor Marks
+            </label>
+          }
+        >
+          <LoadInfoSelect value="" options={["", "REL-1", "REL-2"]} />
+        </LoadInfoRow>
+        <LoadInfoRow label="Shop Order #">
+          <LoadInfoSelect value="" options={["", "SO-2201", "SO-2208"]} />
+        </LoadInfoRow>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-end mt-1">
+          <div className="flex flex-col gap-2">
+            <LoadInfoRow label="ID number">
+              <LoadInfoSelect value="" options={["", "ID-1001", "ID-1002"]} />
+            </LoadInfoRow>
+            <LoadInfoRow label="Pc Release">
+              <LoadInfoSelect value="" options={["", "PR-01", "PR-02"]} />
+            </LoadInfoRow>
+            <LoadInfoRow label="Pkg #">
+              <LoadInfoSelect value="" options={["", "PKG-1", "PKG-2"]} />
+            </LoadInfoRow>
+            <LoadInfoRow label="Batch">
+              <LoadInfoSelect value="" options={["", "BATCH-A", "BATCH-B"]} />
+            </LoadInfoRow>
+            <LoadInfoRow label="COW Code">
+              <LoadInfoSelect value="" options={["", "COW-01", "COW-02"]} />
+            </LoadInfoRow>
+          </div>
+
+          <div className="flex flex-col gap-1.5 pb-1 min-w-[200px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
+            <div className="flex justify-between gap-4"><span>Bar Code ID Numbers:</span><span style={{ fontFamily: "'DM Mono', monospace" }}>{totalMarks}</span></div>
+            <div className="flex justify-between gap-4"><span>Total Pieces:</span><span style={{ fontFamily: "'DM Mono', monospace" }}>{totalPieces}</span></div>
+            <div className="flex justify-between gap-4"><span>Total Weight:</span><span style={{ fontFamily: "'DM Mono', monospace" }}>{load.weightLbs}</span></div>
+            <div className="flex justify-between gap-4"><span>Number of Piece Marks:</span><span style={{ fontFamily: "'DM Mono', monospace" }}>{totalMarks}</span></div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap justify-end gap-2 mt-4 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+          {[
+            { label: "Get Information", primary: false },
+            { label: "Browse", primary: false },
+            { label: "Clear", primary: true },
+            { label: "Close", primary: true },
+          ].map((btn) => (
+            <button
+              key={btn.label}
+              type="button"
+              className="px-3 py-1.5 rounded-sm"
+              style={{
+                fontFamily: "'Lato', sans-serif",
+                fontSize: 12,
+                minWidth: 110,
+                cursor: "pointer",
+                background: btn.primary ? C.primary : C.surfaceAlt,
+                color: btn.primary ? C.primaryFg : C.textMuted,
+                border: `1px solid ${btn.primary ? C.primary : C.border}`,
+              }}
+            >
+              {btn.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WidgetDetailTabBody({
   widgetId,
   tabId,
@@ -918,20 +1142,7 @@ function WidgetDetailTabBody({
     const load = ACTIVE_LOADS.find((l) => l.id === selectedKey);
     if (!load) return null;
     if (tabId === "info") {
-      return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
-          {detailField("Load ID", load.id)}
-          {detailField("Status", load.status)}
-          {detailField("Destination", load.dest)}
-          {detailField("ETA", load.eta)}
-          {detailField("Ship From", load.shipFrom)}
-          {detailField("Truck", load.truck)}
-          {detailField("Driver", load.driver)}
-          {detailField("Weight", `${load.weightLbs} lbs`)}
-          {detailField("Pieces", String(load.pieces))}
-          <div className="sm:col-span-2">{detailField("Notes", load.notes)}</div>
-        </div>
-      );
+      return <ActiveLoadInformationForm load={load} />;
     }
     if (tabId === "status") {
       return (
