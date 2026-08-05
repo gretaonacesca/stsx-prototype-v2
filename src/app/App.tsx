@@ -2,7 +2,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Search, Plus, Settings, HelpCircle, FileDown, LayoutGrid, X,
   CheckCircle, AlertTriangle, XCircle, TrendingUp, BarChart3,
-  ChevronLeft, ChevronRight, ChevronDown, Circle, Info, ScanLine,
+  ChevronLeft, ChevronRight, ChevronDown, Circle, ScanLine,
+  Trash2, Truck, Users, ArrowLeftRight, Package,
 } from "lucide-react";
 
 /** Mobile + tablet stacked layout below this width (desktop bento at ≥1024). */
@@ -68,6 +69,41 @@ type PanelDef = {
 
 type ResizeEdge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
+type WidgetTypeId =
+  | "stat1" | "stat2" | "stat3" | "stat4"
+  | "recent" | "search" | "tasks" | "timelines" | "calendar"
+  | "active-loads" | "employees" | "import-export" | "inventory";
+
+type WidgetCatalogEntry = {
+  id: WidgetTypeId;
+  title: string;
+  description: string;
+  blurb: string;
+  defaultColSpan: number;
+  defaultRowSpan: number;
+  Icon: React.ElementType;
+};
+
+const WIDGET_CATALOG: WidgetCatalogEntry[] = [
+  { id: "stat1", title: "Active Jobs", blurb: "KPI — jobs in production", description: "Total number of jobs currently in production across all stages — from raw material cutting through to final QC sign-off. Includes jobs on hold.", defaultColSpan: 2, defaultRowSpan: 1, Icon: BarChart3 },
+  { id: "stat2", title: "Scans Today", blurb: "KPI — daily scan volume", description: "Total barcodes and QR codes scanned today across all scanner units on the floor. The pass rate reflects first-pass quality without any re-scan events.", defaultColSpan: 2, defaultRowSpan: 1, Icon: CheckCircle },
+  { id: "stat3", title: "Pending Reviews", blurb: "KPI — QC backlog", description: "Parts flagged for manual quality review before they can be signed off and moved to the next stage. Items marked overdue have exceeded their review deadline.", defaultColSpan: 2, defaultRowSpan: 1, Icon: AlertTriangle },
+  { id: "stat4", title: "On-Time Rate", blurb: "KPI — delivery performance", description: "Percentage of jobs delivered on or before the scheduled completion date. Calculated over a rolling 30-day window and compared to the previous period.", defaultColSpan: 2, defaultRowSpan: 1, Icon: TrendingUp },
+  { id: "recent", title: "Recent Scans", blurb: "Live shop-floor scan feed", description: "Live feed of the most recent part scans from all scanner units on the shop floor, sorted newest-first. Click any row to open the full scan record and traceability chain.", defaultColSpan: 4, defaultRowSpan: 2, Icon: ScanLine },
+  { id: "search", title: "Quick Search", blurb: "Search jobs, parts, customers", description: "Search across all jobs, part numbers, customers, and scan records from one place. Use the filter pills to narrow by category, or type a partial string for fuzzy matching.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Search },
+  { id: "tasks", title: "Today's Tasks", blurb: "Personal daily checklist", description: "Your personal task list for the current working day. High-priority items are flagged in amber. Check off tasks as you complete them — progress is saved automatically.", defaultColSpan: 4, defaultRowSpan: 2, Icon: CheckCircle },
+  { id: "timelines", title: "Project Timelines", blurb: "Job progress vs schedule", description: "Gantt-style progress view for all active jobs. Progress is calculated from scanned milestones against the planned schedule. At-risk jobs are tracking behind their baseline.", defaultColSpan: 4, defaultRowSpan: 2, Icon: BarChart3 },
+  { id: "calendar", title: "Calendar", blurb: "Deadlines and events", description: "Monthly overview. Job deadlines, planned site visits, compliance review dates, and team events appear as marked days. Click any date to see what is scheduled.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Circle },
+  { id: "active-loads", title: "Active Loads", blurb: "Loads in transit / staging", description: "Track active outbound and inbound loads — staging status, destination, and estimated departure or arrival times across the yard.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Truck },
+  { id: "employees", title: "Manage Employees", blurb: "Crew roster and roles", description: "View shop-floor crew, shift assignments, and role coverage. Use this panel to spot understaffed stations and reassign people quickly.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Users },
+  { id: "import-export", title: "Import / Export Queue", blurb: "Data sync jobs waiting", description: "Queue of pending imports and exports — nesting files, ERP sync, and label batches. Monitor failures and retry stuck jobs from here.", defaultColSpan: 4, defaultRowSpan: 2, Icon: ArrowLeftRight },
+  { id: "inventory", title: "Stock & Inventory", blurb: "Levels and capacity", description: "Current stock levels against warehouse capacity. Highlights materials below reorder point and bins approaching max fill.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Package },
+];
+
+const PANEL_META: Record<string, { title: string; description: string }> = Object.fromEntries(
+  WIDGET_CATALOG.map((w) => [w.id, { title: w.title, description: w.description }])
+);
+
 // ─── Initial Layout (12×8) ────────────────────────────────────────────────────
 const INIT: PanelDef[] = [
   { id: "stat1",     colStart: 1,  colSpan: 2, rowStart: 1, rowSpan: 2 },
@@ -83,6 +119,71 @@ const INIT: PanelDef[] = [
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
+}
+
+function rectsOverlap(
+  a: { colStart: number; colSpan: number; rowStart: number; rowSpan: number },
+  b: { colStart: number; colSpan: number; rowStart: number; rowSpan: number },
+) {
+  return !(
+    a.colStart + a.colSpan <= b.colStart ||
+    b.colStart + b.colSpan <= a.colStart ||
+    a.rowStart + a.rowSpan <= b.rowStart ||
+    b.rowStart + b.rowSpan <= a.rowStart
+  );
+}
+
+function isRectFree(
+  panels: PanelDef[],
+  colStart: number,
+  rowStart: number,
+  colSpan: number,
+  rowSpan: number,
+) {
+  if (colStart < 1 || rowStart < 1) return false;
+  if (colStart + colSpan - 1 > COLS || rowStart + rowSpan - 1 > ROWS) return false;
+  const candidate = { colStart, colSpan, rowStart, rowSpan };
+  return panels.every((p) => !rectsOverlap(candidate, p));
+}
+
+function getEmptyCells(panels: PanelDef[]) {
+  const occupied = new Set<string>();
+  for (const p of panels) {
+    for (let c = p.colStart; c < p.colStart + p.colSpan; c++) {
+      for (let r = p.rowStart; r < p.rowStart + p.rowSpan; r++) {
+        occupied.add(`${c},${r}`);
+      }
+    }
+  }
+  const empty: { col: number; row: number }[] = [];
+  for (let r = 1; r <= ROWS; r++) {
+    for (let c = 1; c <= COLS; c++) {
+      if (!occupied.has(`${c},${r}`)) empty.push({ col: c, row: r });
+    }
+  }
+  return empty;
+}
+
+/** Place widget at cell, shrinking from catalog default until it fits. */
+function fitNewPanel(
+  panels: PanelDef[],
+  id: WidgetTypeId,
+  col: number,
+  row: number,
+): PanelDef | null {
+  const entry = WIDGET_CATALOG.find((w) => w.id === id);
+  if (!entry) return null;
+  let colSpan = Math.min(entry.defaultColSpan, COLS - col + 1);
+  let rowSpan = Math.min(entry.defaultRowSpan, ROWS - row + 1);
+  while (colSpan >= 1 && rowSpan >= 1) {
+    if (isRectFree(panels, col, row, colSpan, rowSpan)) {
+      return { id, colStart: col, colSpan, rowStart: row, rowSpan };
+    }
+    if (colSpan >= rowSpan && colSpan > 1) colSpan -= 1;
+    else if (rowSpan > 1) rowSpan -= 1;
+    else break;
+  }
+  return null;
 }
 
 /** Map pointer X to nearest vertical grid line (1 … COLS+1). */
@@ -123,54 +224,6 @@ function applyResize(panel: PanelDef, edge: ResizeEdge, colLine: number, rowLine
 
   return { ...panel, colStart, colSpan, rowStart, rowSpan };
 }
-// ─── Panel Metadata ───────────────────────────────────────────────────────────
-const PANEL_META: Record<string, { title: string; description: string }> = {
-  stat1: {
-    title: "Active Jobs",
-    description:
-      "Total number of jobs currently in production across all stages — from raw material cutting through to final QC sign-off. Includes jobs on hold.",
-  },
-  stat2: {
-    title: "Scans Today",
-    description:
-      "Total barcodes and QR codes scanned today across all scanner units on the floor. The pass rate reflects first-pass quality without any re-scan events.",
-  },
-  stat3: {
-    title: "Pending Reviews",
-    description:
-      "Parts flagged for manual quality review before they can be signed off and moved to the next stage. Items marked overdue have exceeded their review deadline.",
-  },
-  stat4: {
-    title: "On-Time Rate",
-    description:
-      "Percentage of jobs delivered on or before the scheduled completion date. Calculated over a rolling 30-day window and compared to the previous period.",
-  },
-  recent: {
-    title: "Recent Scans",
-    description:
-      "Live feed of the most recent part scans from all scanner units on the shop floor, sorted newest-first. Click any row to open the full scan record and traceability chain.",
-  },
-  search: {
-    title: "Quick Search",
-    description:
-      "Search across all jobs, part numbers, customers, and scan records from one place. Use the filter pills to narrow by category, or type a partial string for fuzzy matching.",
-  },
-  tasks: {
-    title: "Today's Tasks",
-    description:
-      "Your personal task list for the current working day. High-priority items are flagged in amber. Check off tasks as you complete them — progress is saved automatically.",
-  },
-  timelines: {
-    title: "Project Timelines",
-    description:
-      "Gantt-style progress view for all active jobs. Progress is calculated from scanned milestones against the planned schedule. At-risk jobs are tracking behind their baseline.",
-  },
-  calendar: {
-    title: "Calendar",
-    description:
-      "Monthly overview. Job deadlines, planned site visits, compliance review dates, and team events appear as marked days. Click any date to see what is scheduled.",
-  },
-};
 
 // ─── Dummy Data ───────────────────────────────────────────────────────────────
 const STATS = [
@@ -213,6 +266,98 @@ const PROJECTS = [
   { name: "J-0912  Steel Frame", progress: 80, due: "Aug 15", status: "on-track" },
   { name: "J-1034  Purlin Set",  progress: 52, due: "Aug 28", status: "on-track" },
   { name: "J-1056  Quote Prep",  progress: 20, due: "Aug  8", status: "at-risk"  },
+];
+
+const ACTIVE_LOADS = [
+  {
+    id: "LD-4412",
+    dest: "Bal Harbour Site",
+    status: "Staging",
+    eta: "14:20",
+    shipFrom: "Shop Dock A",
+    truck: "TRK-18",
+    driver: "M. Ortiz",
+    weightLbs: "42,800",
+    pieces: 128,
+    piecemarks: [
+      { mark: "B-1042-A", qty: 24, desc: "Beam Flange" },
+      { mark: "GP-0672", qty: 40, desc: "Gusset Plate" },
+      { mark: "EP-0442", qty: 64, desc: "End Plate 20 mm" },
+    ],
+    notes: "Hold for QC sign-off on EP-0442 before release.",
+  },
+  {
+    id: "LD-4418",
+    dest: "Yard Bay 3",
+    status: "Loading",
+    eta: "15:05",
+    shipFrom: "Cut Line",
+    truck: "TRK-04",
+    driver: "J. Brooks",
+    weightLbs: "18,240",
+    pieces: 56,
+    piecemarks: [
+      { mark: "W12-58", qty: 12, desc: "W12×58 Beam" },
+      { mark: "PLT-16", qty: 44, desc: "Plate 16 mm" },
+    ],
+    notes: "Internal transfer — no BOL required.",
+  },
+  {
+    id: "LD-4421",
+    dest: "Port Melbourne",
+    status: "In transit",
+    eta: "16:40",
+    shipFrom: "Yard Bay 1",
+    truck: "TRK-22",
+    driver: "A. Nguyen",
+    weightLbs: "61,100",
+    pieces: 210,
+    piecemarks: [
+      { mark: "COL-C1", qty: 8, desc: "Column Cap" },
+      { mark: "BR-L75", qty: 96, desc: "Angle Brace L75" },
+      { mark: "BP-25", qty: 106, desc: "Baseplate 25 mm" },
+    ],
+    notes: "Customer delivery window 16:00–17:30.",
+  },
+  {
+    id: "LD-4427",
+    dest: "Shop Dock B",
+    status: "Arriving",
+    eta: "13:55",
+    shipFrom: "Supplier — Apex Steel",
+    truck: "EXT-903",
+    driver: "External",
+    weightLbs: "9,640",
+    pieces: 32,
+    piecemarks: [
+      { mark: "IN-HEAT", qty: 32, desc: "Inbound plate pack" },
+    ],
+    notes: "Inbound material — verify heat certs on arrival.",
+  },
+];
+
+type ActiveLoad = (typeof ACTIVE_LOADS)[number];
+
+const EMPLOYEES = [
+  { name: "A. Nguyen", role: "Fitter", station: "Bay 2", shift: "Day" },
+  { name: "M. Ortiz", role: "Welder", station: "Bay 5", shift: "Day" },
+  { name: "S. Patel", role: "QC", station: "Inspect", shift: "Day" },
+  { name: "J. Brooks", role: "Crane", station: "Yard", shift: "Swing" },
+  { name: "L. Chen", role: "Saw", station: "Cut line", shift: "Day" },
+];
+
+const IMPORT_EXPORT_QUEUE = [
+  { id: "IE-901", type: "Import", name: "Nesting batch 14", status: "Queued" },
+  { id: "IE-902", type: "Export", name: "ERP job sync", status: "Running" },
+  { id: "IE-903", type: "Import", name: "Heat certs PDF", status: "Failed" },
+  { id: "IE-904", type: "Export", name: "Label batch L-22", status: "Queued" },
+];
+
+const INVENTORY_STOCK = [
+  { sku: "PLT-20", name: "Plate 20 mm", level: 72, capacity: 100 },
+  { sku: "IBEAM-W12", name: "W12×58 Beam", level: 18, capacity: 40 },
+  { sku: "BOLT-M20", name: "M20 Bolt kit", level: 9, capacity: 120 },
+  { sku: "GUSSET-A", name: "Gusset A", level: 54, capacity: 60 },
 ];
 
 const AUG_OFFSET = 5; // Monday-first: blank cells before Aug 1 (Saturday)
@@ -489,96 +634,523 @@ function CalendarContent() {
   );
 }
 
-function PanelContent({ id }: { id: string }) {
+function ActiveLoadsContent({
+  selectedKey,
+  onSelect,
+}: {
+  selectedKey?: string | null;
+  onSelect?: (key: string) => void;
+} = {}) {
+  return (
+    <div className="flex flex-col overflow-hidden h-full">
+      {ACTIVE_LOADS.map((l, i) => {
+        const selected = selectedKey === l.id;
+        return (
+          <div
+            key={l.id}
+            role={onSelect ? "button" : undefined}
+            tabIndex={onSelect ? 0 : undefined}
+            onClick={onSelect ? () => onSelect(l.id) : undefined}
+            onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") onSelect(l.id); } : undefined}
+            className="flex items-center gap-2 px-4 py-2.5"
+            style={{
+              borderBottom: `0.8px solid ${C.border}`,
+              background: selected ? `${C.primary}18` : i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55`,
+              cursor: onSelect ? "pointer" : "default",
+              outline: selected ? `1px solid ${C.primary}44` : "none",
+            }}
+          >
+            <Truck size={14} color={C.primary} />
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary, width: 64 }}>{l.id}</span>
+            <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{l.dest}</span>
+            <span className="px-1.5 py-0.5 rounded" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.primary, background: C.positiveBg }}>{l.status}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted }}>{l.eta}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function EmployeesContent({
+  selectedKey,
+  onSelect,
+}: {
+  selectedKey?: string | null;
+  onSelect?: (key: string) => void;
+} = {}) {
+  return (
+    <div className="flex flex-col overflow-hidden h-full">
+      <div className="flex-none flex px-4 py-1.5" style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}>
+        {["Name", "Role", "Station", "Shift"].map((h) => (
+          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
+        ))}
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {EMPLOYEES.map((e, i) => {
+          const selected = selectedKey === e.name;
+          return (
+            <div
+              key={e.name}
+              role={onSelect ? "button" : undefined}
+              onClick={onSelect ? () => onSelect(e.name) : undefined}
+              className="flex px-4 py-2"
+              style={{
+                borderBottom: `0.8px solid ${C.border}`,
+                background: selected ? `${C.primary}18` : i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55`,
+                cursor: onSelect ? "pointer" : "default",
+              }}
+            >
+              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{e.name}</div>
+              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>{e.role}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted }}>{e.station}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary }}>{e.shift}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ImportExportContent({
+  selectedKey,
+  onSelect,
+}: {
+  selectedKey?: string | null;
+  onSelect?: (key: string) => void;
+} = {}) {
+  return (
+    <div className="flex flex-col overflow-hidden h-full">
+      {IMPORT_EXPORT_QUEUE.map((q, i) => {
+        const selected = selectedKey === q.id;
+        return (
+          <div
+            key={q.id}
+            role={onSelect ? "button" : undefined}
+            onClick={onSelect ? () => onSelect(q.id) : undefined}
+            className="flex items-center gap-2 px-4 py-2.5"
+            style={{
+              borderBottom: `0.8px solid ${C.border}`,
+              background: selected ? `${C.primary}18` : i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55`,
+              cursor: onSelect ? "pointer" : "default",
+            }}
+          >
+            <ArrowLeftRight size={14} color={C.textMuted} />
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.primary, width: 52 }}>{q.id}</span>
+            <span className="px-1.5 py-0.5 rounded" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, background: C.surfaceAlt }}>{q.type}</span>
+            <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{q.name}</span>
+            <span
+              className="px-1.5 py-0.5 rounded"
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 9,
+                color: q.status === "Failed" ? C.danger : q.status === "Running" ? C.primary : C.textMuted,
+                background: q.status === "Failed" ? C.dangerBg : q.status === "Running" ? C.positiveBg : C.surfaceAlt,
+              }}
+            >
+              {q.status}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function InventoryContent({
+  selectedKey,
+  onSelect,
+}: {
+  selectedKey?: string | null;
+  onSelect?: (key: string) => void;
+} = {}) {
+  return (
+    <div className="flex flex-col gap-0 overflow-hidden h-full px-4 py-2">
+      {INVENTORY_STOCK.map((s) => {
+        const pct = Math.round((s.level / s.capacity) * 100);
+        const low = pct < 25;
+        const high = pct > 85;
+        const selected = selectedKey === s.sku;
+        return (
+          <div
+            key={s.sku}
+            role={onSelect ? "button" : undefined}
+            onClick={onSelect ? () => onSelect(s.sku) : undefined}
+            className="py-2.5 px-1 rounded"
+            style={{
+              borderBottom: `0.8px solid ${C.border}`,
+              background: selected ? `${C.primary}12` : "transparent",
+              cursor: onSelect ? "pointer" : "default",
+            }}
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <div>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.primary }}>{s.sku}</span>
+                <span className="ml-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{s.name}</span>
+              </div>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: low ? C.danger : high ? C.warning : C.textMuted }}>
+                {s.level}/{s.capacity}
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.surfaceAlt, border: `0.8px solid ${C.border}` }}>
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${pct}%`, background: low ? C.danger : high ? C.warning : C.primary }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function PanelContent({
+  id,
+  selectedKey,
+  onSelect,
+}: {
+  id: string;
+  selectedKey?: string | null;
+  onSelect?: (key: string) => void;
+}) {
   if (id.startsWith("stat")) return <StatContent id={id} />;
-  if (id === "recent")       return <RecentScansContent />;
-  if (id === "search")       return <QuickSearchContent />;
-  if (id === "tasks")        return <TasksContent />;
-  if (id === "timelines")    return <TimelinesContent />;
-  if (id === "calendar")     return <CalendarContent />;
+  if (id === "recent")         return <RecentScansContent />;
+  if (id === "search")         return <QuickSearchContent />;
+  if (id === "tasks")          return <TasksContent />;
+  if (id === "timelines")      return <TimelinesContent />;
+  if (id === "calendar")       return <CalendarContent />;
+  if (id === "active-loads")   return <ActiveLoadsContent selectedKey={selectedKey} onSelect={onSelect} />;
+  if (id === "employees")      return <EmployeesContent selectedKey={selectedKey} onSelect={onSelect} />;
+  if (id === "import-export")  return <ImportExportContent selectedKey={selectedKey} onSelect={onSelect} />;
+  if (id === "inventory")      return <InventoryContent selectedKey={selectedKey} onSelect={onSelect} />;
   return null;
 }
 
-// ─── Info Tooltip Overlay ─────────────────────────────────────────────────────
-// Rendered inside the panel — slides up from bottom on click
-function InfoOverlay({
-  id,
-  visible,
-  onClose,
-}: {
-  id: string;
-  visible: boolean;
-  onClose: (e: React.MouseEvent) => void;
-}) {
-  const meta = PANEL_META[id];
+// ─── Widget detail popup (left: widget, right: related tabs) ───────────────────
+type DetailTab = { id: string; label: string };
+
+const WIDGET_DETAIL_TABS: Record<string, DetailTab[]> = {
+  "active-loads": [
+    { id: "info", label: "View Load Information" },
+    { id: "status", label: "Edit Status" },
+    { id: "piecemark", label: "Piecemark Info" },
+  ],
+  employees: [
+    { id: "profile", label: "Profile" },
+    { id: "assign", label: "Assignments" },
+    { id: "avail", label: "Availability" },
+  ],
+  "import-export": [
+    { id: "detail", label: "Job Detail" },
+    { id: "logs", label: "Logs" },
+    { id: "retry", label: "Retry / Actions" },
+  ],
+  inventory: [
+    { id: "item", label: "Item Detail" },
+    { id: "reorder", label: "Reorder" },
+    { id: "capacity", label: "Capacity" },
+  ],
+  recent: [
+    { id: "scan", label: "Scan Detail" },
+    { id: "trace", label: "Traceability" },
+    { id: "qc", label: "QC Notes" },
+  ],
+  tasks: [
+    { id: "task", label: "Task Detail" },
+    { id: "notes", label: "Notes" },
+    { id: "links", label: "Linked Jobs" },
+  ],
+  timelines: [
+    { id: "schedule", label: "Schedule" },
+    { id: "milestones", label: "Milestones" },
+    { id: "risk", label: "Risk" },
+  ],
+  calendar: [
+    { id: "events", label: "Day Events" },
+    { id: "add", label: "Add Event" },
+    { id: "reminders", label: "Reminders" },
+  ],
+  search: [
+    { id: "results", label: "Results" },
+    { id: "filters", label: "Filters" },
+    { id: "history", label: "History" },
+  ],
+  default: [
+    { id: "overview", label: "Overview" },
+    { id: "details", label: "Details" },
+    { id: "actions", label: "Actions" },
+  ],
+};
+
+function detailField(label: string, value: string) {
   return (
-    <div
-      className="absolute inset-0 flex flex-col justify-start z-30 pointer-events-none"
-      style={{ transition: "opacity 200ms ease" }}
-    >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 pointer-events-auto"
-        style={{
-          background: `${C.text}18`,
-          backdropFilter: "blur(2px)",
-          WebkitBackdropFilter: "blur(2px)",
-          opacity: visible ? 1 : 0,
-          transition: "opacity 200ms ease",
-        }}
-        onClick={onClose}
-      />
-      {/* Card */}
-      <div
-        className="relative m-3 rounded-lg overflow-hidden pointer-events-auto"
-        style={{
-          background: C.surface,
-          border: `0.8px solid ${C.border}`,
-          boxShadow: `0 8px 24px ${C.text}18`,
-          transform: visible ? "translateY(0)" : "translateY(-16px)",
-          opacity: visible ? 1 : 0,
-          transition: "transform 220ms cubic-bezier(.22,.8,.36,1), opacity 200ms ease",
-        }}
-      >
-        {/* Card header */}
-        <div
-          className="flex items-center justify-between px-4 py-3"
-          style={{ borderBottom: `0.8px solid ${C.border}`, background: C.positiveBg }}
-        >
-          <div className="flex items-center gap-2">
-            <Info size={13} color={C.primary} strokeWidth={2} />
-            <span
-              style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 11,
-                fontWeight: 500,
-                color: C.primary,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-              }}
-            >
-              {meta.title}
-            </span>
-          </div>
-          <button
-            onClick={onClose}
-            style={{ color: C.textMuted, cursor: "pointer", lineHeight: 0 }}
-          >
-            <X size={14} />
+    <div className="flex flex-col gap-1">
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        {label}
+      </span>
+      <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text }}>{value || "—"}</span>
+    </div>
+  );
+}
+
+function WidgetDetailTabBody({
+  widgetId,
+  tabId,
+  selectedKey,
+}: {
+  widgetId: string;
+  tabId: string;
+  selectedKey: string | null;
+}) {
+  if (!selectedKey && !widgetId.startsWith("stat") && widgetId !== "search" && widgetId !== "calendar") {
+    return (
+      <div className="flex items-center justify-center h-full px-6 text-center">
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted, lineHeight: 1.6 }}>
+          Select an item in the list on the left to view and edit related details here.
+        </p>
+      </div>
+    );
+  }
+
+  if (widgetId === "active-loads") {
+    const load = ACTIVE_LOADS.find((l) => l.id === selectedKey);
+    if (!load) return null;
+    if (tabId === "info") {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+          {detailField("Load ID", load.id)}
+          {detailField("Status", load.status)}
+          {detailField("Destination", load.dest)}
+          {detailField("ETA", load.eta)}
+          {detailField("Ship From", load.shipFrom)}
+          {detailField("Truck", load.truck)}
+          {detailField("Driver", load.driver)}
+          {detailField("Weight", `${load.weightLbs} lbs`)}
+          {detailField("Pieces", String(load.pieces))}
+          <div className="sm:col-span-2">{detailField("Notes", load.notes)}</div>
+        </div>
+      );
+    }
+    if (tabId === "status") {
+      return (
+        <div className="flex flex-col gap-3 p-4 max-w-md">
+          <label className="flex flex-col gap-1">
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>Status</span>
+            <select defaultValue={load.status} style={{ height: 36, borderRadius: 6, border: `1px solid ${C.border}`, background: C.surfaceAlt, padding: "0 10px", fontFamily: "'Lato', sans-serif", fontSize: 13 }}>
+              {["Staging", "Loading", "In transit", "Arriving", "Delivered", "On hold"].map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>ETA</span>
+            <input defaultValue={load.eta} style={{ height: 36, borderRadius: 6, border: `1px solid ${C.border}`, background: C.surfaceAlt, padding: "0 10px", fontFamily: "'Lato', sans-serif", fontSize: 13 }} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>Status note</span>
+            <textarea defaultValue={load.notes} rows={4} style={{ borderRadius: 6, border: `1px solid ${C.border}`, background: C.surfaceAlt, padding: 10, fontFamily: "'Lato', sans-serif", fontSize: 13, resize: "vertical" }} />
+          </label>
+          <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: "pointer" }}>
+            Save Status
           </button>
         </div>
-        {/* Card body */}
-        <div className="px-4 py-3">
-          <p
-            style={{
-              fontFamily: "'Lato', sans-serif",
-              fontSize: 12,
-              color: C.textSub,
-              lineHeight: 1.7,
-            }}
+      );
+    }
+    if (tabId === "piecemark") {
+      return (
+        <div className="flex flex-col h-full overflow-hidden">
+          <div className="flex-none flex px-4 py-2" style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}>
+            {["Mark", "Qty", "Description"].map((h) => (
+              <div key={h} className={h === "Description" ? "flex-1" : "w-24"} style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
+            ))}
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {load.piecemarks.map((pm, i) => (
+              <div key={pm.mark} className="flex px-4 py-2.5" style={{ borderBottom: `0.8px solid ${C.border}`, background: i % 2 ? `${C.surfaceAlt}55` : "transparent" }}>
+                <div className="w-24" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary }}>{pm.mark}</div>
+                <div className="w-24" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted }}>{pm.qty}</div>
+                <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{pm.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  if (widgetId === "employees") {
+    const emp = EMPLOYEES.find((e) => e.name === selectedKey);
+    if (!emp) return null;
+    if (tabId === "profile") {
+      return <div className="grid grid-cols-2 gap-4 p-4">{detailField("Name", emp.name)}{detailField("Role", emp.role)}{detailField("Station", emp.station)}{detailField("Shift", emp.shift)}</div>;
+    }
+    if (tabId === "assign") {
+      return <div className="p-4"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.6 }}>{emp.name} is assigned to <strong>{emp.station}</strong> as {emp.role} for the {emp.shift} shift.</p></div>;
+    }
+    return <div className="p-4"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>Availability: On shift · no leave requests.</p></div>;
+  }
+
+  if (widgetId === "inventory") {
+    const item = INVENTORY_STOCK.find((s) => s.sku === selectedKey);
+    if (!item) return null;
+    const pct = Math.round((item.level / item.capacity) * 100);
+    if (tabId === "item") return <div className="grid grid-cols-2 gap-4 p-4">{detailField("SKU", item.sku)}{detailField("Name", item.name)}{detailField("On hand", String(item.level))}{detailField("Capacity", String(item.capacity))}{detailField("Fill", `${pct}%`)}</div>;
+    if (tabId === "reorder") return <div className="p-4 flex flex-col gap-3"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>Reorder point: {Math.round(item.capacity * 0.25)}. Suggested order: {Math.max(0, Math.round(item.capacity * 0.6) - item.level)} units.</p><button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 10, border: "none", cursor: "pointer" }}>Create PO</button></div>;
+    return <div className="p-4"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>Bin capacity utilization is {pct}%. {pct > 85 ? "Near max — consider relocating overflow." : pct < 25 ? "Below reorder threshold." : "Within normal range."}</p></div>;
+  }
+
+  if (widgetId === "import-export") {
+    const job = IMPORT_EXPORT_QUEUE.find((q) => q.id === selectedKey);
+    if (!job) return null;
+    if (tabId === "detail") return <div className="grid grid-cols-2 gap-4 p-4">{detailField("ID", job.id)}{detailField("Type", job.type)}{detailField("Name", job.name)}{detailField("Status", job.status)}</div>;
+    if (tabId === "logs") return <div className="p-4"><p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted, lineHeight: 1.8 }}>[{job.id}] queued<br />[{job.id}] worker claimed<br />[{job.id}] {job.status.toLowerCase()}</p></div>;
+    return <div className="p-4 flex gap-2"><button type="button" className="px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 10, border: "none", cursor: "pointer" }}>Retry</button><button type="button" className="px-3 py-1.5 rounded-md" style={{ background: C.surfaceAlt, color: C.textMuted, fontFamily: "'DM Mono', monospace", fontSize: 10, border: `1px solid ${C.border}`, cursor: "pointer" }}>Cancel</button></div>;
+  }
+
+  const meta = PANEL_META[widgetId];
+  return (
+    <div className="p-4 flex flex-col gap-3">
+      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.7 }}>
+        {meta?.description ?? "Related details for this widget."}
+      </p>
+      {selectedKey && detailField("Selected", selectedKey)}
+      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase" }}>
+        Tab: {tabId}
+      </p>
+    </div>
+  );
+}
+
+function WidgetDetailModal({
+  open,
+  widgetId,
+  isCompact,
+  onClose,
+}: {
+  open: boolean;
+  widgetId: string | null;
+  isCompact: boolean;
+  onClose: () => void;
+}) {
+  const [tabId, setTabId] = useState("info");
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !widgetId) return;
+    const tabs = WIDGET_DETAIL_TABS[widgetId] ?? WIDGET_DETAIL_TABS.default;
+    setTabId(tabs[0].id);
+    setSelectedKey(
+      widgetId === "active-loads" ? ACTIVE_LOADS[0]?.id ?? null
+        : widgetId === "employees" ? EMPLOYEES[0]?.name ?? null
+        : widgetId === "inventory" ? INVENTORY_STOCK[0]?.sku ?? null
+        : widgetId === "import-export" ? IMPORT_EXPORT_QUEUE[0]?.id ?? null
+        : null
+    );
+  }, [open, widgetId]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open || !widgetId) return null;
+
+  const meta = PANEL_META[widgetId];
+  const tabs = WIDGET_DETAIL_TABS[widgetId] ?? WIDGET_DETAIL_TABS.default;
+  const selectable = ["active-loads", "employees", "inventory", "import-export"].includes(widgetId);
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
+      style={{ background: `${C.text}4d` }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{
+          maxWidth: isCompact ? "100%" : 1080,
+          height: isCompact ? "90vh" : "min(780px, 88vh)",
+          background: C.surface,
+          border: `1px solid ${C.border}`,
+          borderRadius: isCompact ? "16px 16px 0 0" : 12,
+          boxShadow: `0 24px 60px ${C.text}2e`,
+          margin: isCompact ? 0 : 20,
+        }}
+      >
+        <div
+          className="flex-none flex items-center justify-between px-4 py-3"
+          style={{ background: C.primary, color: C.primaryFg }}
+        >
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 18 }}>
+            {meta?.title ?? widgetId}
+          </span>
+          <button type="button" onClick={onClose} style={{ color: C.primaryFg, cursor: "pointer", lineHeight: 0 }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className={`flex-1 min-h-0 grid ${isCompact ? "grid-rows-2" : "grid-cols-[minmax(280px,0.95fr)_1.2fr]"}`}>
+          {/* Left: original widget */}
+          <div
+            className="min-h-0 flex flex-col overflow-hidden"
+            style={{ borderRight: isCompact ? "none" : `1px solid ${C.border}`, borderBottom: isCompact ? `1px solid ${C.border}` : "none" }}
           >
-            {meta.description}
-          </p>
+            <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                {selectable ? "Select an item" : "Widget"}
+              </span>
+            </div>
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <PanelContent
+                id={widgetId}
+                selectedKey={selectedKey}
+                onSelect={selectable ? setSelectedKey : undefined}
+              />
+            </div>
+          </div>
+
+          {/* Right: related tabs */}
+          <div className="min-h-0 flex flex-col overflow-hidden" style={{ background: C.bg }}>
+            <div
+              className="flex-none flex items-end gap-1 px-3 pt-2 overflow-x-auto"
+              style={{ borderBottom: `1px solid ${C.border}`, background: C.surface }}
+            >
+              {tabs.map((t) => {
+                const active = t.id === tabId;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTabId(t.id)}
+                    className="px-3 py-2 whitespace-nowrap"
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: 10,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: active ? C.primary : C.textMuted,
+                      borderBottom: active ? `2px solid ${C.primary}` : "2px solid transparent",
+                      background: "transparent",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto" style={{ background: C.surface }}>
+              <WidgetDetailTabBody widgetId={widgetId} tabId={tabId} selectedKey={selectedKey} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -596,27 +1168,25 @@ function BentoPanel({
   isEditing,
   isHovered,
   isGhosted,
-  isActive,
   isDragging,
   onMouseEnter,
   onMouseLeave,
   onClick,
-  onCloseInfo,
   onStartResize,
   onStartMove,
+  onDelete,
 }: {
   panel: PanelDef;
   isEditing:   boolean;
   isHovered:   boolean;
   isGhosted:   boolean;
-  isActive:    boolean;
   isDragging:  boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onClick:     (e: React.MouseEvent) => void;
-  onCloseInfo: (e: React.MouseEvent) => void;
   onStartResize: (e: React.MouseEvent, id: string, edge: ResizeEdge) => void;
   onStartMove:   (e: React.MouseEvent, id: string) => void;
+  onDelete:      (e: React.MouseEvent, id: string) => void;
 }) {
   const { id, colStart, colSpan, rowStart, rowSpan } = panel;
   const isStat = id.startsWith("stat");
@@ -699,26 +1269,40 @@ function BentoPanel({
       )}
 
       {/* Panel header — not shown for stat cards */}
-      {!isStat && <PanelHeader title={PANEL_META[id].title} />}
+      {!isStat && <PanelHeader title={PANEL_META[id]?.title ?? id} />}
 
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-hidden relative z-[1]">
         <PanelContent id={id} />
       </div>
 
-      {/* ── Info tooltip overlay ── */}
-      {!isEditing && <InfoOverlay id={id} visible={isActive} onClose={onCloseInfo} />}
-
       {/* ── Edit mode UI ── */}
       {isEditing && (
         <>
-          {/* Size + position badge */}
           <div
             className="absolute top-2 left-2 px-1.5 py-0.5 rounded z-30 pointer-events-none"
             style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.primaryFg, background: C.primary, letterSpacing: "0.04em" }}
           >
             {colSpan}×{rowSpan} · {colStart},{rowStart}
           </div>
+
+          <button
+            type="button"
+            className="absolute top-2 right-2 z-30 flex items-center justify-center rounded"
+            style={{
+              width: 24,
+              height: 24,
+              background: C.dangerBg,
+              border: `1px solid ${C.danger}55`,
+              color: C.danger,
+              cursor: "pointer",
+            }}
+            title="Remove widget"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => onDelete(e, id)}
+          >
+            <Trash2 size={12} />
+          </button>
 
           {(["n", "s", "e", "w", "ne", "nw", "se", "sw"] as ResizeEdge[]).map((edge) => (
             <div
@@ -746,6 +1330,210 @@ function BentoPanel({
             </div>
           ))}
         </>
+      )}
+    </div>
+  );
+}
+
+function WidgetPickerCarousel({
+  options,
+  onPick,
+  onClose,
+}: {
+  options: WidgetCatalogEntry[];
+  onPick: (id: WidgetTypeId) => void;
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [options]);
+
+  const goTo = (next: number) => {
+    if (options.length < 1) return;
+    setIndex(((next % options.length) + options.length) % options.length);
+  };
+
+  if (options.length === 0) {
+    return (
+      <div
+        className="rounded-lg p-3 h-full flex flex-col justify-center"
+        style={{ background: C.surface, border: `1px solid ${C.border}`, boxShadow: `0 12px 28px ${C.text}22` }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textMuted }}>
+          All widgets are already on the dashboard.
+        </p>
+        <button
+          type="button"
+          className="mt-2 self-start"
+          style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.primary, cursor: "pointer" }}
+          onClick={onClose}
+        >
+          Close
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="rounded-lg overflow-hidden flex flex-col h-full"
+      style={{
+        background: C.surface,
+        border: `1px solid ${C.border}`,
+        boxShadow: `0 14px 32px ${C.text}28`,
+        width: "100%",
+      }}
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <div
+        className="flex-none flex items-center justify-between px-3 py-2"
+        style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}
+      >
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.05em", color: C.text, textTransform: "uppercase" }}>
+          Add widget
+        </span>
+        <button type="button" onClick={onClose} style={{ color: C.textMuted, cursor: "pointer", lineHeight: 0 }}>
+          <X size={14} />
+        </button>
+      </div>
+
+      <div className="flex-1 min-h-0 flex items-center gap-0.5 px-1 py-2">
+        <button
+          type="button"
+          disabled={options.length < 2}
+          onClick={() => goTo(index - 1)}
+          style={{ color: C.primary, cursor: options.length < 2 ? "default" : "pointer", opacity: options.length < 2 ? 0.35 : 1, flexShrink: 0 }}
+        >
+          <ChevronLeft size={18} />
+        </button>
+
+        <div className="flex-1 min-w-0 overflow-hidden" style={{ height: "100%" }}>
+          <div
+            className="flex h-full"
+            style={{
+              width: `${options.length * 100}%`,
+              transform: `translateX(-${(index * 100) / options.length}%)`,
+              transition: "transform 380ms cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
+          >
+            {options.map((opt) => {
+              const Icon = opt.Icon;
+              return (
+                <div
+                  key={opt.id}
+                  className="h-full px-0.5 box-border"
+                  style={{ flex: `0 0 ${100 / options.length}%`, width: `${100 / options.length}%` }}
+                >
+                  <button
+                    type="button"
+                    className="w-full h-full flex flex-col items-start justify-center gap-1.5 p-2.5 rounded-md text-left"
+                    style={{ background: C.bg, border: `0.8px solid ${C.border}`, cursor: "pointer" }}
+                    onClick={() => onPick(opt.id)}
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <Icon size={15} color={C.primary} />
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 12, color: C.text }}>
+                        {opt.title}
+                      </span>
+                    </div>
+                    <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textSub, lineHeight: 1.4 }}>
+                      {opt.blurb}
+                    </p>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted }}>
+                      Default {opt.defaultColSpan}×{opt.defaultRowSpan}
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          disabled={options.length < 2}
+          onClick={() => goTo(index + 1)}
+          style={{ color: C.primary, cursor: options.length < 2 ? "default" : "pointer", opacity: options.length < 2 ? 0.35 : 1, flexShrink: 0 }}
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+
+      <div className="flex-none flex items-center justify-center gap-1 pb-2.5 pt-0.5">
+        {options.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => goTo(i)}
+            style={{
+              width: i === index ? 14 : 6,
+              height: 6,
+              borderRadius: 99,
+              border: "none",
+              background: i === index ? C.primary : C.border,
+              cursor: "pointer",
+              padding: 0,
+              transition: "width 220ms cubic-bezier(0.22, 1, 0.36, 1), background 220ms ease",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EmptyCellAdd({
+  col,
+  row,
+  isOpen,
+  options,
+  onOpen,
+  onClose,
+  onPick,
+}: {
+  col: number;
+  row: number;
+  isOpen: boolean;
+  options: WidgetCatalogEntry[];
+  onOpen: () => void;
+  onClose: () => void;
+  onPick: (id: WidgetTypeId) => void;
+}) {
+  return (
+    <div
+      className="group relative flex items-center justify-center rounded-md"
+      style={{
+        gridColumn: col,
+        gridRow: row,
+        background: isOpen ? C.surface : "transparent",
+        zIndex: isOpen ? 40 : 2,
+        cursor: isOpen ? "default" : "pointer",
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!isOpen) onOpen();
+      }}
+    >
+      {!isOpen && (
+        <span
+          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+          style={{ color: "#6f95c0", lineHeight: 0, display: "flex" }}
+        >
+          <Plus size={28} strokeWidth={2} />
+        </span>
+      )}
+
+      {isOpen && (
+        <div
+          className="absolute inset-0 z-50 pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <WidgetPickerCarousel options={options} onPick={onPick} onClose={onClose} />
+        </div>
       )}
     </div>
   );
@@ -948,14 +1736,341 @@ function CompactDashboard() {
   );
 }
 
+type AddJobFormState = {
+  jobNumber: string;
+  customer: string;
+  useBarCodeForm: string;
+  externalJob: string;
+  division: string;
+  jobStatus: string;
+  shipTo: string;
+  billTo: string;
+  jobTitle: string;
+  projectYear: string;
+  jobStructure: string;
+  jobHours: string;
+  jobLocation: string;
+  jobEfficiency: string;
+  jobCareOf: string;
+  rfInterface: string;
+  jobPo: string;
+  jobRelease: string;
+  defaultAdhesiveBarCodeLabelFormat: string;
+  defaultLabelLaseFormat: string;
+};
+
+const INIT_JOB_FORM: AddJobFormState = {
+  jobNumber: "092356",
+  customer: "P2 Programs#P2PROG",
+  useBarCodeForm: "P2 Programs#P2PROG",
+  externalJob: "",
+  division: "SHOP",
+  jobStatus: "Open",
+  shipTo: "",
+  billTo: "",
+  jobTitle: "Bal Harbour Shops - Expansion",
+  projectYear: "",
+  jobStructure: "",
+  jobHours: "",
+  jobLocation: "",
+  jobEfficiency: "",
+  jobCareOf: "",
+  rfInterface: "PowerFab",
+  jobPo: "",
+  jobRelease: "",
+  defaultAdhesiveBarCodeLabelFormat: "<None>",
+  defaultLabelLaseFormat: "<None>",
+};
+
+function AddNewJobModal({
+  open,
+  isCompact,
+  onClose,
+}: {
+  open: boolean;
+  isCompact: boolean;
+  onClose: () => void;
+}) {
+  const [form, setForm] = useState<AddJobFormState>(INIT_JOB_FORM);
+  const [activeTab, setActiveTab] = useState<"general" | "load">("general");
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const labelStyle: React.CSSProperties = {
+    fontFamily: "'DM Mono', monospace",
+    fontSize: 9,
+    color: "#556578",
+    textTransform: "uppercase",
+    letterSpacing: "0.045em",
+  };
+
+  const inputStyle: React.CSSProperties = {
+    height: 28,
+    borderRadius: 4,
+    border: "1px solid #b8cbe0",
+    background: "#bcd0e5",
+    padding: "0 8px",
+    fontFamily: "'Lato', sans-serif",
+    fontSize: 11,
+    color: "#2f3f52",
+    outline: "none",
+  };
+
+  const leftRows = [
+    "092356", "1234A", "1234B", "1234C", "1234D", "1234E", "1234F", "1234G",
+    "1234H", "1234J", "1234_SHOP", "2247", "2255", "2310", "2319_PUSH", "2319_SHOP", "TEST",
+  ];
+
+  const renderField = (
+    key: keyof AddJobFormState,
+    label: string,
+    opts?: { select?: string[]; metric?: boolean; lbs?: boolean }
+  ) => (
+    <div className="flex flex-col gap-1">
+      <label style={labelStyle}>{label}</label>
+      {opts?.select ? (
+        <select
+          style={inputStyle}
+          value={form[key]}
+          onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+        >
+          {opts.select.map((opt) => (
+            <option key={opt}>{opt}</option>
+          ))}
+        </select>
+      ) : (
+        <div className="flex items-center gap-1.5">
+          <input
+            style={{ ...inputStyle, flex: 1 }}
+            value={form[key]}
+            onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+          />
+          {opts?.lbs && <span style={{ ...labelStyle, fontSize: 8 }}>lbs</span>}
+          {opts?.metric && (
+            <label className="flex items-center gap-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 10, color: "#435368" }}>
+              <input type="checkbox" />
+              Metric Job
+            </label>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      style={{ background: `${C.text}4d` }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full overflow-hidden"
+        style={{
+          maxWidth: isCompact ? "98vw" : 920,
+          background: "#d2e1f1",
+          border: "1px solid #a5bdd7",
+          borderRadius: isCompact ? "14px 14px 0 0" : 12,
+          boxShadow: `0 26px 58px ${C.text}35`,
+          maxHeight: "90vh",
+          margin: isCompact ? "0" : "20px",
+        }}
+      >
+        <div
+          className="flex items-center justify-between px-4 sm:px-5 py-2.5"
+          style={{ borderBottom: "1px solid #0f7f66", background: "#0d856c" }}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              style={{
+                fontFamily: "'Lato', sans-serif",
+                fontSize: 26,
+                letterSpacing: "0",
+                color: "#eef9f6",
+                lineHeight: 1.1,
+              }}
+            >
+              Add New Job - Job Information
+            </span>
+          </div>
+          <button onClick={onClose} style={{ color: "#d7efe8", cursor: "pointer" }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex items-end gap-2 px-3 pt-2" style={{ borderBottom: "1px solid #bccfe3" }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab("general")}
+            className="px-4 py-1"
+            style={{
+              ...labelStyle,
+              fontSize: 10,
+              background: activeTab === "general" ? "#d2e1f1" : "transparent",
+              color: activeTab === "general" ? "#0f7f66" : "#465a71",
+              borderBottom: activeTab === "general" ? "2px solid #0f7f66" : "2px solid transparent",
+            }}
+          >
+            General
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("load")}
+            className="px-4 py-1"
+            style={{
+              ...labelStyle,
+              fontSize: 10,
+              background: activeTab === "load" ? "#d2e1f1" : "transparent",
+              color: activeTab === "load" ? "#0f7f66" : "#465a71",
+              borderBottom: activeTab === "load" ? "2px solid #0f7f66" : "2px solid transparent",
+            }}
+          >
+            Load Details
+          </button>
+        </div>
+
+        <form
+          id="add-new-job-form"
+          className="overflow-y-auto"
+          style={{ maxHeight: "calc(90vh - 142px)" }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            onClose();
+          }}
+        >
+          <div className={`grid ${isCompact ? "grid-cols-1" : "grid-cols-[230px_1fr]"}`}>
+            <div style={{ borderRight: isCompact ? "none" : "1px solid #bccfe3", minHeight: 520 }}>
+              <div className="px-2 py-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <button
+                    type="button"
+                    className="px-2.5 py-1 rounded-sm flex items-center gap-1"
+                    style={{
+                      background: "#dce9f6",
+                      color: "#3d5570",
+                      border: "1px solid #9fb6ce",
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: 9,
+                    }}
+                  >
+                    Edit Existing Job
+                  </button>
+                  <label className="flex items-center gap-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: "#44576d" }}>
+                    <input type="checkbox" />
+                    Show Closed Jobs
+                  </label>
+                </div>
+                <p style={{ fontFamily: "'Lato', sans-serif", color: "#213248", fontSize: 14, lineHeight: 1.25 }}>
+                  Job Number84Customer No.72Name
+                </p>
+              </div>
+
+              <div style={{ borderTop: "1px solid #b8cbe0", maxHeight: 420, overflowY: "auto" }}>
+                {leftRows.map((row, i) => (
+                  <div
+                    key={row}
+                    className="grid grid-cols-3 px-2 py-1.5"
+                    style={{
+                      fontFamily: "'Lato', sans-serif",
+                      fontSize: 10,
+                      color: i === 0 ? "#e7f6f2" : "#39516b",
+                      background: i === 0 ? "#0d856c" : i % 2 === 0 ? "#d8e6f4" : "#d2e1f1",
+                      borderBottom: "1px solid #bccfe3",
+                    }}
+                  >
+                    <span>{row}</span>
+                    <span>P2PROG</span>
+                    <span>P2 Programs</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-3 py-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-2.5">
+                {renderField("jobNumber", "Job Number")}
+                {renderField("customer", "Customer #")}
+                {renderField("useBarCodeForm", "Use Bar Code Form")}
+                {renderField("jobHours", "Job Weight", { lbs: true, metric: true })}
+                {renderField("externalJob", "External Job #")}
+                {renderField("division", "Division", { select: ["SHOP", "FIELD", "FAB"] })}
+                {renderField("jobStatus", "Job Status", { select: ["Open", "Closed", "Hold"] })}
+                {renderField("shipTo", "Ship To", { select: ["", "Main Yard", "Site A", "Site B"] })}
+                {renderField("jobTitle", "Job Title")}
+                {renderField("projectYear", "Project Year")}
+                {renderField("jobStructure", "Job Structure")}
+                {renderField("jobHours", "Job Hours")}
+                {renderField("jobLocation", "Job Location")}
+                {renderField("jobEfficiency", "Job Efficiency")}
+                {renderField("jobCareOf", "Job Care Of")}
+                {renderField("rfInterface", "RF Interface", { select: ["PowerFab", "FieldOps"] })}
+                {renderField("jobPo", "Job PO #")}
+                {renderField("jobRelease", "Job Release #")}
+              </div>
+
+              <div className="mt-3 grid gap-2">
+                {renderField("defaultAdhesiveBarCodeLabelFormat", "Default Adhesive Bar Code Label Format #", { select: ["<None>", "STD-01", "STD-02"] })}
+                {renderField("defaultLabelLaseFormat", "Default LabelLase Label Format #", { select: ["<None>", "LASER-A", "LASER-B"] })}
+              </div>
+
+              <div className="mt-3 pt-2 border-t" style={{ borderColor: "#bccfe3" }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {["Keep Minors on Import (Prefix=No)", "Validate Heats", "Validate Pipes", "Validate Fittings"].map((item) => (
+                    <label key={item} className="flex items-center gap-1.5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: "#43576d" }}>
+                      <input type="checkbox" />
+                      {item}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <div
+          className="flex items-center justify-end gap-2 px-4 sm:px-5 py-2.5"
+          style={{ borderTop: "1px solid #b8cbe0", background: "#d2e1f1" }}
+        >
+          <button
+            type="submit"
+            form="add-new-job-form"
+            className="px-2.5 py-1 rounded-sm flex items-center gap-1"
+            style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 9,
+              border: "1px solid #0c7560",
+              color: "#ecfaf6",
+              background: "#0d856c",
+            }}
+          >
+            <Plus size={10} /> Add Job
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const isCompact = useIsCompact();
   const [isEditing, setIsEditing] = useState(false);
+  const [isAddJobOpen, setIsAddJobOpen] = useState(false);
   const [panels, setPanels]       = useState<PanelDef[]>(INIT);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [activeId, setActiveId]   = useState<string | null>(null);
+  const [detailWidgetId, setDetailWidgetId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [pickerCell, setPickerCell] = useState<{ col: number; row: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Leave edit mode when switching to compact viewport
@@ -964,27 +2079,47 @@ export default function App() {
       setIsEditing(false);
       setDraggingId(null);
       setHoveredId(null);
+      setPickerCell(null);
     }
   }, [isCompact, isEditing]);
 
-  // Click: open/close info tooltip
+  const usedIds = new Set(panels.map((p) => p.id));
+  const availableWidgets = WIDGET_CATALOG.filter((w) => !usedIds.has(w.id));
+  const emptyCells = isEditing ? getEmptyCells(panels) : [];
+
+  const handleDeletePanel = useCallback((e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setPanels((prev) => prev.filter((p) => p.id !== id));
+    setPickerCell(null);
+    setDetailWidgetId((prev) => (prev === id ? null : prev));
+  }, []);
+
+  const handleAddWidget = useCallback((widgetId: WidgetTypeId, col: number, row: number) => {
+    setPanels((prev) => {
+      if (prev.some((p) => p.id === widgetId)) return prev;
+      const placed = fitNewPanel(prev, widgetId, col, row);
+      return placed ? [...prev, placed] : prev;
+    });
+    setPickerCell(null);
+  }, []);
+
+  // Click: open widget detail popup
   const handlePanelClick = useCallback(
     (e: React.MouseEvent, id: string) => {
       if (isEditing) return;
       e.stopPropagation();
-      setActiveId((prev) => (prev === id ? null : id));
+      setDetailWidgetId(id);
     },
     [isEditing]
   );
 
-  const handleCloseInfo = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setActiveId(null);
+  const handleCloseDetail = useCallback(() => {
+    setDetailWidgetId(null);
   }, []);
 
-  // Click on grid background dismisses any open tooltip
+  // Click on grid background dismisses picker
   const handleGridClick = useCallback(() => {
-    setActiveId(null);
+    setPickerCell(null);
   }, []);
 
   // Drag to move panel anywhere on the 12×8 grid
@@ -1068,10 +2203,20 @@ export default function App() {
 
   const toggleEdit = () => {
     setIsEditing((v) => !v);
-    setActiveId(null);
+    setDetailWidgetId(null);
     setHoveredId(null);
     setDraggingId(null);
+    setPickerCell(null);
   };
+
+  const openAddJob = useCallback(() => {
+    setIsAddJobOpen(true);
+    setDetailWidgetId(null);
+  }, []);
+
+  const closeAddJob = useCallback(() => {
+    setIsAddJobOpen(false);
+  }, []);
 
   const anyHovered = hoveredId !== null;
 
@@ -1087,7 +2232,7 @@ export default function App() {
           style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: "0.06em" }}
         >
           <LayoutGrid size={13} />
-          EDIT MODE — drag widgets to move · stretch any edge or corner on the 12×8 grid
+          EDIT MODE — drag to move · stretch edges · trash to remove · + on empty cells to add
         </div>
       )}
 
@@ -1125,10 +2270,22 @@ export default function App() {
               </div>
             )}
 
+            {isEditing && emptyCells.map(({ col, row }) => (
+              <EmptyCellAdd
+                key={`empty-${col}-${row}`}
+                col={col}
+                row={row}
+                isOpen={pickerCell?.col === col && pickerCell?.row === row}
+                options={availableWidgets}
+                onOpen={() => setPickerCell({ col, row })}
+                onClose={() => setPickerCell(null)}
+                onPick={(id) => handleAddWidget(id, col, row)}
+              />
+            ))}
+
             {panels.map((panel) => {
               const isHovered = hoveredId === panel.id;
               const isGhosted = anyHovered && !isHovered && !isEditing;
-              const isActive  = activeId === panel.id;
               return (
                 <BentoPanel
                   key={panel.id}
@@ -1136,14 +2293,13 @@ export default function App() {
                   isEditing={isEditing}
                   isHovered={isHovered}
                   isGhosted={isGhosted}
-                  isActive={isActive}
                   isDragging={draggingId === panel.id}
                   onMouseEnter={() => !isEditing && setHoveredId(panel.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   onClick={(e) => handlePanelClick(e, panel.id)}
-                  onCloseInfo={handleCloseInfo}
                   onStartResize={startResize}
                   onStartMove={startMove}
+                  onDelete={handleDeletePanel}
                 />
               );
             })}
@@ -1163,14 +2319,14 @@ export default function App() {
         {isCompact ? (
           <>
             <TaskbarBtn icon={HelpCircle} label="FAQ & Support" grow />
-            <TaskbarBtn icon={ScanLine}   label="New Scan" primary grow />
+            <TaskbarBtn icon={ScanLine}   label="New Scan" primary grow onClick={openAddJob} />
             <TaskbarBtn icon={Settings}   label="Settings" grow />
           </>
         ) : (
           <>
             <TaskbarBtn icon={Settings}   label="Settings"      />
             <TaskbarBtn icon={HelpCircle} label="FAQ & Support" />
-            <TaskbarBtn icon={Plus}       label="Add New Job"   primary />
+            <TaskbarBtn icon={Plus}       label="Add New Job"   primary onClick={openAddJob} />
             <TaskbarBtn icon={FileDown}   label="Report PDF"    />
             <TaskbarBtn
               icon={isEditing ? X : LayoutGrid}
@@ -1181,6 +2337,13 @@ export default function App() {
           </>
         )}
       </div>
+      <AddNewJobModal open={isAddJobOpen} isCompact={isCompact} onClose={closeAddJob} />
+      <WidgetDetailModal
+        open={detailWidgetId !== null}
+        widgetId={detailWidgetId}
+        isCompact={isCompact}
+        onClose={handleCloseDetail}
+      />
     </div>
   );
 }
