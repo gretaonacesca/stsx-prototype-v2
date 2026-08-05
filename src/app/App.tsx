@@ -70,15 +70,15 @@ type ResizeEdge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
 // ─── Initial Layout (12×8) ────────────────────────────────────────────────────
 const INIT: PanelDef[] = [
-  { id: "stat1",     colStart: 1,  colSpan: 3, rowStart: 1, rowSpan: 2 },
-  { id: "stat2",     colStart: 4,  colSpan: 3, rowStart: 1, rowSpan: 2 },
-  { id: "stat3",     colStart: 7,  colSpan: 3, rowStart: 1, rowSpan: 2 },
-  { id: "stat4",     colStart: 10, colSpan: 3, rowStart: 1, rowSpan: 2 },
+  { id: "stat1",     colStart: 1,  colSpan: 2, rowStart: 1, rowSpan: 2 },
+  { id: "stat2",     colStart: 3,  colSpan: 2, rowStart: 1, rowSpan: 2 },
+  { id: "stat3",     colStart: 5,  colSpan: 2, rowStart: 1, rowSpan: 2 },
+  { id: "stat4",     colStart: 7,  colSpan: 2, rowStart: 1, rowSpan: 2 },
+  { id: "timelines", colStart: 9,  colSpan: 4, rowStart: 1, rowSpan: 4 },
   { id: "recent",    colStart: 1,  colSpan: 4, rowStart: 3, rowSpan: 6 },
-  { id: "search",    colStart: 5,  colSpan: 8, rowStart: 3, rowSpan: 2 },
+  { id: "search",    colStart: 5,  colSpan: 4, rowStart: 3, rowSpan: 2 },
   { id: "tasks",     colStart: 5,  colSpan: 4, rowStart: 5, rowSpan: 4 },
-  { id: "timelines", colStart: 9,  colSpan: 4, rowStart: 5, rowSpan: 2 },
-  { id: "calendar",  colStart: 9,  colSpan: 4, rowStart: 7, rowSpan: 2 },
+  { id: "calendar",  colStart: 9,  colSpan: 4, rowStart: 5, rowSpan: 4 },
 ];
 
 function clamp(n: number, min: number, max: number) {
