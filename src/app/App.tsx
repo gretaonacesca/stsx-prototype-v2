@@ -2627,17 +2627,6 @@ export default function App() {
           pointerEvents: isModalOpen ? "none" : undefined,
         }}
       >
-      {/* Edit mode banner — desktop only */}
-      {isEditing && !isCompact && (
-        <div
-          className="flex-none flex items-center justify-center gap-2 py-1.5"
-          style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: "0.06em" }}
-        >
-          <LayoutGrid size={13} />
-          EDIT MODE — drag to move · stretch edges · trash to remove · + on empty cells to add
-        </div>
-      )}
-
       {isCompact ? (
         <CompactDashboard />
       ) : (
