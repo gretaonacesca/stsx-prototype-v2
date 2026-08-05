@@ -2221,7 +2221,7 @@ function AddNewJobModal({
   return (
     <div
       className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
-      style={{ background: `${C.text}4d` }}
+      style={{ background: "transparent" }}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -2234,7 +2234,7 @@ function AddNewJobModal({
           background: C.surface,
           border: `1px solid ${C.border}`,
           borderRadius: isCompact ? "16px 16px 0 0" : 12,
-          boxShadow: `0 24px 60px ${C.text}2e`,
+          boxShadow: `0 24px 60px ${C.text}14`,
           margin: isCompact ? 0 : 20,
         }}
       >
@@ -2583,6 +2583,7 @@ export default function App() {
 
   const anyHovered = hoveredId !== null;
   const isDetailOpen = detailWidgetId !== null;
+  const isModalOpen = isDetailOpen || isAddJobOpen;
 
   return (
     <div
@@ -2592,10 +2593,10 @@ export default function App() {
       <div
         className="flex-1 min-h-0 flex flex-col"
         style={{
-          opacity: isDetailOpen ? 0.35 : 1,
-          filter: isDetailOpen ? "saturate(0.3)" : "none",
+          opacity: isModalOpen ? 0.35 : 1,
+          filter: isModalOpen ? "saturate(0.3)" : "none",
           transition: "opacity 180ms ease, filter 180ms ease",
-          pointerEvents: isDetailOpen ? "none" : undefined,
+          pointerEvents: isModalOpen ? "none" : undefined,
         }}
       >
       {/* Edit mode banner — desktop only */}
