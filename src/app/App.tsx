@@ -3,7 +3,7 @@ import {
   Search, Plus, Settings, HelpCircle, FileDown, LayoutGrid, X,
   CheckCircle, AlertTriangle, XCircle, TrendingUp, BarChart3,
   ChevronLeft, ChevronRight, ChevronDown, Circle, ScanLine,
-  Trash2, Truck, Users, ArrowLeftRight, Package,
+  Truck, Users, ArrowLeftRight, Package,
 } from "lucide-react";
 
 /** Mobile + tablet stacked layout below this width (desktop bento at ≥1024). */
@@ -1279,29 +1279,23 @@ function BentoPanel({
       {/* ── Edit mode UI ── */}
       {isEditing && (
         <>
-          <div
-            className="absolute top-2 left-2 px-1.5 py-0.5 rounded z-30 pointer-events-none"
-            style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.primaryFg, background: C.primary, letterSpacing: "0.04em" }}
-          >
-            {colSpan}×{rowSpan} · {colStart},{rowStart}
-          </div>
-
           <button
             type="button"
-            className="absolute top-2 right-2 z-30 flex items-center justify-center rounded"
+            className="absolute top-2 right-2 z-30 flex items-center justify-center rounded-full"
             style={{
-              width: 24,
-              height: 24,
-              background: C.dangerBg,
-              border: `1px solid ${C.danger}55`,
-              color: C.danger,
+              width: 22,
+              height: 22,
+              background: C.warning,
+              border: "none",
+              color: "#fff",
               cursor: "pointer",
+              boxShadow: `0 1px 4px ${C.text}22`,
             }}
             title="Remove widget"
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => onDelete(e, id)}
           >
-            <Trash2 size={12} />
+            <X size={12} strokeWidth={2.5} />
           </button>
 
           {(["n", "s", "e", "w", "ne", "nw", "se", "sw"] as ResizeEdge[]).map((edge) => (
@@ -1503,13 +1497,30 @@ function EmptyCellAdd({
   onClose: () => void;
   onPick: (id: WidgetTypeId) => void;
 }) {
+  const pinLeft = col <= 1;
+  const pinRight = col >= COLS;
+  const pinTop = row <= 1;
+  const pinBottom = row >= ROWS;
+
+  const pickerStyle: React.CSSProperties = {
+    position: "absolute",
+    width: `calc(200% + ${GAP}px)`,
+    height: `calc(200% + ${GAP}px)`,
+    zIndex: 50,
+    left: pinLeft ? 0 : pinRight ? undefined : "50%",
+    right: pinRight ? 0 : undefined,
+    top: pinTop ? 0 : pinBottom ? undefined : "50%",
+    bottom: pinBottom ? 0 : undefined,
+    transform: `translate(${pinLeft || pinRight ? "0%" : "-50%"}, ${pinTop || pinBottom ? "0%" : "-50%"})`,
+  };
+
   return (
     <div
       className="group relative flex items-center justify-center rounded-md"
       style={{
         gridColumn: col,
         gridRow: row,
-        background: isOpen ? C.surface : "transparent",
+        background: "transparent",
         zIndex: isOpen ? 40 : 2,
         cursor: isOpen ? "default" : "pointer",
       }}
@@ -1529,7 +1540,8 @@ function EmptyCellAdd({
 
       {isOpen && (
         <div
-          className="absolute inset-0 z-50 pointer-events-auto"
+          className="pointer-events-auto"
+          style={pickerStyle}
           onClick={(e) => e.stopPropagation()}
         >
           <WidgetPickerCarousel options={options} onPick={onPick} onClose={onClose} />
