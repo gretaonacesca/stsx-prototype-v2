@@ -42,40 +42,42 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --font-weight-medium: 500;
+  --background: #131C25;
+  --foreground: #EAE5DE;
+  --card: #1C2836;
+  --card-foreground: #EAE5DE;
+  --popover: #1C2836;
+  --popover-foreground: #EAE5DE;
+  --primary: #009E76;
+  --primary-foreground: #FDFAF5;
+  --secondary: #243344;
+  --secondary-foreground: #EAE5DE;
+  --muted: #243344;
+  --muted-foreground: #8097B4;
+  --accent: #A8C2EA;
+  --accent-foreground: #131C25;
+  --destructive: #E05A44;
+  --destructive-foreground: #F09080;
+  --border: #3A4555;
+  --input: #243344;
+  --input-background: #243344;
+  --switch-background: #3A4555;
+  --ring: #A8C2EA;
+  --font-weight-medium: 600;
   --font-weight-normal: 400;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --chart-1: #A8C2EA;
+  --chart-2: #96DAB3;
+  --chart-3: #EFA483;
+  --chart-4: #009E76;
+  --chart-5: #8097B4;
+  --sidebar: #1C2836;
+  --sidebar-foreground: #EAE5DE;
+  --sidebar-primary: #009E76;
+  --sidebar-primary-foreground: #FDFAF5;
+  --sidebar-accent: #243344;
+  --sidebar-accent-foreground: #EAE5DE;
+  --sidebar-border: #3A4555;
+  --sidebar-ring: #A8C2EA;
 }
 
 @theme inline {

@@ -3,7 +3,7 @@ import {
   Search, Plus, Settings, HelpCircle, FileDown, LayoutGrid, X,
   CheckCircle, AlertTriangle, XCircle, TrendingUp, BarChart3,
   ChevronLeft, ChevronRight, ChevronDown, Circle, ScanLine,
-  Truck, Users, ArrowLeftRight, Package,
+  Truck, Users, ArrowLeftRight, Package, Moon, Sun,
 } from "lucide-react";
 
 /** Mobile + tablet stacked layout below this width (desktop bento at ≥1024). */
@@ -34,8 +34,27 @@ const MOBILE_DEFAULT_OPEN: Record<MobileWidgetId, boolean> = {
   timelines: false,
 };
 
-// ─── STSX Design Tokens ──────────────────────────────────────────────────────
-const C = {
+// ─── STSX Design Tokens (light + dark from brand palette) ─────────────────────
+// Source: Figma STSX-UX colour tokens — https://www.figma.com/design/NZX7yDDzpHmYc6uwcf7ZBQ/STSX-UX?node-id=70-5180
+type ColorTokens = {
+  bg: string;
+  surface: string;
+  surfaceAlt: string;
+  border: string;
+  text: string;
+  textSub: string;
+  textMuted: string;
+  primary: string;
+  primaryFg: string;
+  accent: string;
+  warning: string;
+  warningBg: string;
+  danger: string;
+  dangerBg: string;
+  positiveBg: string;
+};
+
+const LIGHT: ColorTokens = {
   bg:         "#DCE8F6",
   surface:    "#F1F6FC",
   surfaceAlt: "#D4E3F2",
@@ -52,6 +71,31 @@ const C = {
   dangerBg:   "#FAEEE9",
   positiveBg: "#E4F6EE",
 };
+
+/** Dark alternate set — from Figma node 70:5180 (UI Concept Variations dark mode) */
+const DARK: ColorTokens = {
+  bg:         "#131C25",
+  surface:    "#1C2836",
+  surfaceAlt: "#243344",
+  border:     "#3A4555",
+  text:       "#EAE5DE",
+  textSub:    "#C2BBB4",
+  textMuted:  "#8097B4",
+  primary:    "#009E76",
+  primaryFg:  "#FDFAF5",
+  accent:     "#A8C2EA",
+  warning:    "#EFA483",
+  warningBg:  "#1E1008",
+  danger:     "#E05A44",
+  dangerBg:   "#1E0806",
+  positiveBg: "#071A10",
+};
+
+const C: ColorTokens = { ...LIGHT };
+
+function applyColorTokens(dark: boolean) {
+  Object.assign(C, dark ? DARK : LIGHT);
+}
 
 // ─── Grid Constants ───────────────────────────────────────────────────────────
 const COLS = 12;
@@ -923,8 +967,8 @@ function LoadInfoRow({
         <div
           className="flex-1 min-w-0"
           style={{
-            background: highlight ? "#D4E3F2" : C.surfaceAlt,
-            border: `1px solid ${highlight ? "#ADBFD8" : C.border}`,
+            background: C.surfaceAlt,
+            border: `1px solid ${C.border}`,
             borderRadius: 4,
             height: 28,
             display: "flex",
@@ -1279,7 +1323,7 @@ function WidgetDetailModal({
   return (
     <div
       className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
-      style={{ background: `${C.text}4d` }}
+      style={{ background: "transparent" }}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -1292,7 +1336,7 @@ function WidgetDetailModal({
           background: C.surface,
           border: `1px solid ${C.border}`,
           borderRadius: isCompact ? "16px 16px 0 0" : 12,
-          boxShadow: `0 24px 60px ${C.text}2e`,
+          boxShadow: `0 24px 60px ${C.text}14`,
           margin: isCompact ? 0 : 20,
         }}
       >
@@ -1496,7 +1540,7 @@ function BentoPanel({
             style={{
               width: 22,
               height: 22,
-              background: C.warning,
+              background: C.danger,
               border: "none",
               color: "#fff",
               cursor: "pointer",
@@ -1763,6 +1807,70 @@ function EmptyCellAdd({
 }
 
 // ─── Taskbar Button ───────────────────────────────────────────────────────────
+function DarkModeToggle({
+  dark,
+  onToggle,
+}: {
+  dark: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex items-center gap-2 rounded-md px-2 py-1.5"
+      style={{
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        color: C.textMuted,
+      }}
+      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-pressed={dark}
+      aria-label="Dark mode"
+    >
+      {dark ? <Moon size={14} strokeWidth={1.8} /> : <Sun size={14} strokeWidth={1.8} />}
+      <span
+        style={{
+          position: "relative",
+          width: 36,
+          height: 20,
+          borderRadius: 10,
+          background: dark ? C.primary : "#D8E3EE",
+          border: dark ? "0.8px solid transparent" : `0.8px solid ${C.border}`,
+          flexShrink: 0,
+          transition: "background 160ms ease, border-color 160ms ease",
+        }}
+      >
+        <span
+          style={{
+            position: "absolute",
+            top: 2.8,
+            left: dark ? 18.8 : 2.8,
+            width: 14,
+            height: 14,
+            borderRadius: 7,
+            background: "#fff",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+            transition: "left 160ms ease",
+          }}
+        />
+      </span>
+      <span
+        style={{
+          fontFamily: "'DM Mono', monospace",
+          fontSize: 9,
+          letterSpacing: "0.05em",
+          textTransform: "uppercase",
+          lineHeight: 1.3,
+        }}
+      >
+        Dark
+      </span>
+    </button>
+  );
+}
+
 function TaskbarBtn({
   icon: Icon,
   label,
@@ -2312,6 +2420,7 @@ function AddNewJobModal({
 export default function App() {
   const isCompact = useIsCompact();
   const [isEditing, setIsEditing] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const [isAddJobOpen, setIsAddJobOpen] = useState(false);
   const [panels, setPanels]       = useState<PanelDef[]>(INIT);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -2319,6 +2428,13 @@ export default function App() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [pickerCell, setPickerCell] = useState<{ col: number; row: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+
+  // Keep token object in sync with theme on the same render as the toggle.
+  applyColorTokens(isDark);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [isDark]);
 
   // Leave edit mode when switching to compact viewport
   useEffect(() => {
@@ -2466,12 +2582,22 @@ export default function App() {
   }, []);
 
   const anyHovered = hoveredId !== null;
+  const isDetailOpen = detailWidgetId !== null;
 
   return (
     <div
       className="h-screen flex flex-col select-none"
       style={{ background: C.bg }}
     >
+      <div
+        className="flex-1 min-h-0 flex flex-col"
+        style={{
+          opacity: isDetailOpen ? 0.35 : 1,
+          filter: isDetailOpen ? "saturate(0.3)" : "none",
+          transition: "opacity 180ms ease, filter 180ms ease",
+          pointerEvents: isDetailOpen ? "none" : undefined,
+        }}
+      >
       {/* Edit mode banner — desktop only */}
       {isEditing && !isCompact && (
         <div
@@ -2556,37 +2682,44 @@ export default function App() {
 
       {/* Fixed taskbar */}
       <div
-        className="flex-none flex items-center justify-center gap-2 px-3 sm:px-6"
+        className="flex-none flex items-center gap-2 px-3 sm:px-6"
         style={{
           height: 75,
           background: C.positiveBg,
           borderTop: `0.8px solid ${C.border}`,
         }}
       >
-        {isCompact ? (
-          <>
-            <TaskbarBtn icon={HelpCircle} label="FAQ & Support" grow />
-            <TaskbarBtn icon={ScanLine}   label="New Scan" primary grow onClick={openAddJob} />
-            <TaskbarBtn icon={Settings}   label="Settings" grow />
-          </>
-        ) : (
-          <>
-            <TaskbarBtn icon={Settings}   label="Settings"      />
-            <TaskbarBtn icon={HelpCircle} label="FAQ & Support" />
-            <TaskbarBtn icon={Plus}       label="Add New Job"   primary onClick={openAddJob} />
-            <TaskbarBtn icon={FileDown}   label="Report PDF"    />
-            <TaskbarBtn
-              icon={isEditing ? X : LayoutGrid}
-              label={isEditing ? "Exit Edit" : "Edit Dashboard"}
-              onClick={toggleEdit}
-              active={isEditing}
-            />
-          </>
-        )}
+        {!isCompact && <div className="flex-1 min-w-0" />}
+        <div className={`flex items-center justify-center gap-2 min-w-0 ${isCompact ? "flex-1" : ""}`}>
+          {isCompact ? (
+            <>
+              <TaskbarBtn icon={HelpCircle} label="FAQ & Support" grow />
+              <TaskbarBtn icon={ScanLine}   label="New Scan" primary grow onClick={openAddJob} />
+              <TaskbarBtn icon={Settings}   label="Settings" grow />
+            </>
+          ) : (
+            <>
+              <TaskbarBtn icon={Settings}   label="Settings"      />
+              <TaskbarBtn icon={HelpCircle} label="FAQ & Support" />
+              <TaskbarBtn icon={Plus}       label="Add New Job"   primary onClick={openAddJob} />
+              <TaskbarBtn icon={FileDown}   label="Report PDF"    />
+              <TaskbarBtn
+                icon={isEditing ? X : LayoutGrid}
+                label={isEditing ? "Exit Edit" : "Edit Dashboard"}
+                onClick={toggleEdit}
+                active={isEditing}
+              />
+            </>
+          )}
+        </div>
+        <div className={`flex justify-end shrink-0 ${isCompact ? "" : "flex-1 min-w-0"}`}>
+          <DarkModeToggle dark={isDark} onToggle={() => setIsDark((v) => !v)} />
+        </div>
+      </div>
       </div>
       <AddNewJobModal open={isAddJobOpen} isCompact={isCompact} onClose={closeAddJob} />
       <WidgetDetailModal
-        open={detailWidgetId !== null}
+        open={isDetailOpen}
         widgetId={detailWidgetId}
         isCompact={isCompact}
         onClose={handleCloseDetail}
