@@ -62,9 +62,9 @@ type ScanState = {
   progress: number;
 };
 
-/** Matrix-style glyph set — katakana + digits + symbols */
+/** Matrix-style glyph set — Latin letters, digits, and symbols */
 const MATRIX_CHARS =
-  "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝｦｧｨｩｪｫｬｭｮｯｰ01<>*+-=:.|¦";
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789<>*+-=:.|/\\#_@%!?";
 
 function matrixGlyph(col: number, row: number, timeMs: number): string {
   // Column-synced “fall” so glyphs cascade downward through the logo silhouette
