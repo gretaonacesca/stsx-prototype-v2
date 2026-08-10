@@ -4,9 +4,19 @@ import {
   CheckCircle, AlertTriangle, XCircle, TrendingUp, BarChart3,
   ChevronLeft, ChevronRight, ChevronDown, Circle, Clock, ScanLine,
   Truck, Users, ArrowLeftRight, Package, Moon, Sun,
-  Briefcase, Database, ShieldAlert, FileText, Settings2, ClipboardList, Upload,
+  Briefcase, Database, ShieldAlert, FileText, Settings2, ClipboardList, Upload, Check,
 } from "lucide-react";
 import { LoginPage } from "./LoginPage";
+import {
+  ImportFilterForm,
+  CustomerEditorPanel,
+  CarrierEditorPanel,
+  StatusCodesEditorPanel,
+  RoutingCodesEditorPanel,
+  EmployeeInfoEditor,
+  EmployeeClassEditorPanel,
+  PiecemarkEntryWorkbench,
+} from "./stsxPanels";
 
 /** Mobile + tablet stacked layout below this width (desktop bento at ≥1024). */
 const COMPACT_BREAKPOINT = 1024;
@@ -966,42 +976,6 @@ function DangerZoneListContent() {
   );
 }
 
-function PiecemarkEntryContent() {
-  const [mark, setMark] = useState("");
-  const [qty, setQty] = useState("1");
-  return (
-    <div className="flex flex-col gap-4 p-4 h-full">
-      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textMuted, lineHeight: 1.5 }}>
-        Floor entry — one-tap piecemark capture for the current job.
-      </p>
-      <label className="flex flex-col gap-1">
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>Piecemark</span>
-        <input
-          value={mark}
-          onChange={(e) => setMark(e.target.value)}
-          placeholder="e.g. B-1042-A"
-          style={{ height: 44, borderRadius: 8, border: `1.5px solid ${C.border}`, background: C.surfaceAlt, padding: "0 12px", fontFamily: "'DM Mono', monospace", fontSize: 16, color: C.text }}
-        />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>Qty</span>
-        <input
-          value={qty}
-          onChange={(e) => setQty(e.target.value)}
-          style={{ height: 44, borderRadius: 8, border: `1.5px solid ${C.border}`, background: C.surfaceAlt, padding: "0 12px", fontFamily: "'DM Mono', monospace", fontSize: 16, color: C.text, maxWidth: 120 }}
-        />
-      </label>
-      <button
-        type="button"
-        className="mt-auto self-stretch py-3 rounded-md"
-        style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer" }}
-      >
-        Commit Piecemark
-      </button>
-    </div>
-  );
-}
-
 function JobListContent({
   selectedKey,
   onSelect,
@@ -1062,7 +1036,7 @@ function PanelContent({
   if (id === "import-export")  return <ImportExportContent selectedKey={selectedKey} onSelect={onSelect} />;
   if (id === "inventory")      return <InventoryContent selectedKey={selectedKey} onSelect={onSelect} />;
   if (id === "job-piecemark")  return <JobListContent selectedKey={selectedKey} onSelect={onSelect} />;
-  if (id === "piecemark-entry") return <PiecemarkEntryContent />;
+  if (id === "piecemark-entry") return <PiecemarkEntryWorkbench />;
   if (id === "reference-data") return <ReferenceDataListContent tabHint="Open a tab to edit reference tables." />;
   if (id === "records-danger") return <DangerZoneListContent />;
   if (id === "reports-labels") return <SimpleActionListContent title="Reports & Labels" items={["Foxfire", "Status", "Barcode ID", "Raw Material", "Label Fields"]} />;
@@ -1280,8 +1254,8 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
         <LoadInfoRow
           label="Location"
           trailing={
-            <label className="flex items-center gap-1.5 shrink-0 whitespace-nowrap" style={fieldStyle}>
-              <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} />
+            <label className="flex items-center gap-[7px] shrink-0 whitespace-nowrap" style={fieldStyle}>
+              <TokenCheckbox checked={hideEmpty} onChange={setHideEmpty} />
               Hide Empty Columns
             </label>
           }
@@ -1312,8 +1286,8 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
         <LoadInfoRow
           label="Load Rel"
           trailing={
-            <label className="flex items-center gap-1.5 shrink-0 whitespace-nowrap" style={fieldStyle}>
-              <input type="checkbox" checked={includeMinor} onChange={(e) => setIncludeMinor(e.target.checked)} />
+            <label className="flex items-center gap-[7px] shrink-0 whitespace-nowrap" style={fieldStyle}>
+              <TokenCheckbox checked={includeMinor} onChange={setIncludeMinor} />
               Include Minor Marks
             </label>
           }
@@ -1381,6 +1355,52 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
   );
 }
 
+function TokenCheckbox({
+  checked,
+  defaultChecked = false,
+  onChange,
+  disabled = false,
+}: {
+  checked?: boolean;
+  defaultChecked?: boolean;
+  onChange?: (next: boolean) => void;
+  disabled?: boolean;
+}) {
+  const [internal, setInternal] = useState(defaultChecked);
+  const isOn = checked !== undefined ? checked : internal;
+
+  const toggle = () => {
+    if (disabled) return;
+    const next = !isOn;
+    if (checked === undefined) setInternal(next);
+    onChange?.(next);
+  };
+
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={isOn}
+      disabled={disabled}
+      onClick={toggle}
+      className="shrink-0 flex items-center justify-center"
+      style={{
+        width: 16,
+        height: 16,
+        borderRadius: 4,
+        border: `0.8px solid ${isOn ? C.primary : C.border}`,
+        background: isOn ? C.primary : C.surface,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        padding: 0,
+        lineHeight: 0,
+      }}
+    >
+      {isOn && <Check size={10} strokeWidth={2.5} color={C.primaryFg} />}
+    </button>
+  );
+}
+
 function stubForm(fields: { label: string; value?: string }[], cta = "Save") {
   return (
     <div className="flex flex-col gap-3 p-4 max-w-lg">
@@ -1395,32 +1415,6 @@ function stubForm(fields: { label: string; value?: string }[], cta = "Save") {
       ))}
       <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: "pointer" }}>
         {cta}
-      </button>
-    </div>
-  );
-}
-
-function ImportTypePanel({ title, extensions }: { title: string; extensions: string }) {
-  return (
-    <div className="flex flex-col gap-4 p-4 max-w-lg">
-      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.6 }}>
-        {title}. Accepted files: <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary }}>{extensions}</span>
-      </p>
-      <div
-        className="flex flex-col items-center justify-center gap-2 py-10 rounded-md"
-        style={{ border: `1.5px dashed ${C.border}`, background: C.surfaceAlt }}
-      >
-        <Upload size={22} color={C.textMuted} />
-        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted }}>Drop file or browse</span>
-        <button type="button" className="mt-1 px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: "pointer" }}>
-          Choose File
-        </button>
-      </div>
-      <label className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
-        <input type="checkbox" defaultChecked /> Validate on import
-      </label>
-      <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: "pointer" }}>
-        Run Import
       </button>
     </div>
   );
@@ -1445,8 +1439,8 @@ function DangerConfirmPanel({
           <p className="mt-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.6 }}>{body}</p>
         </div>
       </div>
-      <label className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>
-        <input type="checkbox" checked={armed} onChange={(e) => setArmed(e.target.checked)} />
+      <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text, cursor: "pointer" }}>
+        <TokenCheckbox checked={armed} onChange={setArmed} />
         I understand this cannot be undone without recall / backup
       </label>
       <button
@@ -1479,7 +1473,8 @@ function WidgetDetailTabBody({
   selectedKey: string | null;
 }) {
   const needsSelection =
-    (widgetId === "active-loads" || widgetId === "employees" || widgetId === "inventory") ||
+    (widgetId === "active-loads" || widgetId === "inventory") ||
+    (widgetId === "employees" && tabId === "edit-info") ||
     (widgetId === "job-piecemark" && tabId === "edit-job");
   if (needsSelection && !selectedKey) {
     return (
@@ -1498,23 +1493,10 @@ function WidgetDetailTabBody({
   }
 
   if (widgetId === "employees") {
+    if (tabId === "edit-class") return <EmployeeClassEditorPanel />;
     const emp = EMPLOYEES.find((e) => e.name === selectedKey);
     if (!emp) return null;
-    if (tabId === "edit-info") {
-      return stubForm([
-        { label: "Name", value: emp.name },
-        { label: "Role", value: emp.role },
-        { label: "Station", value: emp.station },
-        { label: "Shift", value: emp.shift },
-      ], "Save Employee");
-    }
-    if (tabId === "edit-class") {
-      return stubForm([
-        { label: "Employee Class", value: "Fabricator" },
-        { label: "Pay Grade", value: "B2" },
-        { label: "Certifications", value: "AWS D1.1" },
-      ], "Save Class Info");
-    }
+    if (tabId === "edit-info") return <EmployeeInfoEditor emp={emp} />;
   }
 
   if (widgetId === "inventory") {
@@ -1527,10 +1509,10 @@ function WidgetDetailTabBody({
   }
 
   if (widgetId === "import-export") {
-    if (tabId === "tekla") return <ImportTypePanel title="Tekla XSR Import" extensions=".xsr, .tekla" />;
-    if (tabId === "eje") return <ImportTypePanel title="EJE Delimited Import" extensions=".csv, .txt, .eje" />;
-    if (tabId === "sds") return <ImportTypePanel title="SDS/XML Import" extensions=".xml, .sds" />;
-    if (tabId === "excel") return <ImportTypePanel title="Excel Import" extensions=".xlsx, .xls" />;
+    if (tabId === "tekla") return <ImportFilterForm kind="tekla" />;
+    if (tabId === "eje") return <ImportFilterForm kind="eje" />;
+    if (tabId === "sds") return <ImportFilterForm kind="sds" />;
+    if (tabId === "excel") return <ImportFilterForm kind="excel" />;
   }
 
   if (widgetId === "search" && tabId === "find-piecemark") {
@@ -1547,18 +1529,14 @@ function WidgetDetailTabBody({
   }
 
   if (widgetId === "piecemark-entry") {
-    return <PiecemarkEntryContent />;
+    return <PiecemarkEntryWorkbench />;
   }
 
   if (widgetId === "reference-data") {
-    const map: Record<string, { label: string; value?: string }[]> = {
-      customers: [{ label: "Customer #", value: "P2PROG" }, { label: "Name", value: "P2 Programs" }, { label: "Bill To", value: "" }],
-      carriers: [{ label: "Carrier Code", value: "TRK-18" }, { label: "Name", value: "Ortiz Hauling" }, { label: "Phone", value: "" }],
-      "status-codes": [{ label: "Code", value: "OPEN" }, { label: "Description", value: "Open" }, { label: "Color", value: "Green" }],
-      "routing-codes": [{ label: "Route", value: "FAB-A" }, { label: "Description", value: "Fab Line A" }, { label: "Next", value: "QC" }],
-    };
-    const fields = map[tabId];
-    if (fields) return stubForm(fields);
+    if (tabId === "customers") return <CustomerEditorPanel />;
+    if (tabId === "carriers") return <CarrierEditorPanel />;
+    if (tabId === "status-codes") return <StatusCodesEditorPanel />;
+    if (tabId === "routing-codes") return <RoutingCodesEditorPanel />;
   }
 
   if (widgetId === "records-danger") {
@@ -2464,8 +2442,8 @@ function AddNewJobForm({
               <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted }}>lbs</span>
             )}
             {opts?.metric && (
-              <label className="flex items-center gap-1.5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
-                <input type="checkbox" checked={metricJob} onChange={(e) => setMetricJob(e.target.checked)} />
+              <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
+                <TokenCheckbox checked={metricJob} onChange={setMetricJob} />
                 Metric Job
               </label>
             )}
@@ -2532,11 +2510,10 @@ function AddNewJobForm({
             ["validatePipes", "Validate Pipes"],
             ["validateFittings", "Validate Fittings"],
           ] as const).map(([key, label]) => (
-            <label key={key} className="flex items-center gap-1.5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
-              <input
-                type="checkbox"
+            <label key={key} className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
+              <TokenCheckbox
                 checked={checks[key]}
-                onChange={(e) => setChecks((c) => ({ ...c, [key]: e.target.checked }))}
+                onChange={(next) => setChecks((c) => ({ ...c, [key]: next }))}
               />
               {label}
             </label>
@@ -2596,7 +2573,8 @@ function KissImportModal({
       <div
         className="w-full overflow-hidden flex flex-col"
         style={{
-          maxWidth: isCompact ? "100%" : 520,
+          maxWidth: isCompact ? "100%" : 640,
+          maxHeight: isCompact ? "92vh" : "85vh",
           background: C.surface,
           border: `1px solid ${C.border}`,
           borderRadius: isCompact ? "16px 16px 0 0" : 12,
@@ -2610,8 +2588,8 @@ function KissImportModal({
             <X size={18} />
           </button>
         </div>
-        <div className="p-4">
-          <ImportTypePanel title="KISS Import" extensions=".kiss, .dat, .txt" />
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ImportFilterForm kind="kiss" onClose={onClose} />
         </div>
       </div>
     </div>
