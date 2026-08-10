@@ -816,18 +816,10 @@ export function EmployeeClassEditorPanel() {
   );
 }
 
-const PM_TABS = [
-  { id: "entry", label: "Piecemark Entry" },
-  { id: "job", label: "Job Info" },
-  { id: "pm", label: "Piecemark Info" },
-  { id: "id", label: "ID Info" },
-];
-
 export function PiecemarkEntryWorkbench() {
-  const [tab, setTab] = useState("entry");
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden">
-      <div className="flex-none flex flex-col gap-2 p-3" style={{ borderBottom: `1px solid ${T.border}`, background: T.surfaceAlt }}>
+    <div className="flex flex-col h-full min-h-0 overflow-hidden p-4 gap-3">
+      <div className="flex-none flex flex-col gap-2.5 max-w-2xl">
         <FormRow label="Job Number" required><SelectInput options={JOB_OPTIONS} /></FormRow>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <FormRow label="Job Weight"><TextInput /></FormRow>
@@ -835,65 +827,31 @@ export function PiecemarkEntryWorkbench() {
           <FormRow label="Customer Name"><TextInput defaultValue="P2 Programs" /></FormRow>
         </div>
       </div>
-      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[minmax(200px,0.9fr)_1.2fr]">
-        <div className="min-h-0 overflow-hidden flex flex-col" style={{ borderRight: `1px solid ${T.border}` }}>
-          <div className="flex-none flex px-3 py-1.5" style={{ background: T.surfaceAlt, borderBottom: `0.8px solid ${T.border}` }}>
-            {["ID serial #", "Sheet #", "Parent", "Piecemark"].map((h) => (
-              <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: T.textMuted, textTransform: "uppercase" }}>{h}</div>
-            ))}
-          </div>
-          <div className="flex-1 overflow-y-auto px-3 py-4">
-            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: T.textMuted }}>No results found.</p>
-          </div>
-        </div>
-        <div className="min-h-0 flex flex-col overflow-hidden p-3 gap-2">
-          <NestedTabs tabs={PM_TABS} active={tab} onChange={setTab} />
-          <div className="flex-1 overflow-y-auto flex flex-col gap-2 pt-1">
-            {tab === "entry" && (
-              <>
-                <FormRow label="Load Number"><SelectInput options={["<None>", "LD-4412", "LD-4418"]} /></FormRow>
-                <FormRow label="ID number"><TextInput /></FormRow>
-                <FormRow label="Shop Order #"><SelectInput options={["<None>", "SO-100", "SO-220"]} /></FormRow>
-                <FormRow label="Sheet #" required><TextInput /></FormRow>
-                <FormRow label="Qty" required><TextInput defaultValue="1" /></FormRow>
-                <FormRow label="# of Labels" required><TextInput defaultValue="1" /></FormRow>
-                <FormRow label="Parent Piecemark" required><TextInput /></FormRow>
-                <FormRow label="Piecemark" required><TextInput /></FormRow>
-                <FormRow label="Material" required><SelectInput options={["W12x58", "PL 1/2", "L4x4x3/8"]} /></FormRow>
-                <FormRow label="Sequence #"><SelectInput options={["<None>", "1", "2"]} /></FormRow>
-                <FormRow label="Lot #"><SelectInput options={["<None>", "A", "B"]} /></FormRow>
-                <FormRow label="Weight each"><TextInput /></FormRow>
-                <FormRow label="Width"><TextInput placeholder={`(x)" (x)/(x)`} /></FormRow>
-                <FormRow label="Item Length"><TextInput placeholder={`(x)'(x)" (x)/(x)`} /></FormRow>
-                <FormRow label="Finish"><SelectInput options={["None", "Prime", "Paint"]} /></FormRow>
-                <FormRow label="Grade"><SelectInput options={["A36", "A572", "A992"]} /></FormRow>
-                <FormRow label="Description"><TextInput /></FormRow>
-                <FormRow label="Routing code"><SelectInput options={["STD", "FABRICATION", "PAINTED"]} /></FormRow>
-              </>
-            )}
-            {tab === "job" && (
-              <>
-                <FormRow label="Job Title"><TextInput defaultValue="Bal Harbour Shops - Expansion" /></FormRow>
-                <FormRow label="Division"><SelectInput options={["SHOP", "FIELD"]} /></FormRow>
-                <FormRow label="Status"><SelectInput options={["Open", "Closed"]} /></FormRow>
-              </>
-            )}
-            {tab === "pm" && (
-              <>
-                <FormRow label="Piecemark"><TextInput /></FormRow>
-                <FormRow label="Qty"><TextInput /></FormRow>
-                <FormRow label="Description"><TextInput /></FormRow>
-              </>
-            )}
-            {tab === "id" && (
-              <>
-                <FormRow label="ID serial #"><TextInput /></FormRow>
-                <FormRow label="Barcode"><TextInput /></FormRow>
-              </>
-            )}
-          </div>
-          <FormActions primary={{ label: "Add Piecemark" }} onClose={() => {}} />
-        </div>
+
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5 max-w-2xl">
+        <FormRow label="Load Number"><SelectInput options={["<None>", "LD-4412", "LD-4418"]} /></FormRow>
+        <FormRow label="ID number"><TextInput /></FormRow>
+        <FormRow label="Shop Order #"><SelectInput options={["<None>", "SO-100", "SO-220"]} /></FormRow>
+        <FormRow label="Sheet #" required><TextInput /></FormRow>
+        <FormRow label="Qty" required><TextInput defaultValue="1" /></FormRow>
+        <FormRow label="# of Labels" required><TextInput defaultValue="1" /></FormRow>
+        <FormRow label="Parent Piecemark" required><TextInput /></FormRow>
+        <FormRow label="Piecemark" required><TextInput /></FormRow>
+        <FormRow label="Material" required><SelectInput options={["W12x58", "PL 1/2", "L4x4x3/8"]} /></FormRow>
+        <FormRow label="Sequence #"><SelectInput options={["<None>", "1", "2"]} /></FormRow>
+        <FormRow label="Lot #"><SelectInput options={["<None>", "A", "B"]} /></FormRow>
+        <FormRow label="Weight each"><TextInput /></FormRow>
+        <FormRow label="Width"><TextInput placeholder={`(x)" (x)/(x)`} /></FormRow>
+        <FormRow label="Item Length"><TextInput placeholder={`(x)'(x)" (x)/(x)`} /></FormRow>
+        <FormRow label="Finish"><SelectInput options={["None", "Prime", "Paint"]} /></FormRow>
+        <FormRow label="Grade"><SelectInput options={["A36", "A572", "A992"]} /></FormRow>
+        <FormRow label="Description"><TextInput /></FormRow>
+        <FormRow label="Routing code"><SelectInput options={["STD", "FABRICATION", "PAINTED"]} /></FormRow>
+        <FormRow label="Barcode"><TextInput /></FormRow>
+      </div>
+
+      <div className="flex-none max-w-2xl">
+        <FormActions primary={{ label: "Add Piecemark" }} onClose={() => {}} />
       </div>
     </div>
   );

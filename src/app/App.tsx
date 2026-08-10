@@ -158,10 +158,10 @@ const WIDGET_CATALOG: WidgetCatalogEntry[] = [
   { id: "employees", title: "Manage Employees", blurb: "Crew roster and roles", description: "View shop-floor crew, shift assignments, and role coverage. Edit employee and class information from the detail tabs.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Users },
   { id: "import-export", title: "Import / Export Queue", blurb: "Tekla, EJE, SDS, Excel", description: "Import pipelines for Tekla XSR, EJE delimited, SDS/XML, and Excel sources. Monitor queue status and run imports from the detail tabs.", defaultColSpan: 4, defaultRowSpan: 2, Icon: ArrowLeftRight },
   { id: "inventory", title: "Stock & Inventory", blurb: "Levels and capacity", description: "Current stock levels against warehouse capacity. Highlights materials below reorder point and bins approaching max fill.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Package },
-  { id: "job-piecemark", title: "Job & Piecemark", blurb: "Jobs and office PM admin", description: "Add and edit jobs. Piecemark Entry is a separate floor widget for high-frequency daily use.", defaultColSpan: 4, defaultRowSpan: 3, Icon: Briefcase },
+  { id: "job-piecemark", title: "Add and Edit Jobs", blurb: "Create and maintain jobs", description: "Add and edit jobs. Piecemark Entry is a separate floor widget for high-frequency daily use.", defaultColSpan: 4, defaultRowSpan: 3, Icon: Briefcase },
   { id: "piecemark-entry", title: "Piecemark Entry", blurb: "Floor — enter piecemarks", description: "High-frequency shop-floor piecemark entry. Standalone one-tap surface so floor work is not buried next to office admin tasks.", defaultColSpan: 4, defaultRowSpan: 3, Icon: ClipboardList },
-  { id: "reference-data", title: "Reference Data", blurb: "Customers, carriers, codes", description: "Maintain customers, carriers, status codes, and routing codes used across jobs and loads.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Database },
-  { id: "records-danger", title: "Records — Danger Zone", blurb: "Delete / recall / purge", description: "Destructive record operations: delete active records, recall deleted records, and purge. Kept separate from reference data on purpose.", defaultColSpan: 4, defaultRowSpan: 2, Icon: ShieldAlert, danger: true },
+  { id: "reference-data", title: "Edit Data", blurb: "Customers, carriers, codes", description: "Maintain customers, carriers, status codes, and routing codes used across jobs and loads.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Database },
+  { id: "records-danger", title: "Records — Danger Zone", blurb: "Delete / recall / purge", description: "Destructive record operations: delete active records, recall deleted records, and purge. Kept separate from Edit Data on purpose.", defaultColSpan: 4, defaultRowSpan: 2, Icon: ShieldAlert, danger: true },
   { id: "reports-labels", title: "Reports & Labels", blurb: "Foxfire, status, labels", description: "Foxfire reports, status reports, barcode ID labels, raw material labels, and label field reports.", defaultColSpan: 4, defaultRowSpan: 2, Icon: FileText },
   { id: "admin-system", title: "Admin & System", blurb: "Office employee preferences", description: "Preferences, printers, division/license, logon access, application permissions, and system logs. Office Employee persona.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Settings2 },
 ];
@@ -1037,7 +1037,7 @@ function PanelContent({
   if (id === "inventory")      return <InventoryContent selectedKey={selectedKey} onSelect={onSelect} />;
   if (id === "job-piecemark")  return <JobListContent selectedKey={selectedKey} onSelect={onSelect} />;
   if (id === "piecemark-entry") return <PiecemarkEntryWorkbench />;
-  if (id === "reference-data") return <ReferenceDataListContent tabHint="Open a tab to edit reference tables." />;
+  if (id === "reference-data") return <ReferenceDataListContent tabHint="Open to edit customers, carriers, and codes." />;
   if (id === "records-danger") return <DangerZoneListContent />;
   if (id === "reports-labels") return <SimpleActionListContent title="Reports & Labels" items={["Foxfire", "Status", "Barcode ID", "Raw Material", "Label Fields"]} />;
   if (id === "admin-system")   return <SimpleActionListContent title="Admin & System" items={["Preferences", "Printers", "Licenses", "Access", "Permissions", "Logs"]} />;
@@ -1630,6 +1630,9 @@ function WidgetDetailModal({
   const tabs = WIDGET_DETAIL_TABS[widgetId] ?? WIDGET_DETAIL_TABS.default;
   const selectable = ["active-loads", "employees", "inventory", "job-piecemark"].includes(widgetId);
   const isDanger = WIDGET_CATALOG.find((w) => w.id === widgetId)?.danger === true;
+  /** Full-window editors — no left preview/list pane */
+  const fullWindow = widgetId === "reference-data" || widgetId === "piecemark-entry";
+  const showTabs = tabs.length > 1;
 
   return (
     <div
@@ -1664,56 +1667,64 @@ function WidgetDetailModal({
           </button>
         </div>
 
-        <div className={`flex-1 min-h-0 grid ${isCompact ? "grid-rows-2" : "grid-cols-[minmax(280px,0.95fr)_1.2fr]"}`}>
-          {/* Left: original widget */}
-          <div
-            className="min-h-0 flex flex-col overflow-hidden"
-            style={{ borderRight: isCompact ? "none" : `1px solid ${C.border}`, borderBottom: isCompact ? `1px solid ${C.border}` : "none" }}
-          >
-            <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                {selectable ? "Select an item" : "Widget"}
-              </span>
-            </div>
-            <div className="flex-1 min-h-0 overflow-hidden">
-              <PanelContent
-                id={widgetId}
-                selectedKey={selectedKey}
-                onSelect={selectable ? setSelectedKey : undefined}
-              />
-            </div>
-          </div>
-
-          {/* Right: related tabs */}
-          <div className="min-h-0 flex flex-col overflow-hidden" style={{ background: C.bg }}>
+        <div
+          className={`flex-1 min-h-0 ${
+            fullWindow
+              ? "flex flex-col"
+              : `grid ${isCompact ? "grid-rows-2" : "grid-cols-[minmax(280px,0.95fr)_1.2fr]"}`
+          }`}
+        >
+          {!fullWindow && (
             <div
-              className="flex-none flex items-end gap-1 px-3 pt-2 overflow-x-auto"
-              style={{ borderBottom: `1px solid ${C.border}`, background: C.surface }}
+              className="min-h-0 flex flex-col overflow-hidden"
+              style={{ borderRight: isCompact ? "none" : `1px solid ${C.border}`, borderBottom: isCompact ? `1px solid ${C.border}` : "none" }}
             >
-              {tabs.map((t) => {
-                const active = t.id === tabId;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setTabId(t.id)}
-                    className="px-3 py-2 whitespace-nowrap"
-                    style={{
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: 10,
-                      letterSpacing: "0.04em",
-                      textTransform: "uppercase",
-                      color: active ? C.primary : C.textMuted,
-                      borderBottom: active ? `2px solid ${C.primary}` : "2px solid transparent",
-                      background: "transparent",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {t.label}
-                  </button>
-                );
-              })}
+              <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                  {selectable ? "Select an item" : "Widget"}
+                </span>
+              </div>
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <PanelContent
+                  id={widgetId}
+                  selectedKey={selectedKey}
+                  onSelect={selectable ? setSelectedKey : undefined}
+                />
+              </div>
             </div>
+          )}
+
+          <div className="min-h-0 flex flex-col overflow-hidden flex-1" style={{ background: C.bg }}>
+            {showTabs && (
+              <div
+                className="flex-none flex items-end gap-1 px-3 pt-2 overflow-x-auto"
+                style={{ borderBottom: `1px solid ${C.border}`, background: C.surface }}
+              >
+                {tabs.map((t) => {
+                  const active = t.id === tabId;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setTabId(t.id)}
+                      className="px-3 py-2 whitespace-nowrap"
+                      style={{
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: 10,
+                        letterSpacing: "0.04em",
+                        textTransform: "uppercase",
+                        color: active ? C.primary : C.textMuted,
+                        borderBottom: active ? `2px solid ${C.primary}` : "2px solid transparent",
+                        background: "transparent",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div className="flex-1 min-h-0 overflow-y-auto" style={{ background: C.surface }}>
               <WidgetDetailTabBody widgetId={widgetId} tabId={tabId} selectedKey={selectedKey} />
             </div>
