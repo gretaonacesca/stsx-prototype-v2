@@ -8,20 +8,7 @@ import {
 } from "asciify-engine";
 import type { AsciiFrame, AsciiOptions, AsciiCell } from "asciify-engine";
 import logoUrl from "../assets/stsx-logo.png";
-
-type ColorTokens = {
-  bg: string;
-  surface: string;
-  surfaceAlt: string;
-  border: string;
-  text: string;
-  textSub: string;
-  textMuted: string;
-  primary: string;
-  primaryFg: string;
-  accent: string;
-  warning: string;
-};
+import type { ColorTokens } from "./colorTokens";
 
 /** Reveal in → hold → dissolve out → pause, looping. */
 const PHASE = {
@@ -34,10 +21,7 @@ const PHASE = {
 const CYCLE_MS =
   PHASE.revealMs + PHASE.holdMs + PHASE.dissolveMs + PHASE.pauseMs;
 
-/**
- * Matrix cascade speed (ms per glyph step). Higher = slower rain.
- * Tweak this to taste — try 200–600.
- */
+/** Matrix cascade speed (ms per glyph step). Higher = slower rain. */
 const MATRIX_CASCADE_MS = 360;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -62,12 +46,10 @@ type ScanState = {
   progress: number;
 };
 
-/** Matrix-style glyph set — Latin letters, digits, and symbols */
 const MATRIX_CHARS =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789<>*+-=:.|/\\#_@%!?";
 
 function matrixGlyph(col: number, row: number, timeMs: number): string {
-  // Column-synced “fall” so glyphs cascade downward through the logo silhouette
   const fall = Math.floor(timeMs / MATRIX_CASCADE_MS + row * 0.55);
   const flicker = Math.floor(timeMs / (MATRIX_CASCADE_MS * 1.4));
   const idx =
@@ -76,12 +58,11 @@ function matrixGlyph(col: number, row: number, timeMs: number): string {
   return MATRIX_CHARS[idx]!;
 }
 
-/** Top→bottom barcode wipe + living matrix scramble inside the logo shape. */
+/** Top→bottom barcode wipe + matrix scramble inside the logo shape. */
 function applyScan(source: AsciiFrame, state: ScanState, timeMs: number): AsciiFrame {
   const rows = source.length;
   const cols = source[0]?.length ?? 0;
   if (rows === 0 || cols === 0) return source;
-
   if (state.phase === "pause") return emptyLike(source);
 
   const out = cloneFrame(source);
@@ -94,16 +75,11 @@ function applyScan(source: AsciiFrame, state: ScanState, timeMs: number): AsciiF
 
     if (state.phase === "reveal") {
       visible = r < edge;
-      if (r >= edge - feather && r < edge) {
-        edgeFade = (edge - r) / feather;
-      }
+      if (r >= edge - feather && r < edge) edgeFade = (edge - r) / feather;
     } else if (state.phase === "dissolve") {
       visible = r >= edge;
-      if (r >= edge && r < edge + feather) {
-        edgeFade = (r - edge) / feather;
-      }
+      if (r >= edge && r < edge + feather) edgeFade = (r - edge) / feather;
     }
-    // hold → fully visible
 
     for (let c = 0; c < cols; c++) {
       const cell = out[r][c];
@@ -113,11 +89,11 @@ function applyScan(source: AsciiFrame, state: ScanState, timeMs: number): AsciiF
         continue;
       }
 
-      // Only scramble inked logo cells (chroma-keyed bg already a≈0)
       if (cell.a >= 10 && cell.char !== " ") {
         cell.char = matrixGlyph(c, r, timeMs);
-        // Soft rain-head shimmer along falling columns
-        const pulse = 0.72 + 0.28 * Math.sin((timeMs / (MATRIX_CASCADE_MS * 2.5) + c * 0.4 + r * 0.15) * Math.PI);
+        const pulse =
+          0.72 +
+          0.28 * Math.sin((timeMs / (MATRIX_CASCADE_MS * 2.5) + c * 0.4 + r * 0.15) * Math.PI);
         cell.a = Math.round(Math.min(255, cell.a * pulse * edgeFade));
       } else if (edgeFade < 1) {
         cell.a = Math.round(cell.a * edgeFade);
@@ -129,12 +105,8 @@ function applyScan(source: AsciiFrame, state: ScanState, timeMs: number): AsciiF
 
 function scanStateForTime(t: number): ScanState {
   const x = t % CYCLE_MS;
-  if (x < PHASE.revealMs) {
-    return { phase: "reveal", progress: x / PHASE.revealMs };
-  }
-  if (x < PHASE.revealMs + PHASE.holdMs) {
-    return { phase: "hold", progress: 1 };
-  }
+  if (x < PHASE.revealMs) return { phase: "reveal", progress: x / PHASE.revealMs };
+  if (x < PHASE.revealMs + PHASE.holdMs) return { phase: "hold", progress: 1 };
   if (x < PHASE.revealMs + PHASE.holdMs + PHASE.dissolveMs) {
     const d = x - PHASE.revealMs - PHASE.holdMs;
     return { phase: "dissolve", progress: d / PHASE.dissolveMs };
@@ -190,7 +162,7 @@ function AsciiLogoField({ bg, scanColor }: { bg: string; scanColor: string }) {
 
     const optsBase: AsciiOptions = {
       ...DEFAULT_OPTIONS,
-      fontSize: 9,
+      fontSize: 5,
       // Must stay > 0 — engine multiplies fontSize by charSpacing for cell size
       charSpacing: 1,
       colorMode: "fullcolor",
@@ -198,7 +170,6 @@ function AsciiLogoField({ bg, scanColor }: { bg: string; scanColor: string }) {
       invert: false,
       normalize: true,
       charset: DEFAULT_OPTIONS.charset,
-      // Key out logo white so hold frames stay on token blue (engine otherwise fills #faf9f7)
       chromaKey: "#FFFFFF",
       chromaKeyTolerance: 40,
     };
@@ -236,7 +207,7 @@ function AsciiLogoField({ bg, scanColor }: { bg: string; scanColor: string }) {
       canvas.width = w;
       canvas.height = h;
 
-      const fontSize = w < 420 ? 7 : w < 700 ? 8 : 9;
+      const fontSize = w < 420 ? 3 : w < 700 ? 4 : 5;
       const opts: AsciiOptions = { ...optsBase, fontSize };
       optsRef.current = opts;
 
@@ -247,9 +218,7 @@ function AsciiLogoField({ bg, scanColor }: { bg: string; scanColor: string }) {
       }
       sourceRef.current = frame;
 
-      if (reducedRef.current) {
-        paint({ phase: "hold", progress: 1 }, 0);
-      }
+      if (reducedRef.current) paint({ phase: "hold", progress: 1 }, 0);
     };
 
     const tick = (now: number) => {
@@ -307,7 +276,6 @@ export function LoginPage({
   onLogin: () => void;
 }) {
   const [showPassword, setShowPassword] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
@@ -355,20 +323,18 @@ export function LoginPage({
           className="w-full flex flex-col items-center gap-8"
           style={{ maxWidth: 340 }}
         >
-          <div className="flex items-center justify-center">
-            <span
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontWeight: 600,
-                fontSize: 28,
-                letterSpacing: "0.18em",
-                color: C.text,
-                lineHeight: 1,
-              }}
-            >
-              STSX
-            </span>
-          </div>
+          <span
+            style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontWeight: 600,
+              fontSize: 28,
+              letterSpacing: "0.18em",
+              color: C.text,
+              lineHeight: 1,
+            }}
+          >
+            STSX
+          </span>
 
           <div className="w-full flex flex-col gap-3">
             <input
@@ -377,8 +343,12 @@ export function LoginPage({
               placeholder="User Name"
               autoComplete="username"
               style={inputStyle}
-              onFocus={(e) => { e.currentTarget.style.borderColor = C.primary; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = C.border; }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = C.primary;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = C.border;
+              }}
             />
             <div className="relative w-full">
               <input
@@ -387,8 +357,12 @@ export function LoginPage({
                 placeholder="Password"
                 autoComplete="current-password"
                 style={{ ...inputStyle, paddingRight: 44 }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = C.primary; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = C.border; }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = C.primary;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = C.border;
+                }}
               />
               <button
                 type="button"
@@ -411,9 +385,7 @@ export function LoginPage({
 
           <button
             type="submit"
-            className="w-full"
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
+            className="w-full login-submit"
             style={{
               height: 46,
               borderRadius: 8,
@@ -425,15 +397,18 @@ export function LoginPage({
               letterSpacing: "0.04em",
               color: C.primaryFg,
               background: C.primary,
-              boxShadow: hovered
-                ? `0 10px 28px ${C.primary}44`
-                : `0 4px 14px ${C.primary}28`,
-              transform: hovered ? "translateY(-1px)" : "translateY(0)",
+              boxShadow: `0 4px 14px ${C.primary}28`,
               transition: "box-shadow 180ms ease, transform 180ms ease",
             }}
           >
             Login
           </button>
+          <style>{`
+            .login-submit:hover {
+              box-shadow: 0 10px 28px ${C.primary}44;
+              transform: translateY(-1px);
+            }
+          `}</style>
         </form>
       </div>
     </div>

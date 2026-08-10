@@ -56,18 +56,6 @@ const btnPrimary: CSSProperties = {
   cursor: "pointer",
 };
 
-const btnGhost: CSSProperties = {
-  height: 34,
-  padding: "0 14px",
-  borderRadius: 6,
-  border: `1px solid ${T.border}`,
-  background: T.surfaceAlt,
-  color: T.text,
-  fontFamily: "'Lato', sans-serif",
-  fontSize: 13,
-  cursor: "pointer",
-};
-
 const btnDark: CSSProperties = {
   height: 34,
   padding: "0 14px",
@@ -284,12 +272,12 @@ const JOB_OPTIONS = ["092356", "1234A", "1234B", "2247", "2310", "TEST"];
 
 type ImportKind = "kiss" | "tekla" | "eje" | "sds" | "excel";
 
-const IMPORT_META: Record<ImportKind, { title: string; accept: string }> = {
-  kiss: { title: "KISS Import", accept: ".kiss, .dat, .txt" },
-  tekla: { title: "Tekla XSR Import", accept: ".xsr, .tekla" },
-  eje: { title: "EJE Import", accept: ".csv, .txt, .eje" },
-  sds: { title: "SDS/2 Import", accept: ".xml, .sds" },
-  excel: { title: "Excel Import", accept: ".xlsx, .xls" },
+const IMPORT_ACCEPT: Record<ImportKind, string> = {
+  kiss: ".kiss, .dat, .txt",
+  tekla: ".xsr, .tekla",
+  eje: ".csv, .txt, .eje",
+  sds: ".xml, .sds",
+  excel: ".xlsx, .xls",
 };
 
 /** Shared import filter form — KISS / Tekla / SDS / Excel / EJE variants */
@@ -300,7 +288,7 @@ export function ImportFilterForm({
   kind: ImportKind;
   onClose?: () => void;
 }) {
-  const meta = IMPORT_META[kind];
+  const accept = IMPORT_ACCEPT[kind];
   const [rounding, setRounding] = useState<"none" | "typical" | "up">("none");
   const isEje = kind === "eje";
   const showLot = !isEje;
@@ -372,7 +360,7 @@ export function ImportFilterForm({
           * Multiple filter items may be separated by commas. i.e. 1,2,3
         </p>
 
-        <FileUploadField acceptLabel={meta.accept} />
+        <FileUploadField acceptLabel={accept} />
       </div>
 
       <FormActions onClear={() => {}} onClose={onClose} />

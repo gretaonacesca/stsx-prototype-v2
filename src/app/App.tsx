@@ -3,10 +3,11 @@ import {
   Search, Plus, Settings, HelpCircle, FileDown, LayoutGrid, X,
   CheckCircle, AlertTriangle, XCircle, TrendingUp, BarChart3,
   ChevronLeft, ChevronRight, ChevronDown, Circle, Clock, ScanLine,
-  Truck, Users, ArrowLeftRight, Package, Moon, Sun,
-  Briefcase, Database, ShieldAlert, FileText, Settings2, ClipboardList, Upload, Check,
+  Truck, Users, ArrowLeftRight, Package, Moon, Sun, LogOut,
+  Briefcase, Database, ShieldAlert, FileText, Settings2, ClipboardList, Upload,
 } from "lucide-react";
 import { LoginPage } from "./LoginPage";
+import { C, applyColorTokens } from "./colorTokens";
 import {
   ImportFilterForm,
   CustomerEditorPanel,
@@ -16,6 +17,7 @@ import {
   EmployeeInfoEditor,
   EmployeeClassEditorPanel,
   PiecemarkEntryWorkbench,
+  TokenCheckbox,
 } from "./stsxPanels";
 
 /** Mobile + tablet stacked layout below this width (desktop bento at ≥1024). */
@@ -46,77 +48,13 @@ const MOBILE_DEFAULT_OPEN: Record<MobileWidgetId, boolean> = {
   timelines: false,
 };
 
-// ─── STSX Design Tokens (light + dark from brand palette) ─────────────────────
-// Source: Figma STSX-UX colour tokens — https://www.figma.com/design/NZX7yDDzpHmYc6uwcf7ZBQ/STSX-UX?node-id=70-5180
-type ColorTokens = {
-  bg: string;
-  surface: string;
-  surfaceAlt: string;
-  border: string;
-  text: string;
-  textSub: string;
-  textMuted: string;
-  primary: string;
-  primaryFg: string;
-  accent: string;
-  warning: string;
-  warningBg: string;
-  danger: string;
-  dangerBg: string;
-  positiveBg: string;
-};
-
-const LIGHT: ColorTokens = {
-  bg:         "#DCE8F6",
-  surface:    "#F1F6FC",
-  surfaceAlt: "#D4E3F2",
-  border:     "#ADBFD8",
-  text:       "#1C1712",
-  textSub:    "#3D3028",
-  textMuted:  "#4A5870",
-  primary:    "#00795D",
-  primaryFg:  "#FDFAF5",
-  accent:     "#A8C2EA",
-  warning:    "#D4703A",
-  warningBg:  "#FBF0E6",
-  danger:     "#C44830",
-  dangerBg:   "#FAEEE9",
-  positiveBg: "#E4F6EE",
-};
-
-/** Dark alternate set — from Figma node 70:5180 (UI Concept Variations dark mode) */
-const DARK: ColorTokens = {
-  bg:         "#131C25",
-  surface:    "#1C2836",
-  surfaceAlt: "#243344",
-  border:     "#3A4555",
-  text:       "#EAE5DE",
-  textSub:    "#C2BBB4",
-  textMuted:  "#8097B4",
-  primary:    "#009E76",
-  primaryFg:  "#FDFAF5",
-  accent:     "#A8C2EA",
-  warning:    "#EFA483",
-  warningBg:  "#1E1008",
-  danger:     "#E05A44",
-  dangerBg:   "#1E0806",
-  positiveBg: "#071A10",
-};
-
-const C: ColorTokens = { ...LIGHT };
-
-function applyColorTokens(dark: boolean) {
-  Object.assign(C, dark ? DARK : LIGHT);
-}
-
-// ─── Grid Constants ───────────────────────────────────────────────────────────
+// ─── Grid ─────────────────────────────────────────────────────────────────────
 const COLS = 12;
 const ROWS = 8;
-const GAP  = 10; // px
+const GAP = 10;
 const MIN_COL_SPAN = 1;
 const MIN_ROW_SPAN = 1;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type PanelDef = {
   id: string;
   colStart: number; colSpan: number;
@@ -140,7 +78,6 @@ type WidgetCatalogEntry = {
   defaultColSpan: number;
   defaultRowSpan: number;
   Icon: React.ElementType;
-  /** Danger-zone widgets get warning chrome in the detail modal */
   danger?: boolean;
 };
 
@@ -923,16 +860,29 @@ function SimpleActionListContent({ title, items }: { title: string; items: strin
   );
 }
 
-function ReferenceDataListContent({ tabHint }: { tabHint: string }) {
+function ReferenceDataListContent() {
   const rows = ["Customers", "Carriers", "Status Codes", "Routing Codes"];
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
-        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textMuted }}>{tabHint}</span>
+        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textMuted }}>
+          Open to edit customers, carriers, and codes.
+        </span>
       </div>
       <div className="flex-1 overflow-y-auto">
         {rows.map((r, i) => (
-          <div key={r} className="px-4 py-3" style={{ borderBottom: `0.8px solid ${C.border}`, background: i % 2 ? `${C.surfaceAlt}55` : "transparent", fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 13, color: C.text }}>
+          <div
+            key={r}
+            className="px-4 py-3"
+            style={{
+              borderBottom: `0.8px solid ${C.border}`,
+              background: i % 2 ? `${C.surfaceAlt}55` : "transparent",
+              fontFamily: "'Outfit', sans-serif",
+              fontWeight: 600,
+              fontSize: 13,
+              color: C.text,
+            }}
+          >
             {r}
           </div>
         ))}
@@ -1037,7 +987,7 @@ function PanelContent({
   if (id === "inventory")      return <InventoryContent selectedKey={selectedKey} onSelect={onSelect} />;
   if (id === "job-piecemark")  return <JobListContent selectedKey={selectedKey} onSelect={onSelect} />;
   if (id === "piecemark-entry") return <PiecemarkEntryWorkbench />;
-  if (id === "reference-data") return <ReferenceDataListContent tabHint="Open to edit customers, carriers, and codes." />;
+  if (id === "reference-data") return <ReferenceDataListContent />;
   if (id === "records-danger") return <DangerZoneListContent />;
   if (id === "reports-labels") return <SimpleActionListContent title="Reports & Labels" items={["Foxfire", "Status", "Barcode ID", "Raw Material", "Label Fields"]} />;
   if (id === "admin-system")   return <SimpleActionListContent title="Admin & System" items={["Preferences", "Printers", "Licenses", "Access", "Permissions", "Logs"]} />;
@@ -1355,52 +1305,6 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
   );
 }
 
-function TokenCheckbox({
-  checked,
-  defaultChecked = false,
-  onChange,
-  disabled = false,
-}: {
-  checked?: boolean;
-  defaultChecked?: boolean;
-  onChange?: (next: boolean) => void;
-  disabled?: boolean;
-}) {
-  const [internal, setInternal] = useState(defaultChecked);
-  const isOn = checked !== undefined ? checked : internal;
-
-  const toggle = () => {
-    if (disabled) return;
-    const next = !isOn;
-    if (checked === undefined) setInternal(next);
-    onChange?.(next);
-  };
-
-  return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={isOn}
-      disabled={disabled}
-      onClick={toggle}
-      className="shrink-0 flex items-center justify-center"
-      style={{
-        width: 16,
-        height: 16,
-        borderRadius: 4,
-        border: `0.8px solid ${isOn ? C.primary : C.border}`,
-        background: isOn ? C.primary : C.surface,
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.5 : 1,
-        padding: 0,
-        lineHeight: 0,
-      }}
-    >
-      {isOn && <Check size={10} strokeWidth={2.5} color={C.primaryFg} />}
-    </button>
-  );
-}
-
 function stubForm(fields: { label: string; value?: string }[], cta = "Save") {
   return (
     <div className="flex flex-col gap-3 p-4 max-w-lg">
@@ -1581,9 +1485,6 @@ function WidgetDetailTabBody({
         {meta?.description ?? "Related details for this widget."}
       </p>
       {selectedKey && detailField("Selected", selectedKey)}
-      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase" }}>
-        Tab: {tabId}
-      </p>
     </div>
   );
 }
@@ -2769,10 +2670,6 @@ export default function App() {
     setDetailWidgetId(null);
   }, []);
 
-  const closeKissImport = useCallback(() => {
-    setIsKissImportOpen(false);
-  }, []);
-
   const anyHovered = hoveredId !== null;
   const isDetailOpen = detailWidgetId !== null;
   const isModalOpen = isDetailOpen || isKissImportOpen;
@@ -2876,7 +2773,9 @@ export default function App() {
           borderTop: `0.8px solid ${C.border}`,
         }}
       >
-        {!isCompact && <div className="flex-1 min-w-0" />}
+        <div className={`flex justify-start shrink-0 ${isCompact ? "" : "flex-1 min-w-0"}`}>
+          <DarkModeToggle dark={isDark} onToggle={() => setIsDark((v) => !v)} />
+        </div>
         <div className={`flex items-center justify-center gap-2 min-w-0 ${isCompact ? "flex-1" : ""}`}>
           {isCompact ? (
             <>
@@ -2900,11 +2799,20 @@ export default function App() {
           )}
         </div>
         <div className={`flex justify-end shrink-0 ${isCompact ? "" : "flex-1 min-w-0"}`}>
-          <DarkModeToggle dark={isDark} onToggle={() => setIsDark((v) => !v)} />
+          <TaskbarBtn
+            icon={LogOut}
+            label="Log Out"
+            onClick={() => {
+              setIsLoggedIn(false);
+              setIsEditing(false);
+              setDetailWidgetId(null);
+              setIsKissImportOpen(false);
+            }}
+          />
         </div>
       </div>
       </div>
-      <KissImportModal open={isKissImportOpen} isCompact={isCompact} onClose={closeKissImport} />
+      <KissImportModal open={isKissImportOpen} isCompact={isCompact} onClose={() => setIsKissImportOpen(false)} />
       <WidgetDetailModal
         open={isDetailOpen}
         widgetId={detailWidgetId}
