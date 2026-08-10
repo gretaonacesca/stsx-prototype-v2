@@ -4,7 +4,9 @@ import {
   CheckCircle, AlertTriangle, XCircle, TrendingUp, BarChart3,
   ChevronLeft, ChevronRight, ChevronDown, Circle, Clock, ScanLine,
   Truck, Users, ArrowLeftRight, Package, Moon, Sun,
+  Briefcase, Database, ShieldAlert, FileText, Settings2, ClipboardList, Upload,
 } from "lucide-react";
+import { LoginPage } from "./LoginPage";
 
 /** Mobile + tablet stacked layout below this width (desktop bento at ≥1024). */
 const COMPACT_BREAKPOINT = 1024;
@@ -116,7 +118,9 @@ type ResizeEdge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 type WidgetTypeId =
   | "stat1" | "stat2" | "stat3" | "stat4"
   | "recent" | "search" | "tasks" | "timelines" | "calendar"
-  | "active-loads" | "employees" | "import-export" | "inventory";
+  | "active-loads" | "employees" | "import-export" | "inventory"
+  | "job-piecemark" | "piecemark-entry" | "reference-data"
+  | "records-danger" | "reports-labels" | "admin-system";
 
 type WidgetCatalogEntry = {
   id: WidgetTypeId;
@@ -126,6 +130,8 @@ type WidgetCatalogEntry = {
   defaultColSpan: number;
   defaultRowSpan: number;
   Icon: React.ElementType;
+  /** Danger-zone widgets get warning chrome in the detail modal */
+  danger?: boolean;
 };
 
 const WIDGET_CATALOG: WidgetCatalogEntry[] = [
@@ -134,14 +140,20 @@ const WIDGET_CATALOG: WidgetCatalogEntry[] = [
   { id: "stat3", title: "Pending Reviews", blurb: "KPI — QC backlog", description: "Parts flagged for manual quality review before they can be signed off and moved to the next stage. Items marked overdue have exceeded their review deadline.", defaultColSpan: 2, defaultRowSpan: 1, Icon: AlertTriangle },
   { id: "stat4", title: "On-Time Rate", blurb: "KPI — delivery performance", description: "Percentage of jobs delivered on or before the scheduled completion date. Calculated over a rolling 30-day window and compared to the previous period.", defaultColSpan: 2, defaultRowSpan: 1, Icon: TrendingUp },
   { id: "recent", title: "Recent Scans", blurb: "Live shop-floor scan feed", description: "Live feed of the most recent part scans from all scanner units on the shop floor, sorted newest-first. Click any row to open the full scan record and traceability chain.", defaultColSpan: 4, defaultRowSpan: 2, Icon: ScanLine },
-  { id: "search", title: "Quick Search", blurb: "Search jobs, parts, customers", description: "Search across all jobs, part numbers, customers, and scan records from one place. Use the filter pills to narrow by category, or type a partial string for fuzzy matching.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Search },
+  { id: "search", title: "Quick Search", blurb: "Search jobs, parts, customers", description: "Search across all jobs, part numbers, customers, and scan records from one place. Use Find a Piecemark for floor lookups.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Search },
   { id: "tasks", title: "Today's Tasks", blurb: "Personal daily checklist", description: "Your personal task list for the current working day. High-priority items are flagged in amber. Check off tasks as you complete them — progress is saved automatically.", defaultColSpan: 4, defaultRowSpan: 2, Icon: CheckCircle },
   { id: "timelines", title: "Project Timelines", blurb: "Job progress vs schedule", description: "Gantt-style progress view for all active jobs. Progress is calculated from scanned milestones against the planned schedule. At-risk jobs are tracking behind their baseline.", defaultColSpan: 4, defaultRowSpan: 2, Icon: BarChart3 },
   { id: "calendar", title: "Calendar", blurb: "Deadlines and events", description: "Monthly overview. Job deadlines, planned site visits, compliance review dates, and team events appear as marked days. Click any date to see what is scheduled.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Circle },
   { id: "active-loads", title: "Active Loads", blurb: "Loads in transit / staging", description: "Track active outbound and inbound loads — staging status, destination, and estimated departure or arrival times across the yard.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Truck },
-  { id: "employees", title: "Manage Employees", blurb: "Crew roster and roles", description: "View shop-floor crew, shift assignments, and role coverage. Use this panel to spot understaffed stations and reassign people quickly.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Users },
-  { id: "import-export", title: "Import / Export Queue", blurb: "Data sync jobs waiting", description: "Queue of pending imports and exports — nesting files, ERP sync, and label batches. Monitor failures and retry stuck jobs from here.", defaultColSpan: 4, defaultRowSpan: 2, Icon: ArrowLeftRight },
+  { id: "employees", title: "Manage Employees", blurb: "Crew roster and roles", description: "View shop-floor crew, shift assignments, and role coverage. Edit employee and class information from the detail tabs.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Users },
+  { id: "import-export", title: "Import / Export Queue", blurb: "Tekla, EJE, SDS, Excel", description: "Import pipelines for Tekla XSR, EJE delimited, SDS/XML, and Excel sources. Monitor queue status and run imports from the detail tabs.", defaultColSpan: 4, defaultRowSpan: 2, Icon: ArrowLeftRight },
   { id: "inventory", title: "Stock & Inventory", blurb: "Levels and capacity", description: "Current stock levels against warehouse capacity. Highlights materials below reorder point and bins approaching max fill.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Package },
+  { id: "job-piecemark", title: "Job & Piecemark", blurb: "Jobs and office PM admin", description: "Add and edit jobs. Piecemark Entry is a separate floor widget for high-frequency daily use.", defaultColSpan: 4, defaultRowSpan: 3, Icon: Briefcase },
+  { id: "piecemark-entry", title: "Piecemark Entry", blurb: "Floor — enter piecemarks", description: "High-frequency shop-floor piecemark entry. Standalone one-tap surface so floor work is not buried next to office admin tasks.", defaultColSpan: 4, defaultRowSpan: 3, Icon: ClipboardList },
+  { id: "reference-data", title: "Reference Data", blurb: "Customers, carriers, codes", description: "Maintain customers, carriers, status codes, and routing codes used across jobs and loads.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Database },
+  { id: "records-danger", title: "Records — Danger Zone", blurb: "Delete / recall / purge", description: "Destructive record operations: delete active records, recall deleted records, and purge. Kept separate from reference data on purpose.", defaultColSpan: 4, defaultRowSpan: 2, Icon: ShieldAlert, danger: true },
+  { id: "reports-labels", title: "Reports & Labels", blurb: "Foxfire, status, labels", description: "Foxfire reports, status reports, barcode ID labels, raw material labels, and label field reports.", defaultColSpan: 4, defaultRowSpan: 2, Icon: FileText },
+  { id: "admin-system", title: "Admin & System", blurb: "Office employee preferences", description: "Preferences, printers, division/license, logon access, application permissions, and system logs. Office Employee persona.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Settings2 },
 ];
 
 const PANEL_META: Record<string, { title: string; description: string }> = Object.fromEntries(
@@ -517,8 +529,8 @@ function RecentScansContent() {
 
 function QuickSearchContent() {
   const [filter, setFilter] = useState("All");
-  const filters = ["All", "Job No.", "Part No.", "Customer", "Material"];
-  const recent  = ["PT-1042-A", "J-0912", "SC-2840", "PT-3301"];
+  const filters = ["All", "Job No.", "Part No.", "Customer", "Material", "Piecemark"];
+  const recent  = ["PT-1042-A", "J-0912", "SC-2840", "PT-3301", "B-1042-A"];
   return (
     <div className="flex flex-col gap-4 p-4 h-full">
       <div
@@ -527,12 +539,12 @@ function QuickSearchContent() {
       >
         <Search size={15} color={C.textMuted} strokeWidth={1.8} />
         <input
-          placeholder="Search by part, job, customer or scan ID…"
+          placeholder="Search by part, job, customer, piecemark or scan ID…"
           className="flex-1 bg-transparent outline-none"
           style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text }}
         />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {filters.map((f) => (
           <button
             key={f}
@@ -878,6 +890,158 @@ function InventoryContent({
   );
 }
 
+function SimpleActionListContent({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          {title}
+        </span>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-1.5">
+        {items.map((item) => (
+          <div
+            key={item}
+            className="px-3 py-2.5 rounded-md"
+            style={{ background: C.surfaceAlt, border: `0.8px solid ${C.border}`, fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text }}
+          >
+            {item}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ReferenceDataListContent({ tabHint }: { tabHint: string }) {
+  const rows = ["Customers", "Carriers", "Status Codes", "Routing Codes"];
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
+        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textMuted }}>{tabHint}</span>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {rows.map((r, i) => (
+          <div key={r} className="px-4 py-3" style={{ borderBottom: `0.8px solid ${C.border}`, background: i % 2 ? `${C.surfaceAlt}55` : "transparent", fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 13, color: C.text }}>
+            {r}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DangerZoneListContent() {
+  const rows = [
+    { label: "Active records", tone: "warning" as const },
+    { label: "Deleted (recoverable)", tone: "muted" as const },
+    { label: "Purge queue", tone: "danger" as const },
+  ];
+  return (
+    <div className="flex flex-col h-full overflow-hidden" style={{ background: C.dangerBg }}>
+      <div className="flex-none flex items-center gap-2 px-4 py-2" style={{ background: `${C.danger}18`, borderBottom: `1px solid ${C.danger}44` }}>
+        <ShieldAlert size={14} color={C.danger} />
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.danger, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Destructive operations
+        </span>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+        {rows.map((r) => (
+          <div
+            key={r.label}
+            className="px-3 py-2.5 rounded-md"
+            style={{
+              border: `1px solid ${r.tone === "danger" ? C.danger : C.border}`,
+              background: C.surface,
+              fontFamily: "'Lato', sans-serif",
+              fontSize: 13,
+              color: r.tone === "danger" ? C.danger : C.text,
+            }}
+          >
+            {r.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PiecemarkEntryContent() {
+  const [mark, setMark] = useState("");
+  const [qty, setQty] = useState("1");
+  return (
+    <div className="flex flex-col gap-4 p-4 h-full">
+      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textMuted, lineHeight: 1.5 }}>
+        Floor entry — one-tap piecemark capture for the current job.
+      </p>
+      <label className="flex flex-col gap-1">
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>Piecemark</span>
+        <input
+          value={mark}
+          onChange={(e) => setMark(e.target.value)}
+          placeholder="e.g. B-1042-A"
+          style={{ height: 44, borderRadius: 8, border: `1.5px solid ${C.border}`, background: C.surfaceAlt, padding: "0 12px", fontFamily: "'DM Mono', monospace", fontSize: 16, color: C.text }}
+        />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>Qty</span>
+        <input
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+          style={{ height: 44, borderRadius: 8, border: `1.5px solid ${C.border}`, background: C.surfaceAlt, padding: "0 12px", fontFamily: "'DM Mono', monospace", fontSize: 16, color: C.text, maxWidth: 120 }}
+        />
+      </label>
+      <button
+        type="button"
+        className="mt-auto self-stretch py-3 rounded-md"
+        style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer" }}
+      >
+        Commit Piecemark
+      </button>
+    </div>
+  );
+}
+
+function JobListContent({
+  selectedKey,
+  onSelect,
+}: {
+  selectedKey?: string | null;
+  onSelect?: (key: string) => void;
+}) {
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-none flex px-4 py-1.5" style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}>
+        {["Job #", "Customer", "Name"].map((h) => (
+          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
+        ))}
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {EXISTING_JOBS.map((job, i) => {
+          const selected = selectedKey === job.number;
+          return (
+            <div
+              key={job.number}
+              role={onSelect ? "button" : undefined}
+              onClick={onSelect ? () => onSelect(job.number) : undefined}
+              className="flex px-4 py-2"
+              style={{
+                borderBottom: `0.8px solid ${C.border}`,
+                background: selected ? `${C.primary}18` : i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55`,
+                cursor: onSelect ? "pointer" : "default",
+              }}
+            >
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary }}>{job.number}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted }}>{job.customer}</div>
+              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{job.name}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function PanelContent({
   id,
   selectedKey,
@@ -897,6 +1061,12 @@ function PanelContent({
   if (id === "employees")      return <EmployeesContent selectedKey={selectedKey} onSelect={onSelect} />;
   if (id === "import-export")  return <ImportExportContent selectedKey={selectedKey} onSelect={onSelect} />;
   if (id === "inventory")      return <InventoryContent selectedKey={selectedKey} onSelect={onSelect} />;
+  if (id === "job-piecemark")  return <JobListContent selectedKey={selectedKey} onSelect={onSelect} />;
+  if (id === "piecemark-entry") return <PiecemarkEntryContent />;
+  if (id === "reference-data") return <ReferenceDataListContent tabHint="Open a tab to edit reference tables." />;
+  if (id === "records-danger") return <DangerZoneListContent />;
+  if (id === "reports-labels") return <SimpleActionListContent title="Reports & Labels" items={["Foxfire", "Status", "Barcode ID", "Raw Material", "Label Fields"]} />;
+  if (id === "admin-system")   return <SimpleActionListContent title="Admin & System" items={["Preferences", "Printers", "Licenses", "Access", "Permissions", "Logs"]} />;
   return null;
 }
 
@@ -905,19 +1075,54 @@ type DetailTab = { id: string; label: string };
 
 const WIDGET_DETAIL_TABS: Record<string, DetailTab[]> = {
   "active-loads": [
-    { id: "info", label: "Load Information" },
-    { id: "status", label: "Status Summary Info" },
-    { id: "piecemark", label: "Piecemark Info" },
+    { id: "view-load", label: "View Load Information" },
   ],
   employees: [
-    { id: "profile", label: "Profile" },
-    { id: "assign", label: "Assignments" },
-    { id: "avail", label: "Availability" },
+    { id: "edit-info", label: "Edit Employee Information" },
+    { id: "edit-class", label: "Edit Employee Class Info" },
   ],
   "import-export": [
-    { id: "detail", label: "Job Detail" },
-    { id: "logs", label: "Logs" },
-    { id: "retry", label: "Retry / Actions" },
+    { id: "tekla", label: "Tekla XSR Import" },
+    { id: "eje", label: "EJE Delimited Import" },
+    { id: "sds", label: "SDS/XML Import" },
+    { id: "excel", label: "Excel Import" },
+  ],
+  search: [
+    { id: "find-piecemark", label: "Find a Piecemark" },
+  ],
+  "job-piecemark": [
+    { id: "add-job", label: "Add New Job" },
+    { id: "edit-job", label: "Edit Job Information" },
+  ],
+  "piecemark-entry": [
+    { id: "enter", label: "Enter Piecemark" },
+  ],
+  "reference-data": [
+    { id: "customers", label: "Edit Customer Information" },
+    { id: "carriers", label: "Edit Carrier Information" },
+    { id: "status-codes", label: "Edit Status Codes" },
+    { id: "routing-codes", label: "Edit Routing Codes" },
+  ],
+  "records-danger": [
+    { id: "delete", label: "Active Record Delete" },
+    { id: "recall", label: "Recall Deleted Records" },
+    { id: "purge", label: "Purge Deleted Records" },
+  ],
+  "reports-labels": [
+    { id: "foxfire", label: "Foxfire Reports" },
+    { id: "status-report", label: "Status Report" },
+    { id: "barcode-labels", label: "Barcode ID Labels" },
+    { id: "raw-labels", label: "Raw Material Labels" },
+    { id: "label-fields", label: "Label Field Report" },
+  ],
+  "admin-system": [
+    { id: "prefs", label: "Preferences" },
+    { id: "printer-prefs", label: "Barcode Printer Preferences" },
+    { id: "division", label: "Division & License Management" },
+    { id: "logon", label: "Logon & Access Management" },
+    { id: "permissions", label: "Application Permissions" },
+    { id: "view-log", label: "View Log" },
+    { id: "license-info", label: "View Logon License Info" },
   ],
   inventory: [
     { id: "item", label: "Item Detail" },
@@ -926,33 +1131,18 @@ const WIDGET_DETAIL_TABS: Record<string, DetailTab[]> = {
   ],
   recent: [
     { id: "scan", label: "Scan Detail" },
-    { id: "trace", label: "Traceability" },
-    { id: "qc", label: "QC Notes" },
   ],
   tasks: [
     { id: "task", label: "Task Detail" },
-    { id: "notes", label: "Notes" },
-    { id: "links", label: "Linked Jobs" },
   ],
   timelines: [
     { id: "schedule", label: "Schedule" },
-    { id: "milestones", label: "Milestones" },
-    { id: "risk", label: "Risk" },
   ],
   calendar: [
     { id: "events", label: "Day Events" },
-    { id: "add", label: "Add Event" },
-    { id: "reminders", label: "Reminders" },
-  ],
-  search: [
-    { id: "results", label: "Results" },
-    { id: "filters", label: "Filters" },
-    { id: "history", label: "History" },
   ],
   default: [
     { id: "overview", label: "Overview" },
-    { id: "details", label: "Details" },
-    { id: "actions", label: "Actions" },
   ],
 };
 
@@ -1191,6 +1381,94 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
   );
 }
 
+function stubForm(fields: { label: string; value?: string }[], cta = "Save") {
+  return (
+    <div className="flex flex-col gap-3 p-4 max-w-lg">
+      {fields.map((f) => (
+        <label key={f.label} className="flex flex-col gap-1">
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{f.label}</span>
+          <input
+            defaultValue={f.value ?? ""}
+            style={{ height: 36, borderRadius: 6, border: `1px solid ${C.border}`, background: C.surfaceAlt, padding: "0 10px", fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text }}
+          />
+        </label>
+      ))}
+      <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: "pointer" }}>
+        {cta}
+      </button>
+    </div>
+  );
+}
+
+function ImportTypePanel({ title, extensions }: { title: string; extensions: string }) {
+  return (
+    <div className="flex flex-col gap-4 p-4 max-w-lg">
+      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.6 }}>
+        {title}. Accepted files: <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary }}>{extensions}</span>
+      </p>
+      <div
+        className="flex flex-col items-center justify-center gap-2 py-10 rounded-md"
+        style={{ border: `1.5px dashed ${C.border}`, background: C.surfaceAlt }}
+      >
+        <Upload size={22} color={C.textMuted} />
+        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted }}>Drop file or browse</span>
+        <button type="button" className="mt-1 px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: "pointer" }}>
+          Choose File
+        </button>
+      </div>
+      <label className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
+        <input type="checkbox" defaultChecked /> Validate on import
+      </label>
+      <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: "pointer" }}>
+        Run Import
+      </button>
+    </div>
+  );
+}
+
+function DangerConfirmPanel({
+  title,
+  body,
+  confirmLabel,
+}: {
+  title: string;
+  body: string;
+  confirmLabel: string;
+}) {
+  const [armed, setArmed] = useState(false);
+  return (
+    <div className="flex flex-col gap-4 p-4 max-w-lg" style={{ background: C.dangerBg }}>
+      <div className="flex items-start gap-2">
+        <ShieldAlert size={18} color={C.danger} className="mt-0.5 shrink-0" />
+        <div>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: C.danger }}>{title}</p>
+          <p className="mt-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.6 }}>{body}</p>
+        </div>
+      </div>
+      <label className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>
+        <input type="checkbox" checked={armed} onChange={(e) => setArmed(e.target.checked)} />
+        I understand this cannot be undone without recall / backup
+      </label>
+      <button
+        type="button"
+        disabled={!armed}
+        className="self-start px-3 py-1.5 rounded-md"
+        style={{
+          background: armed ? C.danger : C.border,
+          color: C.primaryFg,
+          border: "none",
+          fontFamily: "'DM Mono', monospace",
+          fontSize: 10,
+          cursor: armed ? "pointer" : "not-allowed",
+          opacity: armed ? 1 : 0.6,
+        }}
+      >
+        {confirmLabel}
+      </button>
+    </div>
+  );
+}
+
 function WidgetDetailTabBody({
   widgetId,
   tabId,
@@ -1200,7 +1478,10 @@ function WidgetDetailTabBody({
   tabId: string;
   selectedKey: string | null;
 }) {
-  if (!selectedKey && !widgetId.startsWith("stat") && widgetId !== "search" && widgetId !== "calendar") {
+  const needsSelection =
+    (widgetId === "active-loads" || widgetId === "employees" || widgetId === "inventory") ||
+    (widgetId === "job-piecemark" && tabId === "edit-job");
+  if (needsSelection && !selectedKey) {
     return (
       <div className="flex items-center justify-center h-full px-6 text-center">
         <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted, lineHeight: 1.6 }}>
@@ -1213,66 +1494,27 @@ function WidgetDetailTabBody({
   if (widgetId === "active-loads") {
     const load = ACTIVE_LOADS.find((l) => l.id === selectedKey);
     if (!load) return null;
-    if (tabId === "info") {
-      return <ActiveLoadInformationForm load={load} />;
-    }
-    if (tabId === "status") {
-      return (
-        <div className="flex flex-col gap-3 p-4 max-w-md">
-          <label className="flex flex-col gap-1">
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>Status</span>
-            <select defaultValue={load.status} style={{ height: 36, borderRadius: 6, border: `1px solid ${C.border}`, background: C.surfaceAlt, padding: "0 10px", fontFamily: "'Lato', sans-serif", fontSize: 13 }}>
-              {["Staging", "Loading", "In transit", "Arriving", "Delivered", "On hold"].map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>ETA</span>
-            <input defaultValue={load.eta} style={{ height: 36, borderRadius: 6, border: `1px solid ${C.border}`, background: C.surfaceAlt, padding: "0 10px", fontFamily: "'Lato', sans-serif", fontSize: 13 }} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>Status note</span>
-            <textarea defaultValue={load.notes} rows={4} style={{ borderRadius: 6, border: `1px solid ${C.border}`, background: C.surfaceAlt, padding: 10, fontFamily: "'Lato', sans-serif", fontSize: 13, resize: "vertical" }} />
-          </label>
-          <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: "pointer" }}>
-            Save Status
-          </button>
-        </div>
-      );
-    }
-    if (tabId === "piecemark") {
-      return (
-        <div className="flex flex-col h-full overflow-hidden">
-          <div className="flex-none flex px-4 py-2" style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}>
-            {["Mark", "Qty", "Description"].map((h) => (
-              <div key={h} className={h === "Description" ? "flex-1" : "w-24"} style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
-            ))}
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {load.piecemarks.map((pm, i) => (
-              <div key={pm.mark} className="flex px-4 py-2.5" style={{ borderBottom: `0.8px solid ${C.border}`, background: i % 2 ? `${C.surfaceAlt}55` : "transparent" }}>
-                <div className="w-24" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary }}>{pm.mark}</div>
-                <div className="w-24" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted }}>{pm.qty}</div>
-                <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{pm.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
+    if (tabId === "view-load") return <ActiveLoadInformationForm load={load} />;
   }
 
   if (widgetId === "employees") {
     const emp = EMPLOYEES.find((e) => e.name === selectedKey);
     if (!emp) return null;
-    if (tabId === "profile") {
-      return <div className="grid grid-cols-2 gap-4 p-4">{detailField("Name", emp.name)}{detailField("Role", emp.role)}{detailField("Station", emp.station)}{detailField("Shift", emp.shift)}</div>;
+    if (tabId === "edit-info") {
+      return stubForm([
+        { label: "Name", value: emp.name },
+        { label: "Role", value: emp.role },
+        { label: "Station", value: emp.station },
+        { label: "Shift", value: emp.shift },
+      ], "Save Employee");
     }
-    if (tabId === "assign") {
-      return <div className="p-4"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.6 }}>{emp.name} is assigned to <strong>{emp.station}</strong> as {emp.role} for the {emp.shift} shift.</p></div>;
+    if (tabId === "edit-class") {
+      return stubForm([
+        { label: "Employee Class", value: "Fabricator" },
+        { label: "Pay Grade", value: "B2" },
+        { label: "Certifications", value: "AWS D1.1" },
+      ], "Save Class Info");
     }
-    return <div className="p-4"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>Availability: On shift · no leave requests.</p></div>;
   }
 
   if (widgetId === "inventory") {
@@ -1281,15 +1523,77 @@ function WidgetDetailTabBody({
     const pct = Math.round((item.level / item.capacity) * 100);
     if (tabId === "item") return <div className="grid grid-cols-2 gap-4 p-4">{detailField("SKU", item.sku)}{detailField("Name", item.name)}{detailField("On hand", String(item.level))}{detailField("Capacity", String(item.capacity))}{detailField("Fill", `${pct}%`)}</div>;
     if (tabId === "reorder") return <div className="p-4 flex flex-col gap-3"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>Reorder point: {Math.round(item.capacity * 0.25)}. Suggested order: {Math.max(0, Math.round(item.capacity * 0.6) - item.level)} units.</p><button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 10, border: "none", cursor: "pointer" }}>Create PO</button></div>;
-    return <div className="p-4"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>Bin capacity utilization is {pct}%. {pct > 85 ? "Near max — consider relocating overflow." : pct < 25 ? "Below reorder threshold." : "Within normal range."}</p></div>;
+    return <div className="p-4"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>Bin capacity utilization is {pct}%.</p></div>;
   }
 
   if (widgetId === "import-export") {
-    const job = IMPORT_EXPORT_QUEUE.find((q) => q.id === selectedKey);
-    if (!job) return null;
-    if (tabId === "detail") return <div className="grid grid-cols-2 gap-4 p-4">{detailField("ID", job.id)}{detailField("Type", job.type)}{detailField("Name", job.name)}{detailField("Status", job.status)}</div>;
-    if (tabId === "logs") return <div className="p-4"><p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted, lineHeight: 1.8 }}>[{job.id}] queued<br />[{job.id}] worker claimed<br />[{job.id}] {job.status.toLowerCase()}</p></div>;
-    return <div className="p-4 flex gap-2"><button type="button" className="px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 10, border: "none", cursor: "pointer" }}>Retry</button><button type="button" className="px-3 py-1.5 rounded-md" style={{ background: C.surfaceAlt, color: C.textMuted, fontFamily: "'DM Mono', monospace", fontSize: 10, border: `1px solid ${C.border}`, cursor: "pointer" }}>Cancel</button></div>;
+    if (tabId === "tekla") return <ImportTypePanel title="Tekla XSR Import" extensions=".xsr, .tekla" />;
+    if (tabId === "eje") return <ImportTypePanel title="EJE Delimited Import" extensions=".csv, .txt, .eje" />;
+    if (tabId === "sds") return <ImportTypePanel title="SDS/XML Import" extensions=".xml, .sds" />;
+    if (tabId === "excel") return <ImportTypePanel title="Excel Import" extensions=".xlsx, .xls" />;
+  }
+
+  if (widgetId === "search" && tabId === "find-piecemark") {
+    return stubForm([
+      { label: "Piecemark", value: "" },
+      { label: "Job Number", value: "" },
+      { label: "Drawing", value: "" },
+    ], "Find Piecemark");
+  }
+
+  if (widgetId === "job-piecemark") {
+    if (tabId === "add-job") return <AddNewJobForm mode="add" selectedJobNumber={null} />;
+    if (tabId === "edit-job") return <AddNewJobForm mode="edit" selectedJobNumber={selectedKey} />;
+  }
+
+  if (widgetId === "piecemark-entry") {
+    return <PiecemarkEntryContent />;
+  }
+
+  if (widgetId === "reference-data") {
+    const map: Record<string, { label: string; value?: string }[]> = {
+      customers: [{ label: "Customer #", value: "P2PROG" }, { label: "Name", value: "P2 Programs" }, { label: "Bill To", value: "" }],
+      carriers: [{ label: "Carrier Code", value: "TRK-18" }, { label: "Name", value: "Ortiz Hauling" }, { label: "Phone", value: "" }],
+      "status-codes": [{ label: "Code", value: "OPEN" }, { label: "Description", value: "Open" }, { label: "Color", value: "Green" }],
+      "routing-codes": [{ label: "Route", value: "FAB-A" }, { label: "Description", value: "Fab Line A" }, { label: "Next", value: "QC" }],
+    };
+    const fields = map[tabId];
+    if (fields) return stubForm(fields);
+  }
+
+  if (widgetId === "records-danger") {
+    if (tabId === "delete") {
+      return <DangerConfirmPanel title="Active Record Delete" body="Permanently marks the selected active record as deleted. It can still be recalled until purged." confirmLabel="Delete Active Record" />;
+    }
+    if (tabId === "recall") {
+      return stubForm([{ label: "Deleted Record ID", value: "" }, { label: "Reason", value: "" }], "Recall Record");
+    }
+    if (tabId === "purge") {
+      return <DangerConfirmPanel title="Purge Deleted Records" body="Irreversibly removes deleted records from the database. This is the Danger Zone operation — confirm carefully." confirmLabel="Purge Forever" />;
+    }
+  }
+
+  if (widgetId === "reports-labels") {
+    const titles: Record<string, string> = {
+      foxfire: "Foxfire Reports",
+      "status-report": "Status Report",
+      "barcode-labels": "Barcode ID Labels",
+      "raw-labels": "Raw Material Labels",
+      "label-fields": "Label Field Report",
+    };
+    return (
+      <div className="flex flex-col gap-3 p-4 max-w-lg">
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>{titles[tabId] ?? "Report"}</p>
+        {stubForm([{ label: "Job Number", value: "" }, { label: "Date Range", value: "This week" }], "Generate")}
+      </div>
+    );
+  }
+
+  if (widgetId === "admin-system") {
+    return stubForm([
+      { label: "Setting", value: tabId },
+      { label: "Value", value: "" },
+    ], "Apply");
   }
 
   const meta = PANEL_META[widgetId];
@@ -1328,7 +1632,7 @@ function WidgetDetailModal({
       widgetId === "active-loads" ? ACTIVE_LOADS[0]?.id ?? null
         : widgetId === "employees" ? EMPLOYEES[0]?.name ?? null
         : widgetId === "inventory" ? INVENTORY_STOCK[0]?.sku ?? null
-        : widgetId === "import-export" ? IMPORT_EXPORT_QUEUE[0]?.id ?? null
+        : widgetId === "job-piecemark" ? EXISTING_JOBS[0]?.number ?? null
         : null
     );
   }, [open, widgetId]);
@@ -1346,7 +1650,8 @@ function WidgetDetailModal({
 
   const meta = PANEL_META[widgetId];
   const tabs = WIDGET_DETAIL_TABS[widgetId] ?? WIDGET_DETAIL_TABS.default;
-  const selectable = ["active-loads", "employees", "inventory", "import-export"].includes(widgetId);
+  const selectable = ["active-loads", "employees", "inventory", "job-piecemark"].includes(widgetId);
+  const isDanger = WIDGET_CATALOG.find((w) => w.id === widgetId)?.danger === true;
 
   return (
     <div
@@ -1370,9 +1675,10 @@ function WidgetDetailModal({
       >
         <div
           className="flex-none flex items-center justify-between px-4 py-3"
-          style={{ background: C.primary, color: C.primaryFg }}
+          style={{ background: isDanger ? C.danger : C.primary, color: C.primaryFg }}
         >
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 18 }}>
+          <span className="flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 18 }}>
+            {isDanger && <ShieldAlert size={18} />}
             {meta?.title ?? widgetId}
           </span>
           <button type="button" onClick={onClose} style={{ color: C.primaryFg, cursor: "pointer", lineHeight: 0 }}>
@@ -1473,6 +1779,7 @@ function BentoPanel({
 }) {
   const { id, colStart, colSpan, rowStart, rowSpan } = panel;
   const isStat = id.startsWith("stat");
+  const isDanger = WIDGET_CATALOG.find((w) => w.id === id)?.danger === true;
   const handleSize = 10;
   const corner = 14;
 
@@ -1521,6 +1828,8 @@ function BentoPanel({
         background: C.surface,
         border: isEditing
           ? `1.5px dashed ${C.primary}`
+          : isDanger
+          ? `1px solid ${C.danger}66`
           : `0.8px solid ${C.border}`,
         borderRadius: 8,
         overflow: "hidden",
@@ -1532,9 +1841,11 @@ function BentoPanel({
         filter:    isGhosted ? "saturate(0.3)" : "none",
         transform: isHovered && !isEditing ? "scale(1.008)" : "scale(1)",
         boxShadow: isHovered && !isEditing
-          ? `0 6px 24px ${C.text}18, 0 0 0 1.5px ${C.border}`
+          ? `0 6px 24px ${C.text}18, 0 0 0 1.5px ${isDanger ? C.danger : C.border}`
           : isEditing
           ? `0 0 0 1px ${C.primary}22, inset 0 0 0 1000px ${C.primary}03`
+          : isDanger
+          ? `inset 0 0 0 1000px ${C.danger}08`
           : "none",
         transition: isDragging
           ? "none"
@@ -1612,7 +1923,7 @@ function BentoPanel({
   );
 }
 
-function WidgetPickerCarousel({
+function WidgetPickerDropdown({
   options,
   onPick,
   onClose,
@@ -1621,22 +1932,11 @@ function WidgetPickerCarousel({
   onPick: (id: WidgetTypeId) => void;
   onClose: () => void;
 }) {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    setIndex(0);
-  }, [options]);
-
-  const goTo = (next: number) => {
-    if (options.length < 1) return;
-    setIndex(((next % options.length) + options.length) % options.length);
-  };
-
   if (options.length === 0) {
     return (
       <div
-        className="rounded-lg p-3 h-full flex flex-col justify-center"
-        style={{ background: C.surface, border: `1px solid ${C.border}`, boxShadow: `0 12px 28px ${C.text}22` }}
+        className="rounded-lg p-3"
+        style={{ background: C.surface, border: `1px solid ${C.border}`, boxShadow: `0 12px 28px ${C.text}22`, minWidth: 220 }}
         onClick={(e) => e.stopPropagation()}
       >
         <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textMuted }}>
@@ -1656,12 +1956,13 @@ function WidgetPickerCarousel({
 
   return (
     <div
-      className="rounded-lg overflow-hidden flex flex-col h-full"
+      className="rounded-lg overflow-hidden flex flex-col"
       style={{
         background: C.surface,
         border: `1px solid ${C.border}`,
         boxShadow: `0 14px 32px ${C.text}28`,
-        width: "100%",
+        width: 260,
+        maxHeight: 320,
       }}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
@@ -1678,86 +1979,37 @@ function WidgetPickerCarousel({
         </button>
       </div>
 
-      <div className="flex-1 min-h-0 flex items-center gap-0.5 px-1 py-2">
-        <button
-          type="button"
-          disabled={options.length < 2}
-          onClick={() => goTo(index - 1)}
-          style={{ color: C.primary, cursor: options.length < 2 ? "default" : "pointer", opacity: options.length < 2 ? 0.35 : 1, flexShrink: 0 }}
-        >
-          <ChevronLeft size={18} />
-        </button>
-
-        <div className="flex-1 min-w-0 overflow-hidden" style={{ height: "100%" }}>
-          <div
-            className="flex h-full"
-            style={{
-              width: `${options.length * 100}%`,
-              transform: `translateX(-${(index * 100) / options.length}%)`,
-              transition: "transform 380ms cubic-bezier(0.22, 1, 0.36, 1)",
-            }}
-          >
-            {options.map((opt) => {
-              const Icon = opt.Icon;
-              return (
-                <div
-                  key={opt.id}
-                  className="h-full px-0.5 box-border"
-                  style={{ flex: `0 0 ${100 / options.length}%`, width: `${100 / options.length}%` }}
+      <div className="flex-1 min-h-0 overflow-y-auto py-1">
+        {options.map((opt) => {
+          const Icon = opt.Icon;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              className="w-full flex items-start gap-2.5 px-3 py-2 text-left"
+              style={{ background: "transparent", border: "none", cursor: "pointer" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = C.surfaceAlt; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              onClick={() => onPick(opt.id)}
+            >
+              <Icon size={15} color={C.primary} className="mt-0.5 shrink-0" />
+              <span className="min-w-0 flex-1">
+                <span
+                  className="block"
+                  style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 12, color: C.text }}
                 >
-                  <button
-                    type="button"
-                    className="w-full h-full flex flex-col items-start justify-center gap-1.5 p-2.5 rounded-md text-left"
-                    style={{ background: C.bg, border: `0.8px solid ${C.border}`, cursor: "pointer" }}
-                    onClick={() => onPick(opt.id)}
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <Icon size={15} color={C.primary} />
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 12, color: C.text }}>
-                        {opt.title}
-                      </span>
-                    </div>
-                    <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textSub, lineHeight: 1.4 }}>
-                      {opt.blurb}
-                    </p>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted }}>
-                      Default {opt.defaultColSpan}×{opt.defaultRowSpan}
-                    </span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          disabled={options.length < 2}
-          onClick={() => goTo(index + 1)}
-          style={{ color: C.primary, cursor: options.length < 2 ? "default" : "pointer", opacity: options.length < 2 ? 0.35 : 1, flexShrink: 0 }}
-        >
-          <ChevronRight size={18} />
-        </button>
-      </div>
-
-      <div className="flex-none flex items-center justify-center gap-1 pb-2.5 pt-0.5">
-        {options.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => goTo(i)}
-            style={{
-              width: i === index ? 14 : 6,
-              height: 6,
-              borderRadius: 99,
-              border: "none",
-              background: i === index ? C.primary : C.border,
-              cursor: "pointer",
-              padding: 0,
-              transition: "width 220ms cubic-bezier(0.22, 1, 0.36, 1), background 220ms ease",
-            }}
-          />
-        ))}
+                  {opt.title}
+                </span>
+                <span
+                  className="block"
+                  style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textSub, lineHeight: 1.35 }}
+                >
+                  {opt.blurb}
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1780,21 +2032,18 @@ function EmptyCellAdd({
   onClose: () => void;
   onPick: (id: WidgetTypeId) => void;
 }) {
-  const pinLeft = col <= 1;
-  const pinRight = col >= COLS;
-  const pinTop = row <= 1;
-  const pinBottom = row >= ROWS;
+  const pinRight = col >= COLS - 1;
+  const pinBottom = row >= ROWS - 2;
 
   const pickerStyle: React.CSSProperties = {
     position: "absolute",
-    width: `calc(200% + ${GAP}px)`,
-    height: `calc(200% + ${GAP}px)`,
     zIndex: 50,
-    left: pinLeft ? 0 : pinRight ? undefined : "50%",
+    left: pinRight ? undefined : 0,
     right: pinRight ? 0 : undefined,
-    top: pinTop ? 0 : pinBottom ? undefined : "50%",
-    bottom: pinBottom ? 0 : undefined,
-    transform: `translate(${pinLeft || pinRight ? "0%" : "-50%"}, ${pinTop || pinBottom ? "0%" : "-50%"})`,
+    top: pinBottom ? undefined : "100%",
+    bottom: pinBottom ? "100%" : undefined,
+    marginTop: pinBottom ? undefined : 4,
+    marginBottom: pinBottom ? 4 : undefined,
   };
 
   return (
@@ -1827,7 +2076,7 @@ function EmptyCellAdd({
           style={pickerStyle}
           onClick={(e) => e.stopPropagation()}
         >
-          <WidgetPickerCarousel options={options} onPick={onPick} onClose={onClose} />
+          <WidgetPickerDropdown options={options} onPick={onPick} onClose={onClose} />
         </div>
       )}
     </div>
@@ -2161,18 +2410,18 @@ const EXISTING_JOBS = [
   { number: "TEST", customer: "P2PROG", name: "P2 Programs" },
 ];
 
-function AddNewJobModal({
-  open,
-  isCompact,
-  onClose,
+function AddNewJobForm({
+  mode,
+  selectedJobNumber,
 }: {
-  open: boolean;
-  isCompact: boolean;
-  onClose: () => void;
+  mode: "add" | "edit";
+  selectedJobNumber: string | null;
 }) {
-  const [form, setForm] = useState<AddJobFormState>(INIT_JOB_FORM);
-  const [selectedJob, setSelectedJob] = useState(EXISTING_JOBS[0]?.number ?? null);
-  const [showClosed, setShowClosed] = useState(false);
+  const job = EXISTING_JOBS.find((j) => j.number === selectedJobNumber);
+  const [form, setForm] = useState<AddJobFormState>(() => ({
+    ...INIT_JOB_FORM,
+    ...(job ? { jobNumber: job.number, customer: `${job.name}#${job.customer}` } : {}),
+  }));
   const [metricJob, setMetricJob] = useState(false);
   const [checks, setChecks] = useState({
     keepMinors: false,
@@ -2182,15 +2431,13 @@ function AddNewJobModal({
   });
 
   useEffect(() => {
-    if (!open) return;
-    const onKey = (ev: KeyboardEvent) => {
-      if (ev.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
+    if (mode !== "edit" || !job) return;
+    setForm((f) => ({
+      ...f,
+      jobNumber: job.number,
+      customer: `${job.name}#${job.customer}`,
+    }));
+  }, [mode, job]);
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -2247,6 +2494,98 @@ function AddNewJobModal({
   );
 
   return (
+    <form
+      className="h-full overflow-y-auto p-4"
+      style={{ background: C.surface }}
+      onSubmit={(e) => e.preventDefault()}
+    >
+      <div className="flex flex-col gap-2 max-w-3xl">
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
+          {mode === "add" ? "Add New Job" : `Edit Job${job ? ` — ${job.number}` : ""}`}
+        </p>
+        {renderField("jobNumber", "Job Number")}
+        {renderField("customer", "Customer #")}
+        {renderField("useBarCodeForm", "Use Bar Code Form")}
+        {renderField("jobHours", "Job Weight", { lbs: true, metric: true })}
+        {renderField("externalJob", "External Job #")}
+        {renderField("division", "Division", { select: ["SHOP", "FIELD", "FAB"] })}
+        {renderField("jobStatus", "Job Status", { select: ["Open", "Closed", "Hold"] })}
+        {renderField("shipTo", "Ship To", { select: ["", "Main Yard", "Site A", "Site B"] })}
+        {renderField("billTo", "Bill To", { select: ["", "Main Yard", "Site A", "Site B"] })}
+        {renderField("jobTitle", "Job Title")}
+        {renderField("projectYear", "Project Year")}
+        {renderField("jobStructure", "Job Structure")}
+        {renderField("jobHours", "Job Hours")}
+        {renderField("jobLocation", "Job Location")}
+        {renderField("jobEfficiency", "Job Efficiency")}
+        {renderField("jobCareOf", "Job Care Of")}
+        {renderField("rfInterface", "RF Interface", { select: ["PowerFab", "FieldOps"] })}
+        {renderField("jobPo", "Job PO #")}
+        {renderField("jobRelease", "Job Release #")}
+        {renderField("defaultAdhesiveBarCodeLabelFormat", "Default Adhesive Bar Code Label Format #", { select: ["<None>", "STD-01", "STD-02"] })}
+        {renderField("defaultLabelLaseFormat", "Default LabelLase Label Format #", { select: ["<None>", "LASER-A", "LASER-B"] })}
+
+        <div className="mt-2 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2" style={{ borderTop: `1px solid ${C.border}` }}>
+          {([
+            ["keepMinors", "Keep Minors on Import (Prefix=No)"],
+            ["validateHeats", "Validate Heats"],
+            ["validatePipes", "Validate Pipes"],
+            ["validateFittings", "Validate Fittings"],
+          ] as const).map(([key, label]) => (
+            <label key={key} className="flex items-center gap-1.5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
+              <input
+                type="checkbox"
+                checked={checks[key]}
+                onChange={(e) => setChecks((c) => ({ ...c, [key]: e.target.checked }))}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap justify-end gap-2 mt-4 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+          <button
+            type="submit"
+            className="px-3 py-1.5 rounded-sm flex items-center justify-center gap-1.5"
+            style={{
+              fontFamily: "'Lato', sans-serif",
+              fontSize: 12,
+              minWidth: 110,
+              cursor: "pointer",
+              background: C.primary,
+              color: C.primaryFg,
+              border: `1px solid ${C.primary}`,
+            }}
+          >
+            {mode === "add" ? <><Plus size={12} /> Add Job</> : "Save Job"}
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+function KissImportModal({
+  open,
+  isCompact,
+  onClose,
+}: {
+  open: boolean;
+  isCompact: boolean;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
     <div
       className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
       style={{ background: "transparent" }}
@@ -2257,8 +2596,7 @@ function AddNewJobModal({
       <div
         className="w-full overflow-hidden flex flex-col"
         style={{
-          maxWidth: isCompact ? "100%" : 1080,
-          height: isCompact ? "90vh" : "min(780px, 88vh)",
+          maxWidth: isCompact ? "100%" : 520,
           background: C.surface,
           border: `1px solid ${C.border}`,
           borderRadius: isCompact ? "16px 16px 0 0" : 12,
@@ -2266,178 +2604,14 @@ function AddNewJobModal({
           margin: isCompact ? 0 : 20,
         }}
       >
-        <div
-          className="flex-none flex items-center justify-between px-4 py-3"
-          style={{ background: C.primary, color: C.primaryFg }}
-        >
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 18 }}>
-            Add New Job
-          </span>
+        <div className="flex-none flex items-center justify-between px-4 py-3" style={{ background: C.primary, color: C.primaryFg }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 18 }}>KISS Import</span>
           <button type="button" onClick={onClose} style={{ color: C.primaryFg, cursor: "pointer", lineHeight: 0 }}>
             <X size={18} />
           </button>
         </div>
-
-        <div className={`flex-1 min-h-0 grid ${isCompact ? "grid-rows-2" : "grid-cols-[minmax(280px,0.95fr)_1.2fr]"}`}>
-          {/* Left: existing jobs */}
-          <div
-            className="min-h-0 flex flex-col overflow-hidden"
-            style={{ borderRight: isCompact ? "none" : `1px solid ${C.border}`, borderBottom: isCompact ? `1px solid ${C.border}` : "none" }}
-          >
-            <div className="flex-none flex items-center justify-between gap-2 px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                Edit Jobs
-              </span>
-              <label className="flex items-center gap-1.5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textSub }}>
-                <input type="checkbox" checked={showClosed} onChange={(e) => setShowClosed(e.target.checked)} />
-                Show Closed Jobs
-              </label>
-            </div>
-            <div className="flex-none flex px-4 py-1.5" style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}>
-              {["Job Number", "Customer No.", "Name"].map((h) => (
-                <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
-              ))}
-            </div>
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              {EXISTING_JOBS.map((job, i) => {
-                const selected = selectedJob === job.number;
-                return (
-                  <div
-                    key={job.number}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => {
-                      setSelectedJob(job.number);
-                      setForm((f) => ({ ...f, jobNumber: job.number, customer: `${job.name}#${job.customer}` }));
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        setSelectedJob(job.number);
-                        setForm((f) => ({ ...f, jobNumber: job.number, customer: `${job.name}#${job.customer}` }));
-                      }
-                    }}
-                    className="flex px-4 py-2"
-                    style={{
-                      borderBottom: `0.8px solid ${C.border}`,
-                      background: selected ? `${C.primary}18` : i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55`,
-                      cursor: "pointer",
-                      outline: selected ? `1px solid ${C.primary}44` : "none",
-                    }}
-                  >
-                    <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary }}>{job.number}</div>
-                    <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted }}>{job.customer}</div>
-                    <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{job.name}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right: new job fields (tab content area) */}
-          <div className="min-h-0 flex flex-col overflow-hidden" style={{ background: C.bg }}>
-            <div
-              className="flex-none flex items-end gap-1 px-3 pt-2"
-              style={{ borderBottom: `1px solid ${C.border}`, background: C.surface }}
-            >
-              <div
-                className="px-3 py-2 whitespace-nowrap"
-                style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 10,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  color: C.primary,
-                  borderBottom: `2px solid ${C.primary}`,
-                }}
-              >
-                Job Information
-              </div>
-            </div>
-            <form
-              className="flex-1 min-h-0 overflow-y-auto p-4"
-              style={{ background: C.surface }}
-              onSubmit={(e) => {
-                e.preventDefault();
-                onClose();
-              }}
-            >
-              <div className="flex flex-col gap-2 max-w-3xl">
-                {renderField("jobNumber", "Job Number")}
-                {renderField("customer", "Customer #")}
-                {renderField("useBarCodeForm", "Use Bar Code Form")}
-                {renderField("jobHours", "Job Weight", { lbs: true, metric: true })}
-                {renderField("externalJob", "External Job #")}
-                {renderField("division", "Division", { select: ["SHOP", "FIELD", "FAB"] })}
-                {renderField("jobStatus", "Job Status", { select: ["Open", "Closed", "Hold"] })}
-                {renderField("shipTo", "Ship To", { select: ["", "Main Yard", "Site A", "Site B"] })}
-                {renderField("billTo", "Bill To", { select: ["", "Main Yard", "Site A", "Site B"] })}
-                {renderField("jobTitle", "Job Title")}
-                {renderField("projectYear", "Project Year")}
-                {renderField("jobStructure", "Job Structure")}
-                {renderField("jobHours", "Job Hours")}
-                {renderField("jobLocation", "Job Location")}
-                {renderField("jobEfficiency", "Job Efficiency")}
-                {renderField("jobCareOf", "Job Care Of")}
-                {renderField("rfInterface", "RF Interface", { select: ["PowerFab", "FieldOps"] })}
-                {renderField("jobPo", "Job PO #")}
-                {renderField("jobRelease", "Job Release #")}
-                {renderField("defaultAdhesiveBarCodeLabelFormat", "Default Adhesive Bar Code Label Format #", { select: ["<None>", "STD-01", "STD-02"] })}
-                {renderField("defaultLabelLaseFormat", "Default LabelLase Label Format #", { select: ["<None>", "LASER-A", "LASER-B"] })}
-
-                <div className="mt-2 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2" style={{ borderTop: `1px solid ${C.border}` }}>
-                  {([
-                    ["keepMinors", "Keep Minors on Import (Prefix=No)"],
-                    ["validateHeats", "Validate Heats"],
-                    ["validatePipes", "Validate Pipes"],
-                    ["validateFittings", "Validate Fittings"],
-                  ] as const).map(([key, label]) => (
-                    <label key={key} className="flex items-center gap-1.5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
-                      <input
-                        type="checkbox"
-                        checked={checks[key]}
-                        onChange={(e) => setChecks((c) => ({ ...c, [key]: e.target.checked }))}
-                      />
-                      {label}
-                    </label>
-                  ))}
-                </div>
-
-                <div className="flex flex-wrap justify-end gap-2 mt-4 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-3 py-1.5 rounded-sm"
-                    style={{
-                      fontFamily: "'Lato', sans-serif",
-                      fontSize: 12,
-                      minWidth: 110,
-                      cursor: "pointer",
-                      background: C.surfaceAlt,
-                      color: C.textMuted,
-                      border: `1px solid ${C.border}`,
-                    }}
-                  >
-                    Close
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-3 py-1.5 rounded-sm flex items-center justify-center gap-1.5"
-                    style={{
-                      fontFamily: "'Lato', sans-serif",
-                      fontSize: 12,
-                      minWidth: 110,
-                      cursor: "pointer",
-                      background: C.primary,
-                      color: C.primaryFg,
-                      border: `1px solid ${C.primary}`,
-                    }}
-                  >
-                    <Plus size={12} /> Add Job
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
+        <div className="p-4">
+          <ImportTypePanel title="KISS Import" extensions=".kiss, .dat, .txt" />
         </div>
       </div>
     </div>
@@ -2447,9 +2621,10 @@ function AddNewJobModal({
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const isCompact = useIsCompact();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDark, setIsDark] = useState(false);
-  const [isAddJobOpen, setIsAddJobOpen] = useState(false);
+  const [isKissImportOpen, setIsKissImportOpen] = useState(false);
   const [panels, setPanels]       = useState<PanelDef[]>(INIT);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [detailWidgetId, setDetailWidgetId] = useState<string | null>(null);
@@ -2600,18 +2775,23 @@ export default function App() {
     setPickerCell(null);
   };
 
-  const openAddJob = useCallback(() => {
-    setIsAddJobOpen(true);
+  const openKissImport = useCallback(() => {
+    setIsKissImportOpen(true);
     setDetailWidgetId(null);
   }, []);
 
-  const closeAddJob = useCallback(() => {
-    setIsAddJobOpen(false);
+  const closeKissImport = useCallback(() => {
+    setIsKissImportOpen(false);
   }, []);
 
   const anyHovered = hoveredId !== null;
   const isDetailOpen = detailWidgetId !== null;
-  const isModalOpen = isDetailOpen || isAddJobOpen;
+  const isModalOpen = isDetailOpen || isKissImportOpen;
+
+  if (!isLoggedIn) {
+    applyColorTokens(false);
+    return <LoginPage C={C} onLogin={() => setIsLoggedIn(true)} />;
+  }
 
   return (
     <div
@@ -2712,14 +2892,14 @@ export default function App() {
           {isCompact ? (
             <>
               <TaskbarBtn icon={HelpCircle} label="FAQ & Support" grow />
-              <TaskbarBtn icon={ScanLine}   label="New Scan" primary grow onClick={openAddJob} />
+              <TaskbarBtn icon={ScanLine}   label="New Scan" primary grow onClick={openKissImport} />
               <TaskbarBtn icon={Settings}   label="Settings" grow />
             </>
           ) : (
             <>
               <TaskbarBtn icon={Settings}   label="Settings"      />
               <TaskbarBtn icon={HelpCircle} label="FAQ & Support" />
-              <TaskbarBtn icon={Plus}       label="Add New Job"   primary onClick={openAddJob} />
+              <TaskbarBtn icon={Upload}     label="KISS Import"   primary onClick={openKissImport} />
               <TaskbarBtn icon={FileDown}   label="Report PDF"    />
               <TaskbarBtn
                 icon={isEditing ? X : LayoutGrid}
@@ -2735,7 +2915,7 @@ export default function App() {
         </div>
       </div>
       </div>
-      <AddNewJobModal open={isAddJobOpen} isCompact={isCompact} onClose={closeAddJob} />
+      <KissImportModal open={isKissImportOpen} isCompact={isCompact} onClose={closeKissImport} />
       <WidgetDetailModal
         open={isDetailOpen}
         widgetId={detailWidgetId}
