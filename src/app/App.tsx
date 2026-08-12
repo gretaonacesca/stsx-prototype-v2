@@ -7,7 +7,16 @@ import {
   Briefcase, Database, ShieldAlert, FileText, Settings2, ClipboardList, Upload,
 } from "lucide-react";
 import { LoginPage } from "./LoginPage";
-import { C, applyColorTokens } from "./colorTokens";
+import {
+  C,
+  JEWEL,
+  applyColorTokens,
+  gradientBorderFill,
+  metalFill,
+  metalShadow,
+  metalSpecular,
+  type JewelMetal,
+} from "./colorTokens";
 import {
   ImportFilterForm,
   CustomerEditorPanel,
@@ -229,12 +238,75 @@ function applyResize(panel: PanelDef, edge: ResizeEdge, colLine: number, rowLine
 }
 
 // ─── Dummy Data ───────────────────────────────────────────────────────────────
-const STATS = [
-  { id: "stat1", label: "Active Jobs",     value: "47",    sub: "+3 since yesterday", color: C.primary, Icon: BarChart3 },
-  { id: "stat2", label: "Scans Today",     value: "183",   sub: "94.0% pass rate",    color: C.primary, Icon: CheckCircle },
-  { id: "stat3", label: "Pending Reviews", value: "12",    sub: "3 overdue",          color: C.warning, Icon: AlertTriangle },
-  { id: "stat4", label: "On-Time Rate",    value: "94.2%", sub: "↑ 2.1pp this week", color: C.primary, Icon: TrendingUp },
+const STATS: {
+  id: string;
+  label: string;
+  value: string;
+  sub: string;
+  metal: JewelMetal;
+  Icon: typeof BarChart3;
+}[] = [
+  { id: "stat1", label: "Active Jobs",     value: "47",    sub: "+3 since yesterday", metal: JEWEL.viridian, Icon: BarChart3 },
+  { id: "stat2", label: "Scans Today",     value: "183",   sub: "94.0% pass rate",    metal: JEWEL.amber,    Icon: CheckCircle },
+  { id: "stat3", label: "Pending Reviews", value: "12",    sub: "3 overdue",          metal: JEWEL.indigo,   Icon: AlertTriangle },
+  { id: "stat4", label: "On-Time Rate",    value: "94.2%", sub: "↑ 2.1pp this week", metal: JEWEL.cherry,   Icon: TrendingUp },
 ];
+
+function jewelForStat(id: string): JewelMetal {
+  return STATS.find((s) => s.id === id)?.metal ?? JEWEL.indigo;
+}
+
+/** Per-widget jewel accent — ~equal viridian / amber / indigo; cherry only on records-danger. */
+const PANEL_JEWEL: Record<string, JewelMetal> = {
+  recent: JEWEL.viridian,
+  timelines: JEWEL.viridian,
+  calendar: JEWEL.viridian,
+  "active-loads": JEWEL.viridian,
+  tasks: JEWEL.amber,
+  "import-export": JEWEL.amber,
+  "piecemark-entry": JEWEL.amber,
+  "admin-system": JEWEL.amber,
+  inventory: JEWEL.amber,
+  search: JEWEL.indigo,
+  employees: JEWEL.indigo,
+  "job-piecemark": JEWEL.indigo,
+  "reports-labels": JEWEL.indigo,
+  "reference-data": JEWEL.indigo,
+  "records-danger": JEWEL.cherry,
+};
+
+function panelJewel(id: string): JewelMetal {
+  return PANEL_JEWEL[id] ?? JEWEL.viridian;
+}
+
+function StatusPill({
+  tone,
+  children,
+}: {
+  tone: "ok" | "warn" | "danger";
+  children: React.ReactNode;
+}) {
+  const styles =
+    tone === "ok"
+      ? { color: C.primary, background: `${C.primary}2E`, border: `1.5px solid ${C.primary}AA` }
+      : tone === "warn"
+      ? { color: C.warning, background: `${C.warning}33`, border: `1.5px solid ${C.warning}BB` }
+      : { color: C.danger, background: `${C.danger}2E`, border: `1.5px solid ${C.danger}AA` };
+  return (
+    <span
+      className="px-1.5 py-0.5 rounded"
+      style={{
+        fontFamily: "'DM Mono', monospace",
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        ...styles,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
 
 const SCANS = [
   { id: "SC-2847", part: "PT-1042-A", desc: "Beam Flange Cut",    qty: 24, time: "09:41", status: "passed" },
@@ -375,24 +447,28 @@ const AUG_OFFSET = 5; // Monday-first: blank cells before Aug 1 (Saturday)
 const AUG_DAYS   = 31;
 const TODAY       = 2; // August 2, 2026
 
+/** Shared dim: hover sibling ghost ↔ dashboard behind modal (midpoint of the two extremes). */
+const GHOST_OPACITY = 0.58;
+const GHOST_SATURATE = "saturate(0.58)";
+
 // ─── Panel content components ─────────────────────────────────────────────────
 
-function PanelHeader({ title }: { title: string }) {
+function PanelHeader({ title, accent }: { title: string; accent: string }) {
   return (
     <div
       className="flex-none flex items-center px-4 py-2.5"
       style={{
-        background: C.surfaceAlt,
-        borderBottom: `0.8px solid ${C.border}`,
+        background: C.surface,
+        borderBottom: `1px solid ${C.border}`,
         minHeight: 36,
       }}
     >
       <span
         style={{
           fontFamily: "'DM Mono', monospace",
-          fontSize: 11,
-          fontWeight: 500,
-          color: C.text,
+          fontSize: 13,
+          fontWeight: 600,
+          color: accent,
           letterSpacing: "0.07em",
           textTransform: "uppercase",
         }}
@@ -405,20 +481,34 @@ function PanelHeader({ title }: { title: string }) {
 
 function StatContent({ id }: { id: string }) {
   const s = STATS.find((x) => x.id === id)!;
-  const { Icon } = s;
+  const { Icon, metal } = s;
   return (
-    <div className="flex flex-col justify-between h-full p-4">
-      <div className="flex items-start justify-between">
-        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+    <div className="flex flex-col justify-between h-full p-4 relative overflow-hidden">
+      <div
+        className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+        style={{ background: metalSpecular(metal) }}
+      />
+      <div className="flex items-start justify-between relative z-[1]">
+        <span
+          style={{
+            fontFamily: "'Lato', sans-serif",
+            fontSize: 13,
+            color: metal.text,
+            opacity: 0.8,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            fontWeight: 700,
+          }}
+        >
           {s.label}
         </span>
-        <Icon size={16} color={s.color} strokeWidth={1.8} />
+        <Icon size={16} color={metal.text} strokeWidth={1.8} style={{ opacity: 0.8 }} />
       </div>
-      <div>
-        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 38, color: C.text, lineHeight: 1 }}>
+      <div className="relative z-[1]">
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 44, color: metal.text, lineHeight: 1 }}>
           {s.value}
         </p>
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: s.color, marginTop: 7 }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: metal.text, marginTop: 7, opacity: 0.9 }}>
           {s.sub}
         </p>
       </div>
@@ -431,7 +521,7 @@ function RecentScansContent() {
     <div className="flex flex-col overflow-hidden h-full">
       <div
         className="flex-none flex items-center py-1.5"
-        style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}
+        style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surfaceAlt }}
       >
         {(["Scan ID", "Part No.", "Description", "Qty", "Time", ""] as const).map((label, i) => (
           <div
@@ -440,7 +530,7 @@ function RecentScansContent() {
             style={{
               width: [72, 74, undefined, 32, 42, 28][i],
               fontFamily: "'DM Mono', monospace",
-              fontSize: 10,
+              fontSize: 12,
               color: C.textMuted,
               textTransform: "uppercase",
               letterSpacing: "0.05em",
@@ -455,13 +545,13 @@ function RecentScansContent() {
           <div
             key={s.id}
             className="flex items-center py-[6px]"
-            style={{ borderBottom: `0.8px solid ${C.border}`, background: i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55` }}
+            style={{ borderBottom: `1.5px solid ${C.border}`, background: i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55` }}
           >
-            <div className="w-[72px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.primary }}>{s.id}</div>
-            <div className="w-[74px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.text }}>{s.part}</div>
-            <div className="flex-1 px-2 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textSub }}>{s.desc}</div>
-            <div className="w-[32px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted }}>{s.qty}</div>
-            <div className="w-[42px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted }}>{s.time}</div>
+            <div className="w-[72px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary }}>{s.id}</div>
+            <div className="w-[74px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.text }}>{s.part}</div>
+            <div className="flex-1 px-2 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>{s.desc}</div>
+            <div className="w-[32px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>{s.qty}</div>
+            <div className="w-[42px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>{s.time}</div>
             <div className="w-[28px] shrink-0 px-2 flex items-center">
               {s.status === "passed" && <CheckCircle size={12} color={C.primary} />}
               {s.status === "review" && <AlertTriangle size={12} color={C.warning} />}
@@ -482,13 +572,13 @@ function QuickSearchContent() {
     <div className="flex flex-col gap-4 p-4 h-full">
       <div
         className="flex items-center gap-3 px-4 rounded-md"
-        style={{ background: C.surfaceAlt, border: `0.8px solid ${C.border}`, height: 42 }}
+        style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}`, height: 42 }}
       >
         <Search size={15} color={C.textMuted} strokeWidth={1.8} />
         <input
           placeholder="Search by part, job, customer, piecemark or scan ID…"
           className="flex-1 bg-transparent outline-none"
-          style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text }}
+          style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}
         />
       </div>
       <div className="flex items-center gap-2 flex-wrap">
@@ -499,10 +589,10 @@ function QuickSearchContent() {
             className="px-3 py-1 rounded-full transition-all"
             style={{
               fontFamily: "'Lato', sans-serif",
-              fontSize: 11,
-              background: filter === f ? C.primary : C.surfaceAlt,
-              color:      filter === f ? C.primaryFg : C.textMuted,
-              border:     `0.8px solid ${filter === f ? C.primary : C.border}`,
+              fontSize: 13,
+              background: filter === f ? JEWEL.indigo.base : C.surfaceAlt,
+              color:      filter === f ? JEWEL.indigo.text : C.textMuted,
+              border:     `1.5px solid ${filter === f ? JEWEL.indigo.base : C.border}`,
               cursor: "pointer",
             }}
           >
@@ -511,7 +601,7 @@ function QuickSearchContent() {
         ))}
       </div>
       <div>
-        <p className="mb-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        <p className="mb-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Recent searches
         </p>
         <div className="flex flex-wrap gap-2">
@@ -519,7 +609,15 @@ function QuickSearchContent() {
             <span
               key={r}
               className="px-3 py-1 rounded"
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary, background: C.positiveBg, border: `0.8px solid ${C.border}`, cursor: "pointer" }}
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 13,
+                fontWeight: 600,
+                color: JEWEL.indigo.base,
+                background: `${JEWEL.indigo.base}1A`,
+                border: `1.5px solid ${JEWEL.indigo.base}77`,
+                cursor: "pointer",
+              }}
             >
               {r}
             </span>
@@ -540,14 +638,22 @@ function TasksContent() {
     <div className="flex flex-col overflow-hidden h-full">
       <div
         className="flex-none flex items-center justify-between px-4 py-2"
-        style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}
+        style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surfaceAlt }}
       >
-        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textMuted }}>
+        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted }}>
           {tasks.filter((t) => t.status === "done").length}/{tasks.length} complete
         </span>
         <button
-          className="flex items-center gap-1 px-2 py-1 rounded"
-          style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.primary, background: C.positiveBg, border: `0.8px solid ${C.border}`, cursor: "pointer" }}
+          className="flex items-center gap-1 px-2.5 py-1 rounded"
+          style={{
+            fontFamily: "'Lato', sans-serif",
+            fontSize: 13,
+            fontWeight: 600,
+            color: JEWEL.amber.text,
+            background: JEWEL.amber.base,
+            border: "none",
+            cursor: "pointer",
+          }}
         >
           <Plus size={11} /> Add task
         </button>
@@ -557,7 +663,7 @@ function TasksContent() {
           const isDone = t.status === "done";
           const isProgress = t.status === "progress";
           return (
-            <div key={t.id} className="flex items-start gap-3 px-4 py-2.5" style={{ borderBottom: `0.8px solid ${C.border}` }}>
+            <div key={t.id} className="flex items-start gap-3 px-4 py-2.5" style={{ borderBottom: `1.5px solid ${C.border}` }}>
               <button
                 type="button"
                 onClick={(e) => {
@@ -575,13 +681,11 @@ function TasksContent() {
               >
                 {isDone ? <CheckCircle size={14} /> : isProgress ? <Clock size={14} /> : <Circle size={14} />}
               </button>
-              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: isDone ? C.textMuted : C.text, textDecoration: isDone ? "line-through" : "none", flex: 1, lineHeight: 1.5 }}>
+              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: isDone ? C.textMuted : C.text, textDecoration: isDone ? "line-through" : "none", flex: 1, lineHeight: 1.5 }}>
                 {t.text}
               </span>
               {t.priority === "high" && !isDone && (
-                <span className="flex-none px-1.5 py-0.5 rounded" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.warning, background: C.warningBg, border: `0.8px solid ${C.warning}44` }}>
-                  HIGH
-                </span>
+                <StatusPill tone="warn">HIGH</StatusPill>
               )}
             </div>
           );
@@ -595,22 +699,22 @@ function TimelinesContent() {
   return (
     <div className="flex flex-col gap-0 overflow-hidden h-full px-4 py-3">
       {PROJECTS.map((p) => (
-        <div key={p.name} className="py-3" style={{ borderBottom: `0.8px solid ${C.border}` }}>
+        <div key={p.name} className="py-3" style={{ borderBottom: `1.5px solid ${C.border}` }}>
           <div className="flex items-center justify-between mb-2">
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text }}>{p.name}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.text }}>{p.name}</span>
             <div className="flex items-center gap-2">
-              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 10, color: C.textMuted }}>Due {p.due}</span>
-              <span className="px-1.5 py-0.5 rounded" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: p.status === "at-risk" ? C.warning : C.primary, background: p.status === "at-risk" ? C.warningBg : C.positiveBg, border: `0.8px solid ${p.status === "at-risk" ? C.warning : C.primary}44` }}>
+              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textMuted }}>Due {p.due}</span>
+              <StatusPill tone={p.status === "at-risk" ? "warn" : "ok"}>
                 {p.status === "at-risk" ? "AT RISK" : "ON TRACK"}
-              </span>
+              </StatusPill>
             </div>
           </div>
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: C.surfaceAlt, border: `0.8px solid ${C.border}` }}>
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}` }}>
             <div className="h-full rounded-full transition-all" style={{ width: `${p.progress}%`, background: p.status === "at-risk" ? C.warning : C.primary }} />
           </div>
           <div className="flex justify-between mt-1">
             {["0%", `${p.progress}%`, "100%"].map((v) => (
-              <span key={v} style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted }}>{v}</span>
+              <span key={v} style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted }}>{v}</span>
             ))}
           </div>
         </div>
@@ -630,12 +734,12 @@ function CalendarContent() {
     <div className="flex flex-col h-full px-4 py-3 gap-2">
       <div className="flex items-center justify-between mb-1">
         <button style={{ color: C.textMuted, cursor: "pointer" }}><ChevronLeft size={14} /></button>
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 13, color: C.text }}>August 2026</span>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: C.text }}>August 2026</span>
         <button style={{ color: C.textMuted, cursor: "pointer" }}><ChevronRight size={14} /></button>
       </div>
       <div className="grid grid-cols-7">
         {days.map((d) => (
-          <div key={d} className="text-center py-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>{d}</div>
+          <div key={d} className="text-center py-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 flex-1">
@@ -648,7 +752,7 @@ function CalendarContent() {
                   className="flex items-center justify-center rounded-full w-6 h-6 cursor-pointer"
                   style={{
                     fontFamily: "'DM Mono', monospace",
-                    fontSize: isToday ? 11 : 10,
+                    fontSize: isToday ? 13 : 12,
                     fontWeight: isToday ? 500 : 400,
                     color:      isToday ? C.primaryFg : d < TODAY ? C.textMuted : C.text,
                     background: isToday ? C.primary    : "transparent",
@@ -685,17 +789,17 @@ function ActiveLoadsContent({
             onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") onSelect(l.id); } : undefined}
             className="flex items-center gap-2 px-4 py-2.5"
             style={{
-              borderBottom: `0.8px solid ${C.border}`,
+              borderBottom: `1.5px solid ${C.border}`,
               background: selected ? `${C.primary}18` : i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55`,
               cursor: onSelect ? "pointer" : "default",
-              outline: selected ? `1px solid ${C.primary}44` : "none",
+              outline: selected ? `1.5px solid ${C.primary}44` : "none",
             }}
           >
             <Truck size={14} color={C.primary} />
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary, width: 64 }}>{l.id}</span>
-            <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{l.dest}</span>
-            <span className="px-1.5 py-0.5 rounded" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.primary, background: C.positiveBg }}>{l.status}</span>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted }}>{l.eta}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary, width: 64 }}>{l.id}</span>
+            <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{l.dest}</span>
+            <StatusPill tone="ok">{l.status}</StatusPill>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>{l.eta}</span>
           </div>
         );
       })}
@@ -712,9 +816,9 @@ function EmployeesContent({
 } = {}) {
   return (
     <div className="flex flex-col overflow-hidden h-full">
-      <div className="flex-none flex px-4 py-1.5" style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}>
+      <div className="flex-none flex px-4 py-1.5" style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surfaceAlt }}>
         {["Name", "Role", "Station", "Shift"].map((h) => (
-          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
+          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
         ))}
       </div>
       <div className="flex-1 overflow-y-auto">
@@ -727,15 +831,15 @@ function EmployeesContent({
               onClick={onSelect ? () => onSelect(e.name) : undefined}
               className="flex px-4 py-2"
               style={{
-                borderBottom: `0.8px solid ${C.border}`,
+                borderBottom: `1.5px solid ${C.border}`,
                 background: selected ? `${C.primary}18` : i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55`,
                 cursor: onSelect ? "pointer" : "default",
               }}
             >
-              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{e.name}</div>
-              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>{e.role}</div>
-              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted }}>{e.station}</div>
-              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary }}>{e.shift}</div>
+              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{e.name}</div>
+              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textSub }}>{e.role}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted }}>{e.station}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary }}>{e.shift}</div>
             </div>
           );
         })}
@@ -762,26 +866,20 @@ function ImportExportContent({
             onClick={onSelect ? () => onSelect(q.id) : undefined}
             className="flex items-center gap-2 px-4 py-2.5"
             style={{
-              borderBottom: `0.8px solid ${C.border}`,
+              borderBottom: `1.5px solid ${C.border}`,
               background: selected ? `${C.primary}18` : i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55`,
               cursor: onSelect ? "pointer" : "default",
             }}
           >
             <ArrowLeftRight size={14} color={C.textMuted} />
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.primary, width: 52 }}>{q.id}</span>
-            <span className="px-1.5 py-0.5 rounded" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, background: C.surfaceAlt }}>{q.type}</span>
-            <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{q.name}</span>
-            <span
-              className="px-1.5 py-0.5 rounded"
-              style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 9,
-                color: q.status === "Failed" ? C.danger : q.status === "Running" ? C.primary : C.textMuted,
-                background: q.status === "Failed" ? C.dangerBg : q.status === "Running" ? C.positiveBg : C.surfaceAlt,
-              }}
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary, width: 52 }}>{q.id}</span>
+            <span className="px-1.5 py-0.5 rounded" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, background: C.surfaceAlt }}>{q.type}</span>
+            <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{q.name}</span>
+            <StatusPill
+              tone={q.status === "Failed" ? "danger" : q.status === "Running" ? "ok" : "warn"}
             >
               {q.status}
-            </span>
+            </StatusPill>
           </div>
         );
       })}
@@ -810,21 +908,21 @@ function InventoryContent({
             onClick={onSelect ? () => onSelect(s.sku) : undefined}
             className="py-2.5 px-1 rounded"
             style={{
-              borderBottom: `0.8px solid ${C.border}`,
+              borderBottom: `1.5px solid ${C.border}`,
               background: selected ? `${C.primary}12` : "transparent",
               cursor: onSelect ? "pointer" : "default",
             }}
           >
             <div className="flex items-center justify-between mb-1.5">
               <div>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.primary }}>{s.sku}</span>
-                <span className="ml-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{s.name}</span>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary }}>{s.sku}</span>
+                <span className="ml-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{s.name}</span>
               </div>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: low ? C.danger : high ? C.warning : C.textMuted }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: low ? C.danger : high ? C.warning : C.textMuted }}>
                 {s.level}/{s.capacity}
               </span>
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.surfaceAlt, border: `0.8px solid ${C.border}` }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}` }}>
               <div
                 className="h-full rounded-full"
                 style={{ width: `${pct}%`, background: low ? C.danger : high ? C.warning : C.primary }}
@@ -840,8 +938,8 @@ function InventoryContent({
 function SimpleActionListContent({ title, items }: { title: string; items: string[] }) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+      <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `1.5px solid ${C.border}` }}>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
           {title}
         </span>
       </div>
@@ -850,7 +948,7 @@ function SimpleActionListContent({ title, items }: { title: string; items: strin
           <div
             key={item}
             className="px-3 py-2.5 rounded-md"
-            style={{ background: C.surfaceAlt, border: `0.8px solid ${C.border}`, fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text }}
+            style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}`, fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}
           >
             {item}
           </div>
@@ -864,8 +962,8 @@ function ReferenceDataListContent() {
   const rows = ["Customers", "Carriers", "Status Codes", "Routing Codes"];
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
-        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textMuted }}>
+      <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `1.5px solid ${C.border}` }}>
+        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted }}>
           Open to edit customers, carriers, and codes.
         </span>
       </div>
@@ -875,11 +973,11 @@ function ReferenceDataListContent() {
             key={r}
             className="px-4 py-3"
             style={{
-              borderBottom: `0.8px solid ${C.border}`,
+              borderBottom: `1.5px solid ${C.border}`,
               background: i % 2 ? `${C.surfaceAlt}55` : "transparent",
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 600,
-              fontSize: 13,
+              fontSize: 15,
               color: C.text,
             }}
           >
@@ -899,9 +997,9 @@ function DangerZoneListContent() {
   ];
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: C.dangerBg }}>
-      <div className="flex-none flex items-center gap-2 px-4 py-2" style={{ background: `${C.danger}18`, borderBottom: `1px solid ${C.danger}44` }}>
+      <div className="flex-none flex items-center gap-2 px-4 py-2" style={{ background: `${C.danger}18`, borderBottom: `1.5px solid ${C.danger}44` }}>
         <ShieldAlert size={14} color={C.danger} />
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.danger, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.danger, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Destructive operations
         </span>
       </div>
@@ -911,10 +1009,10 @@ function DangerZoneListContent() {
             key={r.label}
             className="px-3 py-2.5 rounded-md"
             style={{
-              border: `1px solid ${r.tone === "danger" ? C.danger : C.border}`,
+              border: `1.5px solid ${r.tone === "danger" ? C.danger : C.border}`,
               background: C.surface,
               fontFamily: "'Lato', sans-serif",
-              fontSize: 13,
+              fontSize: 15,
               color: r.tone === "danger" ? C.danger : C.text,
             }}
           >
@@ -935,9 +1033,9 @@ function JobListContent({
 }) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-none flex px-4 py-1.5" style={{ borderBottom: `0.8px solid ${C.border}`, background: C.surfaceAlt }}>
+      <div className="flex-none flex px-4 py-1.5" style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surfaceAlt }}>
         {["Job #", "Customer", "Name"].map((h) => (
-          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
+          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
         ))}
       </div>
       <div className="flex-1 overflow-y-auto">
@@ -950,14 +1048,14 @@ function JobListContent({
               onClick={onSelect ? () => onSelect(job.number) : undefined}
               className="flex px-4 py-2"
               style={{
-                borderBottom: `0.8px solid ${C.border}`,
+                borderBottom: `1.5px solid ${C.border}`,
                 background: selected ? `${C.primary}18` : i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55`,
                 cursor: onSelect ? "pointer" : "default",
               }}
             >
-              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.primary }}>{job.number}</div>
-              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted }}>{job.customer}</div>
-              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.text }}>{job.name}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary }}>{job.number}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted }}>{job.customer}</div>
+              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{job.name}</div>
             </div>
           );
         })}
@@ -1073,10 +1171,10 @@ const WIDGET_DETAIL_TABS: Record<string, DetailTab[]> = {
 function detailField(label: string, value: string) {
   return (
     <div className="flex flex-col gap-1">
-      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
         {label}
       </span>
-      <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text }}>{value || "—"}</span>
+      <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}>{value || "—"}</span>
     </div>
   );
 }
@@ -1099,7 +1197,7 @@ function LoadInfoRow({
         style={{
           width: 118,
           fontFamily: "'Lato', sans-serif",
-          fontSize: 12,
+          fontSize: 14,
           color: C.textSub,
         }}
       >
@@ -1110,7 +1208,7 @@ function LoadInfoRow({
           className="flex-1 min-w-0"
           style={{
             background: C.surfaceAlt,
-            border: `1px solid ${C.border}`,
+            border: `1.5px solid ${C.border}`,
             borderRadius: 4,
             height: 28,
             display: "flex",
@@ -1143,7 +1241,7 @@ function LoadInfoSelect({
         background: "transparent",
         outline: "none",
         fontFamily: "'Lato', sans-serif",
-        fontSize: 12,
+        fontSize: 14,
         color: C.text,
         cursor: "pointer",
       }}
@@ -1166,7 +1264,7 @@ function LoadInfoInput({ value }: { value: string }) {
         background: "transparent",
         outline: "none",
         fontFamily: "'Lato', sans-serif",
-        fontSize: 12,
+        fontSize: 14,
         color: C.text,
       }}
     />
@@ -1182,7 +1280,7 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
 
   const fieldStyle = {
     fontFamily: "'Lato', sans-serif" as const,
-    fontSize: 12,
+    fontSize: 14,
     color: C.textSub,
   };
 
@@ -1267,7 +1365,7 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
             </LoadInfoRow>
           </div>
 
-          <div className="flex flex-col gap-1.5 pb-1 min-w-[200px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
+          <div className="flex flex-col gap-1.5 pb-1 min-w-[200px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textSub }}>
             <div className="flex justify-between gap-4"><span>Bar Code ID Numbers:</span><span style={{ fontFamily: "'DM Mono', monospace" }}>{totalMarks}</span></div>
             <div className="flex justify-between gap-4"><span>Total Pieces:</span><span style={{ fontFamily: "'DM Mono', monospace" }}>{totalPieces}</span></div>
             <div className="flex justify-between gap-4"><span>Total Weight:</span><span style={{ fontFamily: "'DM Mono', monospace" }}>{load.weightLbs}</span></div>
@@ -1275,7 +1373,7 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap justify-end gap-2 mt-4 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+        <div className="flex flex-wrap justify-end gap-2 mt-4 pt-3" style={{ borderTop: `1.5px solid ${C.border}` }}>
           {[
             { label: "Get Information", primary: false },
             { label: "Browse", primary: false },
@@ -1288,12 +1386,12 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
               className="px-3 py-1.5 rounded-sm"
               style={{
                 fontFamily: "'Lato', sans-serif",
-                fontSize: 12,
+                fontSize: 14,
                 minWidth: 110,
                 cursor: "pointer",
                 background: btn.primary ? C.primary : C.surfaceAlt,
                 color: btn.primary ? C.primaryFg : C.textMuted,
-                border: `1px solid ${btn.primary ? C.primary : C.border}`,
+                border: `1.5px solid ${btn.primary ? C.primary : C.border}`,
               }}
             >
               {btn.label}
@@ -1310,14 +1408,14 @@ function stubForm(fields: { label: string; value?: string }[], cta = "Save") {
     <div className="flex flex-col gap-3 p-4 max-w-lg">
       {fields.map((f) => (
         <label key={f.label} className="flex flex-col gap-1">
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: C.textMuted, textTransform: "uppercase" }}>{f.label}</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase" }}>{f.label}</span>
           <input
             defaultValue={f.value ?? ""}
-            style={{ height: 36, borderRadius: 6, border: `1px solid ${C.border}`, background: C.surfaceAlt, padding: "0 10px", fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text }}
+            style={{ height: 36, borderRadius: 6, border: `1.5px solid ${C.border}`, background: C.surfaceAlt, padding: "0 10px", fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}
           />
         </label>
       ))}
-      <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 10, cursor: "pointer" }}>
+      <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 12, cursor: "pointer" }}>
         {cta}
       </button>
     </div>
@@ -1339,11 +1437,11 @@ function DangerConfirmPanel({
       <div className="flex items-start gap-2">
         <ShieldAlert size={18} color={C.danger} className="mt-0.5 shrink-0" />
         <div>
-          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: C.danger }}>{title}</p>
-          <p className="mt-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.6 }}>{body}</p>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 17, color: C.danger }}>{title}</p>
+          <p className="mt-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub, lineHeight: 1.6 }}>{body}</p>
         </div>
       </div>
-      <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text, cursor: "pointer" }}>
+      <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text, cursor: "pointer" }}>
         <TokenCheckbox checked={armed} onChange={setArmed} />
         I understand this cannot be undone without recall / backup
       </label>
@@ -1356,7 +1454,7 @@ function DangerConfirmPanel({
           color: C.primaryFg,
           border: "none",
           fontFamily: "'DM Mono', monospace",
-          fontSize: 10,
+          fontSize: 12,
           cursor: armed ? "pointer" : "not-allowed",
           opacity: armed ? 1 : 0.6,
         }}
@@ -1383,7 +1481,7 @@ function WidgetDetailTabBody({
   if (needsSelection && !selectedKey) {
     return (
       <div className="flex items-center justify-center h-full px-6 text-center">
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textMuted, lineHeight: 1.6 }}>
           Select an item in the list on the left to view and edit related details here.
         </p>
       </div>
@@ -1408,8 +1506,8 @@ function WidgetDetailTabBody({
     if (!item) return null;
     const pct = Math.round((item.level / item.capacity) * 100);
     if (tabId === "item") return <div className="grid grid-cols-2 gap-4 p-4">{detailField("SKU", item.sku)}{detailField("Name", item.name)}{detailField("On hand", String(item.level))}{detailField("Capacity", String(item.capacity))}{detailField("Fill", `${pct}%`)}</div>;
-    if (tabId === "reorder") return <div className="p-4 flex flex-col gap-3"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>Reorder point: {Math.round(item.capacity * 0.25)}. Suggested order: {Math.max(0, Math.round(item.capacity * 0.6) - item.level)} units.</p><button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 10, border: "none", cursor: "pointer" }}>Create PO</button></div>;
-    return <div className="p-4"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>Bin capacity utilization is {pct}%.</p></div>;
+    if (tabId === "reorder") return <div className="p-4 flex flex-col gap-3"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>Reorder point: {Math.round(item.capacity * 0.25)}. Suggested order: {Math.max(0, Math.round(item.capacity * 0.6) - item.level)} units.</p><button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 12, border: "none", cursor: "pointer" }}>Create PO</button></div>;
+    return <div className="p-4"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>Bin capacity utilization is {pct}%.</p></div>;
   }
 
   if (widgetId === "import-export") {
@@ -1465,7 +1563,7 @@ function WidgetDetailTabBody({
     };
     return (
       <div className="flex flex-col gap-3 p-4 max-w-lg">
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>{titles[tabId] ?? "Report"}</p>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>{titles[tabId] ?? "Report"}</p>
         {stubForm([{ label: "Job Number", value: "" }, { label: "Date Range", value: "This week" }], "Generate")}
       </div>
     );
@@ -1481,7 +1579,7 @@ function WidgetDetailTabBody({
   const meta = PANEL_META[widgetId];
   return (
     <div className="p-4 flex flex-col gap-3">
-      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.7 }}>
+      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub, lineHeight: 1.7 }}>
         {meta?.description ?? "Related details for this widget."}
       </p>
       {selectedKey && detailField("Selected", selectedKey)}
@@ -1531,6 +1629,7 @@ function WidgetDetailModal({
   const tabs = WIDGET_DETAIL_TABS[widgetId] ?? WIDGET_DETAIL_TABS.default;
   const selectable = ["active-loads", "employees", "inventory", "job-piecemark"].includes(widgetId);
   const isDanger = WIDGET_CATALOG.find((w) => w.id === widgetId)?.danger === true;
+  const headerJewel = panelJewel(widgetId);
   /** Full-window editors — no left preview/list pane */
   const fullWindow = widgetId === "reference-data" || widgetId === "piecemark-entry";
   const showTabs = tabs.length > 1;
@@ -1549,7 +1648,7 @@ function WidgetDetailModal({
           maxWidth: isCompact ? "100%" : 1080,
           height: isCompact ? "90vh" : "min(780px, 88vh)",
           background: C.surface,
-          border: `1px solid ${C.border}`,
+          border: `1.5px solid ${C.border}`,
           borderRadius: isCompact ? "16px 16px 0 0" : 12,
           boxShadow: `0 24px 60px ${C.text}14`,
           margin: isCompact ? 0 : 20,
@@ -1557,9 +1656,12 @@ function WidgetDetailModal({
       >
         <div
           className="flex-none flex items-center justify-between px-4 py-3"
-          style={{ background: isDanger ? C.danger : C.primary, color: C.primaryFg }}
+          style={{
+            background: headerJewel.base,
+            color: "#FFFFFF",
+          }}
         >
-          <span className="flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 18 }}>
+          <span className="flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 21 }}>
             {isDanger && <ShieldAlert size={18} />}
             {meta?.title ?? widgetId}
           </span>
@@ -1578,10 +1680,10 @@ function WidgetDetailModal({
           {!fullWindow && (
             <div
               className="min-h-0 flex flex-col overflow-hidden"
-              style={{ borderRight: isCompact ? "none" : `1px solid ${C.border}`, borderBottom: isCompact ? `1px solid ${C.border}` : "none" }}
+              style={{ borderRight: isCompact ? "none" : `1.5px solid ${C.border}`, borderBottom: isCompact ? `1.5px solid ${C.border}` : "none" }}
             >
-              <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+              <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `1.5px solid ${C.border}` }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
                   {selectable ? "Select an item" : "Widget"}
                 </span>
               </div>
@@ -1599,7 +1701,7 @@ function WidgetDetailModal({
             {showTabs && (
               <div
                 className="flex-none flex items-end gap-1 px-3 pt-2 overflow-x-auto"
-                style={{ borderBottom: `1px solid ${C.border}`, background: C.surface }}
+                style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surface }}
               >
                 {tabs.map((t) => {
                   const active = t.id === tabId;
@@ -1611,7 +1713,7 @@ function WidgetDetailModal({
                       className="px-3 py-2 whitespace-nowrap"
                       style={{
                         fontFamily: "'DM Mono', monospace",
-                        fontSize: 10,
+                        fontSize: 12,
                         letterSpacing: "0.04em",
                         textTransform: "uppercase",
                         color: active ? C.primary : C.textMuted,
@@ -1672,6 +1774,8 @@ function BentoPanel({
   const isDanger = WIDGET_CATALOG.find((w) => w.id === id)?.danger === true;
   const handleSize = 10;
   const corner = 14;
+  const metal = isStat ? jewelForStat(id) : null;
+  const jewel = metal ?? panelJewel(id);
 
   const edgeStyle = (edge: ResizeEdge): React.CSSProperties => {
     const base: React.CSSProperties = {
@@ -1697,7 +1801,7 @@ function BentoPanel({
       style={{
         width: horizontal ? 36 : 4,
         height: horizontal ? 4 : 36,
-        background: C.primary,
+        background: C.accent,
         opacity: 0.7,
         position: "absolute",
         top: "50%",
@@ -1707,6 +1811,30 @@ function BentoPanel({
     />
   );
 
+  const chromeBg = metal
+    ? metalFill(metal)
+    : isEditing || isDanger
+    ? C.surface
+    : gradientBorderFill(C.surface, jewel.base);
+
+  const chromeBorder = isEditing
+    ? `2px dashed ${C.accent}`
+    : isDanger
+    ? `1.5px solid ${C.danger}66`
+    : "1.5px solid transparent";
+
+  const chromeShadow = isHovered && !isEditing
+    ? metal
+      ? `0 6px 20px ${metal.base}40, 0 1px 0 ${metal.light}55 inset`
+      : `0 4px 16px ${jewel.base}18`
+    : isEditing
+    ? `0 0 0 1px ${C.accent}22, inset 0 0 0 1000px ${C.accent}06`
+    : isDanger
+    ? `inset 0 0 0 1000px ${C.danger}08`
+    : metal
+    ? metalShadow(metal)
+    : `0 2px 10px ${jewel.base}10`;
+
   return (
     <div
       onMouseEnter={onMouseEnter}
@@ -1715,28 +1843,18 @@ function BentoPanel({
       style={{
         gridColumn: `${colStart} / ${colStart + colSpan}`,
         gridRow:    `${rowStart} / ${rowStart + rowSpan}`,
-        background: C.surface,
-        border: isEditing
-          ? `1.5px dashed ${C.primary}`
-          : isDanger
-          ? `1px solid ${C.danger}66`
-          : `0.8px solid ${C.border}`,
-        borderRadius: 8,
+        background: chromeBg,
+        border: chromeBorder,
+        borderRadius: 12,
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         position: "relative",
         cursor: isEditing ? (isDragging ? "grabbing" : "grab") : "pointer",
-        opacity:   isGhosted ? 0.35 : 1,
-        filter:    isGhosted ? "saturate(0.3)" : "none",
-        transform: isHovered && !isEditing ? "scale(1.008)" : "scale(1)",
-        boxShadow: isHovered && !isEditing
-          ? `0 6px 24px ${C.text}18, 0 0 0 1.5px ${isDanger ? C.danger : C.border}`
-          : isEditing
-          ? `0 0 0 1px ${C.primary}22, inset 0 0 0 1000px ${C.primary}03`
-          : isDanger
-          ? `inset 0 0 0 1000px ${C.danger}08`
-          : "none",
+        opacity:   isGhosted ? GHOST_OPACITY : 1,
+        filter:    isGhosted ? GHOST_SATURATE : "none",
+        transform: isHovered && !isEditing ? "scale(1.002)" : "scale(1)",
+        boxShadow: chromeShadow,
         transition: isDragging
           ? "none"
           : "opacity 180ms ease, filter 180ms ease, transform 180ms ease, box-shadow 180ms ease, border 150ms ease",
@@ -1753,7 +1871,7 @@ function BentoPanel({
       )}
 
       {/* Panel header — not shown for stat cards */}
-      {!isStat && <PanelHeader title={PANEL_META[id]?.title ?? id} />}
+      {!isStat && <PanelHeader title={PANEL_META[id]?.title ?? id} accent={jewel.base} />}
 
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-hidden relative z-[1]">
@@ -1796,7 +1914,7 @@ function BentoPanel({
                   style={{
                     width: 8,
                     height: 8,
-                    background: C.primary,
+                    background: C.accent,
                     opacity: 0.85,
                     position: "absolute",
                     top: "50%",
@@ -1826,16 +1944,16 @@ function WidgetPickerDropdown({
     return (
       <div
         className="rounded-lg p-3"
-        style={{ background: C.surface, border: `1px solid ${C.border}`, boxShadow: `0 12px 28px ${C.text}22`, minWidth: 220 }}
+        style={{ background: C.surface, border: `1.5px solid ${C.border}`, boxShadow: `0 12px 28px ${C.text}22`, minWidth: 220 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textMuted }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textMuted }}>
           All widgets are already on the dashboard.
         </p>
         <button
           type="button"
           className="mt-2 self-start"
-          style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.primary, cursor: "pointer" }}
+          style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary, cursor: "pointer" }}
           onClick={onClose}
         >
           Close
@@ -1849,7 +1967,7 @@ function WidgetPickerDropdown({
       className="rounded-lg overflow-hidden flex flex-col"
       style={{
         background: C.surface,
-        border: `1px solid ${C.border}`,
+        border: `1.5px solid ${C.border}`,
         boxShadow: `0 14px 32px ${C.text}28`,
         width: 260,
         maxHeight: 320,
@@ -1859,9 +1977,9 @@ function WidgetPickerDropdown({
     >
       <div
         className="flex-none flex items-center justify-between px-3 py-2"
-        style={{ background: C.surfaceAlt, borderBottom: `0.8px solid ${C.border}` }}
+        style={{ background: C.surfaceAlt, borderBottom: `1.5px solid ${C.border}` }}
       >
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.05em", color: C.text, textTransform: "uppercase" }}>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, letterSpacing: "0.05em", color: C.text, textTransform: "uppercase" }}>
           Add widget
         </span>
         <button type="button" onClick={onClose} style={{ color: C.textMuted, cursor: "pointer", lineHeight: 0 }}>
@@ -1886,13 +2004,13 @@ function WidgetPickerDropdown({
               <span className="min-w-0 flex-1">
                 <span
                   className="block"
-                  style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 12, color: C.text }}
+                  style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 14, color: C.text }}
                 >
                   {opt.title}
                 </span>
                 <span
                   className="block"
-                  style={{ fontFamily: "'Lato', sans-serif", fontSize: 11, color: C.textSub, lineHeight: 1.35 }}
+                  style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.35 }}
                 >
                   {opt.blurb}
                 </span>
@@ -1990,7 +2108,7 @@ function DarkModeToggle({
         background: "transparent",
         border: "none",
         cursor: "pointer",
-        color: C.textMuted,
+        color: C.taskbarFg,
       }}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={dark}
@@ -2003,8 +2121,8 @@ function DarkModeToggle({
           width: 36,
           height: 20,
           borderRadius: 10,
-          background: dark ? C.primary : "#D8E3EE",
-          border: dark ? "0.8px solid transparent" : `0.8px solid ${C.border}`,
+          background: dark ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.18)",
+          border: "1.5px solid rgba(255,255,255,0.35)",
           flexShrink: 0,
           transition: "background 160ms ease, border-color 160ms ease",
         }}
@@ -2016,23 +2134,15 @@ function DarkModeToggle({
             left: dark ? 18.8 : 2.8,
             width: 14,
             height: 14,
-            borderRadius: 7,
-            background: "#fff",
+            borderRadius: "50%",
+            background: C.taskbarFg,
             boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
             transition: "left 160ms ease",
           }}
         />
       </span>
-      <span
-        style={{
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 9,
-          letterSpacing: "0.05em",
-          textTransform: "uppercase",
-          lineHeight: 1.3,
-        }}
-      >
-        Dark
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        {dark ? "Dark" : "Light"}
       </span>
     </button>
   );
@@ -2058,15 +2168,13 @@ function TaskbarBtn({
       onClick={onClick}
       className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-md transition-all"
       style={{
-        background: active  ? C.primary
-                  : primary ? `${C.primary}1a`
-                  : `${C.primary}0a`,
-        color:      active  ? C.primaryFg
-                  : primary ? C.primary
-                  :           C.textMuted,
-        border:     active  ? `0.8px solid ${C.primary}`
-                  : primary ? `0.8px solid ${C.primary}55`
-                  :           `0.8px solid transparent`,
+        background: active  ? "rgba(255,255,255,0.22)"
+                  : primary ? "rgba(255,255,255,0.16)"
+                  : "transparent",
+        color:      C.taskbarFg,
+        border:     active || primary
+                  ? "1.5px solid rgba(255,255,255,0.45)"
+                  : "1.5px solid transparent",
         cursor:     "pointer",
         minWidth:   grow ? 0 : 68,
         flex:       grow ? 1 : undefined,
@@ -2096,35 +2204,43 @@ function CompactStatStrip() {
       className="grid grid-cols-2 sm:grid-cols-4 gap-2"
     >
       {STATS.map((s) => {
-        const { Icon } = s;
+        const { Icon, metal } = s;
         return (
           <div
             key={s.id}
-            className="rounded-lg p-3 flex flex-col gap-1.5 min-w-0"
+            className="rounded-lg p-3 flex flex-col gap-1.5 min-w-0 relative overflow-hidden"
             style={{
-              background: C.surface,
-              border: `0.8px solid ${C.border}`,
+              background: metalFill(metal),
+              border: "1.5px solid transparent",
+              borderRadius: 12,
+              boxShadow: metalShadow(metal),
             }}
           >
-            <div className="flex items-center justify-between gap-1">
+            <div
+              className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+              style={{ background: metalSpecular(metal) }}
+            />
+            <div className="flex items-center justify-between gap-1 relative z-[1]">
               <span
                 className="truncate"
                 style={{
                   fontFamily: "'Lato', sans-serif",
-                  fontSize: 10,
-                  color: C.textMuted,
+                  fontSize: 12,
+                  color: metal.text,
+                  opacity: 0.8,
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
+                  fontWeight: 700,
                 }}
               >
                 {s.label}
               </span>
-              <Icon size={14} color={s.color} strokeWidth={1.8} className="shrink-0" />
+              <Icon size={14} color={metal.text} strokeWidth={1.8} className="shrink-0" style={{ opacity: 0.8 }} />
             </div>
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 24, color: C.text, lineHeight: 1 }}>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 28, color: metal.text, lineHeight: 1 }} className="relative z-[1]">
               {s.value}
             </p>
-            <p className="truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 10, color: s.color }}>
+            <p className="truncate relative z-[1]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: metal.text, opacity: 0.9 }}>
               {s.sub}
             </p>
           </div>
@@ -2144,12 +2260,15 @@ function CompactCollapsible({
   onToggle: () => void;
 }) {
   const title = PANEL_META[id].title;
+  const jewel = panelJewel(id);
   return (
     <div
       className="rounded-lg overflow-hidden flex flex-col"
       style={{
-        background: C.surface,
-        border: `0.8px solid ${C.border}`,
+        background: gradientBorderFill(C.surface, jewel.base),
+        border: "1.5px solid transparent",
+        borderRadius: 12,
+        boxShadow: `0 2px 10px ${jewel.base}10`,
       }}
     >
       <button
@@ -2157,8 +2276,8 @@ function CompactCollapsible({
         onClick={onToggle}
         className="flex-none flex items-center justify-between gap-3 px-4 py-3 w-full text-left"
         style={{
-          background: C.surfaceAlt,
-          borderBottom: open ? `0.8px solid ${C.border}` : "none",
+          background: C.surface,
+          borderBottom: open ? `1px solid ${C.border}` : "none",
           cursor: "pointer",
           minHeight: 44,
         }}
@@ -2167,9 +2286,9 @@ function CompactCollapsible({
         <span
           style={{
             fontFamily: "'DM Mono', monospace",
-            fontSize: 11,
-            fontWeight: 500,
-            color: C.text,
+            fontSize: 13,
+            fontWeight: 600,
+            color: jewel.base,
             letterSpacing: "0.07em",
             textTransform: "uppercase",
           }}
@@ -2336,7 +2455,7 @@ function AddNewJobForm({
     background: "transparent",
     outline: "none",
     fontFamily: "'Lato', sans-serif",
-    fontSize: 12,
+    fontSize: 14,
     color: C.text,
   };
 
@@ -2351,10 +2470,10 @@ function AddNewJobForm({
         opts?.metric || opts?.lbs ? (
           <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
             {opts?.lbs && (
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted }}>lbs</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>lbs</span>
             )}
             {opts?.metric && (
-              <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
+              <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textSub }}>
                 <TokenCheckbox checked={metricJob} onChange={setMetricJob} />
                 Metric Job
               </label>
@@ -2390,7 +2509,7 @@ function AddNewJobForm({
       onSubmit={(e) => e.preventDefault()}
     >
       <div className="flex flex-col gap-2 max-w-3xl">
-        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
           {mode === "add" ? "Add New Job" : `Edit Job${job ? ` — ${job.number}` : ""}`}
         </p>
         {renderField("jobNumber", "Job Number")}
@@ -2415,14 +2534,14 @@ function AddNewJobForm({
         {renderField("defaultAdhesiveBarCodeLabelFormat", "Default Adhesive Bar Code Label Format #", { select: ["<None>", "STD-01", "STD-02"] })}
         {renderField("defaultLabelLaseFormat", "Default LabelLase Label Format #", { select: ["<None>", "LASER-A", "LASER-B"] })}
 
-        <div className="mt-2 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2" style={{ borderTop: `1px solid ${C.border}` }}>
+        <div className="mt-2 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2" style={{ borderTop: `1.5px solid ${C.border}` }}>
           {([
             ["keepMinors", "Keep Minors on Import (Prefix=No)"],
             ["validateHeats", "Validate Heats"],
             ["validatePipes", "Validate Pipes"],
             ["validateFittings", "Validate Fittings"],
           ] as const).map(([key, label]) => (
-            <label key={key} className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textSub }}>
+            <label key={key} className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textSub }}>
               <TokenCheckbox
                 checked={checks[key]}
                 onChange={(next) => setChecks((c) => ({ ...c, [key]: next }))}
@@ -2432,18 +2551,18 @@ function AddNewJobForm({
           ))}
         </div>
 
-        <div className="flex flex-wrap justify-end gap-2 mt-4 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+        <div className="flex flex-wrap justify-end gap-2 mt-4 pt-3" style={{ borderTop: `1.5px solid ${C.border}` }}>
           <button
             type="submit"
             className="px-3 py-1.5 rounded-sm flex items-center justify-center gap-1.5"
             style={{
               fontFamily: "'Lato', sans-serif",
-              fontSize: 12,
+              fontSize: 14,
               minWidth: 110,
               cursor: "pointer",
               background: C.primary,
               color: C.primaryFg,
-              border: `1px solid ${C.primary}`,
+              border: `1.5px solid ${C.primary}`,
             }}
           >
             {mode === "add" ? <><Plus size={12} /> Add Job</> : "Save Job"}
@@ -2488,14 +2607,14 @@ function KissImportModal({
           maxWidth: isCompact ? "100%" : 640,
           maxHeight: isCompact ? "92vh" : "85vh",
           background: C.surface,
-          border: `1px solid ${C.border}`,
+          border: `1.5px solid ${C.border}`,
           borderRadius: isCompact ? "16px 16px 0 0" : 12,
           boxShadow: `0 24px 60px ${C.text}14`,
           margin: isCompact ? 0 : 20,
         }}
       >
         <div className="flex-none flex items-center justify-between px-4 py-3" style={{ background: C.primary, color: C.primaryFg }}>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 18 }}>KISS Import</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 21 }}>KISS Import</span>
           <button type="button" onClick={onClose} style={{ color: C.primaryFg, cursor: "pointer", lineHeight: 0 }}>
             <X size={18} />
           </button>
@@ -2687,8 +2806,8 @@ export default function App() {
       <div
         className="flex-1 min-h-0 flex flex-col"
         style={{
-          opacity: isModalOpen ? 0.35 : 1,
-          filter: isModalOpen ? "saturate(0.3)" : "none",
+          opacity: isModalOpen ? GHOST_OPACITY : 1,
+          filter: isModalOpen ? GHOST_SATURATE : "none",
           transition: "opacity 180ms ease, filter 180ms ease",
           pointerEvents: isModalOpen ? "none" : undefined,
         }}
@@ -2721,7 +2840,7 @@ export default function App() {
                   <div
                     key={i}
                     className="rounded-md"
-                    style={{ background: `${C.primary}06`, border: `1px dashed ${C.primary}18` }}
+                    style={{ background: `${C.accent}06`, border: `1px dashed ${C.accent}28` }}
                   />
                 ))}
               </div>
@@ -2769,8 +2888,8 @@ export default function App() {
         className="flex-none flex items-center gap-2 px-3 sm:px-6"
         style={{
           height: 75,
-          background: C.positiveBg,
-          borderTop: `0.8px solid ${C.border}`,
+          background: C.taskbarBg,
+          borderTop: `1.5px solid ${JEWEL.indigo.dark}`,
         }}
       >
         <div className={`flex justify-start shrink-0 ${isCompact ? "" : "flex-1 min-w-0"}`}>

@@ -287,10 +287,10 @@ export function LoginPage({
     height: 44,
     padding: "0 14px",
     fontFamily: "'Lato', sans-serif",
-    fontSize: 14,
+    fontSize: 16,
     color: C.text,
     background: C.surface,
-    border: `1px solid ${C.border}`,
+    border: `1.5px solid ${C.border}`,
     borderRadius: 8,
     outline: "none",
     boxSizing: "border-box",
@@ -308,7 +308,7 @@ export function LoginPage({
     >
       <div
         className="relative w-full lg:w-1/2 h-[42vh] lg:h-full shrink-0"
-        style={{ borderBottom: `1px solid ${C.border}` }}
+        style={{ borderBottom: `1.5px solid ${C.border}` }}
       >
         <div
           className="hidden lg:block absolute inset-y-0 right-0 w-px pointer-events-none z-10"
@@ -327,7 +327,7 @@ export function LoginPage({
             style={{
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 600,
-              fontSize: 28,
+              fontSize: 32,
               letterSpacing: "0.18em",
               color: C.text,
               lineHeight: 1,
@@ -393,11 +393,11 @@ export function LoginPage({
               cursor: "pointer",
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 600,
-              fontSize: 15,
+              fontSize: 17,
               letterSpacing: "0.04em",
-              color: C.primaryFg,
-              background: C.primary,
-              boxShadow: `0 4px 14px ${C.primary}28`,
+              color: "#FFFFFF",
+              background: C.accent,
+              boxShadow: `0 4px 14px ${C.accent}28`,
               transition: "box-shadow 180ms ease, transform 180ms ease",
             }}
           >
@@ -405,7 +405,7 @@ export function LoginPage({
           </button>
           <style>{`
             .login-submit:hover {
-              box-shadow: 0 10px 28px ${C.primary}44;
+              box-shadow: 0 10px 28px ${C.accent}44;
               transform: translateY(-1px);
             }
           `}</style>
