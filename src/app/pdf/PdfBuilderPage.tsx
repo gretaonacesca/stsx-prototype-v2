@@ -9,22 +9,29 @@ import {
   CompanyHeader, VizBody, VizPanelFrame, TimeRangeBar, StatCard,
 } from "../viz/blocks";
 import type { TimeRange } from "../data/mock";
-import { exportPagesToPdf } from "./exportPdf";
+import { exportPagesToPdf, type PageOrientation } from "./exportPdf";
 
-/** PDF page content grid — 6 columns × 12 rows inside page margins. */
-export const PDF_COLS = 6;
-export const PDF_ROWS = 12;
+/** PDF page content grid — portrait 6×12, landscape 12×6. */
+export function gridDims(orientation: PageOrientation) {
+  return orientation === "landscape"
+    ? { cols: 12, rows: 6 }
+    : { cols: 6, rows: 12 };
+}
+
 /** Outer page margin as % of A4 size */
 export const PDF_MARGIN_PCT = 5.5;
 const GRID_GAP_PX = 8;
+
+const A4_PORTRAIT = { w: 794, h: 1123 };
+const A4_LANDSCAPE = { w: 1123, h: 794 };
 
 export type PdfBlockKind = VizWidgetId | "company-header";
 
 export type PdfBlock = {
   id: string;
   kind: PdfBlockKind;
-  col: number; // 1..PDF_COLS
-  row: number; // 1..PDF_ROWS
+  col: number;
+  row: number;
   colSpan: number;
   rowSpan: number;
 };
@@ -42,35 +49,46 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-function defaultSpan(kind: PdfBlockKind): { colSpan: number; rowSpan: number } {
-  if (kind === "company-header") return { colSpan: 6, rowSpan: 2 };
-  if (kind.startsWith("stat")) return { colSpan: 3, rowSpan: 3 };
-  if (kind === "recent") return { colSpan: 6, rowSpan: 5 };
-  return { colSpan: 6, rowSpan: 4 };
+function defaultSpan(kind: PdfBlockKind, orientation: PageOrientation): { colSpan: number; rowSpan: number } {
+  const { cols, rows } = gridDims(orientation);
+  const full = cols;
+  if (kind === "company-header") return { colSpan: full, rowSpan: 2 };
+  if (kind.startsWith("stat")) return { colSpan: Math.min(3, cols), rowSpan: Math.min(3, rows) };
+  if (kind === "kpi-hero") return { colSpan: Math.min(4, cols), rowSpan: Math.min(3, rows) };
+  if (kind === "recent" || kind === "sankey" || kind === "story-strip") return { colSpan: full, rowSpan: Math.min(4, rows) };
+  if (kind === "funnel" || kind === "yard-map") return { colSpan: Math.min(4, cols), rowSpan: Math.min(4, rows) };
+  return { colSpan: full, rowSpan: Math.min(4, rows) };
 }
 
-function clampBlock(b: PdfBlock): PdfBlock {
-  const colSpan = clamp(b.colSpan, 1, PDF_COLS);
-  const rowSpan = clamp(b.rowSpan, 1, PDF_ROWS);
-  const col = clamp(b.col, 1, PDF_COLS - colSpan + 1);
-  const row = clamp(b.row, 1, PDF_ROWS - rowSpan + 1);
+function clampBlock(b: PdfBlock, orientation: PageOrientation): PdfBlock {
+  const { cols, rows } = gridDims(orientation);
+  const colSpan = clamp(b.colSpan, 1, cols);
+  const rowSpan = clamp(b.rowSpan, 1, rows);
+  const col = clamp(b.col, 1, cols - colSpan + 1);
+  const row = clamp(b.row, 1, rows - rowSpan + 1);
   return { ...b, col, row, colSpan, rowSpan };
 }
 
-function makeBlock(kind: PdfBlockKind, col = 1, row = 1): PdfBlock {
-  const { colSpan, rowSpan } = defaultSpan(kind);
-  return clampBlock({ id: uid(), kind, col, row, colSpan, rowSpan });
+function makeBlock(kind: PdfBlockKind, orientation: PageOrientation, col = 1, row = 1): PdfBlock {
+  const { colSpan, rowSpan } = defaultSpan(kind, orientation);
+  return clampBlock({ id: uid(), kind, col, row, colSpan, rowSpan }, orientation);
 }
 
 /** Map pointer inside the grid element to a 1-based cell. */
-function pointerToCell(clientX: number, clientY: number, gridEl: HTMLElement) {
+function pointerToCell(
+  clientX: number,
+  clientY: number,
+  gridEl: HTMLElement,
+  orientation: PageOrientation
+) {
+  const { cols, rows } = gridDims(orientation);
   const rect = gridEl.getBoundingClientRect();
   const x = clientX - rect.left;
   const y = clientY - rect.top;
-  const cellW = (rect.width - (PDF_COLS - 1) * GRID_GAP_PX) / PDF_COLS + GRID_GAP_PX;
-  const cellH = (rect.height - (PDF_ROWS - 1) * GRID_GAP_PX) / PDF_ROWS + GRID_GAP_PX;
-  const col = clamp(Math.floor(x / cellW) + 1, 1, PDF_COLS);
-  const row = clamp(Math.floor(y / cellH) + 1, 1, PDF_ROWS);
+  const cellW = (rect.width - (cols - 1) * GRID_GAP_PX) / cols + GRID_GAP_PX;
+  const cellH = (rect.height - (rows - 1) * GRID_GAP_PX) / rows + GRID_GAP_PX;
+  const col = clamp(Math.floor(x / cellW) + 1, 1, cols);
+  const row = clamp(Math.floor(y / cellH) + 1, 1, rows);
   return { col, row };
 }
 
@@ -80,9 +98,10 @@ const PALETTE: { kind: PdfBlockKind; label: string }[] = [
 ];
 
 export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null }) {
+  const [orientation, setOrientation] = useState<PageOrientation>("portrait");
   const [pages, setPages] = useState<PdfPage[]>(() => [{
     id: uid(),
-    blocks: seedKind ? [makeBlock(seedKind, 1, 1)] : [],
+    blocks: seedKind ? [makeBlock(seedKind, "portrait", 1, 1)] : [],
   }]);
   const [activePage, setActivePage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -92,6 +111,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
   const gridRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const page = pages[activePage];
+  const { cols: gridCols, rows: gridRows } = gridDims(orientation);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -111,6 +131,17 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedId, activePage]);
 
+  const changeOrientation = (orient: PageOrientation) => {
+    if (orient === orientation) return;
+    setOrientation(orient);
+    setPages((prev) =>
+      prev.map((pg) => ({
+        ...pg,
+        blocks: pg.blocks.map((b) => clampBlock(b, orient)),
+      }))
+    );
+  };
+
   const addPage = () => {
     setPages((p) => [...p, { id: uid(), blocks: [] }]);
     setActivePage(pages.length);
@@ -118,7 +149,6 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
 
   const removePage = (idx: number) => {
     if (pages.length <= 1) {
-      // Clear the only page instead of removing it
       setPages([{ id: uid(), blocks: [] }]);
       setActivePage(0);
       setSelectedId(null);
@@ -137,7 +167,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
           : {
               ...pg,
               blocks: pg.blocks.map((b) =>
-                b.id === blockId ? clampBlock({ ...b, ...patch }) : b
+                b.id === blockId ? clampBlock({ ...b, ...patch }, orientation) : b
               ),
             }
       )
@@ -154,7 +184,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
   };
 
   const placeBlockAt = (kind: PdfBlockKind, col: number, row: number) => {
-    const block = makeBlock(kind, col, row);
+    const block = makeBlock(kind, orientation, col, row);
     setPages((prev) =>
       prev.map((pg, i) => (i === activePage ? { ...pg, blocks: [...pg.blocks, block] } : pg))
     );
@@ -172,7 +202,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
     if (!kind) return;
     const grid = gridRefs.current[activePage];
     if (!grid) return;
-    const { col, row } = pointerToCell(e.clientX, e.clientY, grid);
+    const { col, row } = pointerToCell(e.clientX, e.clientY, grid, orientation);
     placeBlockAt(kind, col, row);
   };
 
@@ -183,12 +213,12 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
     setSelectedId(block.id);
     const grid = gridRefs.current[activePage];
     if (!grid) return;
-    const origin = pointerToCell(e.clientX, e.clientY, grid);
+    const origin = pointerToCell(e.clientX, e.clientY, grid, orientation);
     const offsetCol = origin.col - block.col;
     const offsetRow = origin.row - block.row;
 
     const onMove = (ev: globalThis.MouseEvent) => {
-      const cell = pointerToCell(ev.clientX, ev.clientY, grid);
+      const cell = pointerToCell(ev.clientX, ev.clientY, grid, orientation);
       updateBlock(block.id, {
         col: cell.col - offsetCol,
         row: cell.row - offsetRow,
@@ -210,7 +240,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
     if (!grid) return;
 
     const onMove = (ev: globalThis.MouseEvent) => {
-      const cell = pointerToCell(ev.clientX, ev.clientY, grid);
+      const cell = pointerToCell(ev.clientX, ev.clientY, grid, orientation);
       updateBlock(block.id, {
         colSpan: cell.col - block.col + 1,
         rowSpan: cell.row - block.row + 1,
@@ -228,11 +258,12 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
     setExporting(true);
     try {
       const els = pageRefs.current.filter(Boolean) as HTMLElement[];
-      await exportPagesToPdf(els);
+      const orients = pages.map(() => orientation);
+      await exportPagesToPdf(els, orients);
     } finally {
       setExporting(false);
     }
-  }, []);
+  }, [pages, orientation]);
 
   const renderBlocks = (pg: PdfPage, interactive: boolean) =>
     pg.blocks.map((b) => (
@@ -307,7 +338,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
         <div className="px-3 py-3" style={{ borderBottom: `1.5px solid ${C.border}` }}>
           <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 16, color: C.text }}>Blocks</p>
           <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, fontWeight: 700, color: C.text }}>
-            Snap to 6×12 grid
+            Snap to {gridCols}×{gridRows} grid
           </p>
         </div>
         <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1.5">
@@ -406,6 +437,29 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
           >
             <Plus size={12} /> A4 page
           </button>
+
+          <div className="flex items-center gap-1 ml-2">
+            {(["portrait", "landscape"] as PageOrientation[]).map((o) => (
+              <button
+                key={o}
+                type="button"
+                onClick={() => changeOrientation(o)}
+                className="px-2 py-1 rounded-md"
+                style={{
+                  background: orientation === o ? C.accent : C.surfaceAlt,
+                  color: orientation === o ? "#fff" : C.text,
+                  border: `1.5px solid ${orientation === o ? C.accent : C.border}`,
+                  cursor: "pointer",
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textTransform: "capitalize",
+                }}
+              >
+                {o}
+              </button>
+            ))}
+          </div>
           {selectedId && (
             <button
               type="button"
@@ -431,6 +485,9 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
             ref={(el) => {
               pageRefs.current[activePage] = el;
             }}
+            orientation={orientation}
+            gridCols={gridCols}
+            gridRows={gridRows}
             onDragOver={(e) => e.preventDefault()}
             onDrop={onDropCanvas}
             onClickBlank={() => setSelectedId(null)}
@@ -449,6 +506,9 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
                   ref={(el) => {
                     pageRefs.current[i] = el;
                   }}
+                  orientation={orientation}
+                  gridCols={gridCols}
+                  gridRows={gridRows}
                   gridRef={(el) => {
                     gridRefs.current[i] = el;
                   }}
@@ -467,6 +527,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
 function BlockPreview({ kind, timeRange }: { kind: PdfBlockKind; timeRange: TimeRange }) {
   if (kind === "company-header") return <CompanyHeader showEditPencil />;
   if (kind.startsWith("stat")) return <StatCard id={kind} />;
+  if (kind === "kpi-hero") return <VizBody id="kpi-hero" timeRange={timeRange} />;
   return (
     <VizPanelFrame id={kind as VizWidgetId}>
       <VizBody id={kind as VizWidgetId} timeRange={timeRange} />
@@ -478,17 +539,31 @@ const A4Page = forwardRef<
   HTMLDivElement,
   {
     children?: ReactNode;
+    orientation?: PageOrientation;
+    gridCols: number;
+    gridRows: number;
     onDragOver?: (e: DragEvent) => void;
     onDrop?: (e: DragEvent) => void;
     onClickBlank?: () => void;
     gridRef?: (el: HTMLDivElement | null) => void;
     showGrid?: boolean;
   }
->(function A4Page({ children, onDragOver, onDrop, onClickBlank, gridRef, showGrid }, ref) {
+>(function A4Page({
+  children,
+  orientation = "portrait",
+  gridCols,
+  gridRows,
+  onDragOver,
+  onDrop,
+  onClickBlank,
+  gridRef,
+  showGrid,
+}, ref) {
+  const size = orientation === "landscape" ? A4_LANDSCAPE : A4_PORTRAIT;
   const gridStyle: CSSProperties = {
     display: "grid",
-    gridTemplateColumns: `repeat(${PDF_COLS}, minmax(0, 1fr))`,
-    gridTemplateRows: `repeat(${PDF_ROWS}, minmax(0, 1fr))`,
+    gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+    gridTemplateRows: `repeat(${gridRows}, minmax(0, 1fr))`,
     gap: GRID_GAP_PX,
   };
 
@@ -496,11 +571,12 @@ const A4Page = forwardRef<
     <div
       ref={ref}
       data-a4
+      data-orientation={orientation}
       onClick={onClickBlank}
       className="relative shrink-0 shadow-xl"
       style={{
-        width: 794,
-        height: 1123,
+        width: size.w,
+        height: size.h,
         background: "#fff",
         border: `1px solid ${C.border}`,
       }}
@@ -516,7 +592,7 @@ const A4Page = forwardRef<
       >
         {showGrid && (
           <div className="absolute inset-0 pointer-events-none" style={gridStyle} aria-hidden>
-            {Array.from({ length: PDF_COLS * PDF_ROWS }).map((_, i) => (
+            {Array.from({ length: gridCols * gridRows }).map((_, i) => (
               <div
                 key={i}
                 className="rounded-sm"

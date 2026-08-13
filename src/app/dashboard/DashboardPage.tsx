@@ -143,7 +143,7 @@ export function DashboardPage({
         {panels.map((panel) => {
           const isHovered = hoveredId === panel.id;
           const isGhosted = anyHovered && !isHovered;
-          const isStat = panel.id.startsWith("stat");
+          const isStat = panel.id.startsWith("stat") || panel.id === "kpi-hero";
           return (
             <div
               key={panel.id}

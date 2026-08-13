@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { C } from "../colorTokens";
 import { NAV_CATEGORIES, findOperation, type OperationId } from "../nav/catalog";
+import { Switch } from "../components/ui/switch";
 
 export function Sidebar({
   activeOp,
@@ -104,7 +105,7 @@ export function TopBar({
   isDark: boolean;
   onToggleEdit: () => void;
   onOpenPdf: () => void;
-  onToggleDark: () => void;
+  onToggleDark: (next: boolean) => void;
   onLogout: () => void;
   pdfMode: boolean;
   onExitPdf: () => void;
@@ -150,7 +151,25 @@ export function TopBar({
             <TopBtn icon={FileDown} label="Report PDF" onClick={onOpenPdf} primary />
           </>
         )}
-        <TopBtn icon={isDark ? Sun : Moon} label={isDark ? "Light" : "Dark"} onClick={onToggleDark} />
+
+        <label
+          className="flex items-center gap-2 px-2.5 py-1.5 rounded-md"
+          style={{
+            background: C.surfaceAlt,
+            border: `1.5px solid ${C.border}`,
+            cursor: "pointer",
+          }}
+        >
+          <Sun size={14} color={C.text} />
+          <Switch
+            checked={isDark}
+            onCheckedChange={onToggleDark}
+            aria-label="Toggle dark mode"
+            style={{ background: isDark ? C.accent : C.border }}
+          />
+          <Moon size={14} color={C.text} />
+        </label>
+
         <TopBtn icon={LogOut} label="Log Out" onClick={onLogout} />
       </div>
     </header>

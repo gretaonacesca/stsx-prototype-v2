@@ -10,6 +10,10 @@ import {
 } from "../data/mock";
 import { PANEL_META, panelJewel, type VizWidgetId } from "../dashboard/widgetCatalog";
 import { StatusPill, loadStatusTone, queueStatusTone, PanelHeader } from "./chrome";
+import {
+  ThroughputFunnel, BottleneckSankey, BacklogBurndown, KpiHero,
+  ExecutiveScorecard, StoryStrip, YardMapLite,
+} from "./charts";
 import logoUrl from "../../assets/stsx-logo.png";
 
 export function StatCard({ id }: { id: string }) {
@@ -337,6 +341,13 @@ export function VizBody({
   if (id === "employees") return <EmployeesTable />;
   if (id === "import-export") return <ImportQueueTable timeRange={timeRange} />;
   if (id === "inventory") return <InventoryPanel />;
+  if (id === "funnel") return <ThroughputFunnel />;
+  if (id === "sankey") return <BottleneckSankey />;
+  if (id === "burndown") return <BacklogBurndown />;
+  if (id === "kpi-hero") return <KpiHero />;
+  if (id === "scorecard") return <ExecutiveScorecard />;
+  if (id === "story-strip") return <StoryStrip />;
+  if (id === "yard-map") return <YardMapLite />;
   return null;
 }
 
@@ -351,7 +362,7 @@ export function VizPanelFrame({
 }) {
   const jewel = panelJewel(id);
   const title = PANEL_META[id]?.title ?? id;
-  if (isStat || id.startsWith("stat")) {
+  if (isStat || id.startsWith("stat") || id === "kpi-hero") {
     return <div className="h-full w-full">{children}</div>;
   }
   return (

@@ -29,12 +29,9 @@ export type JewelMetal = {
 
 export const JEWEL = {
   viridian: { base: "#0D8C7E", light: "#12B09E", dark: "#096A5F", text: "#FFFFFF" },
-  /** Darker chrome / gunmetal silver */
   chrome:   { base: "#5A616C", light: "#A8B2BE", dark: "#2E333B", text: "#FFFFFF" },
   indigo:   { base: "#3F52CC", light: "#5A6EE0", dark: "#2E3AA0", text: "#FFFFFF" },
-  /** Jewel-tone lime (replaces former cherry on KPIs / former amber panel edges) */
   lime:     { base: "#6BCB2A", light: "#8FE04A", dark: "#3F8F12", text: "#FFFFFF" },
-  /** Red — records danger widget only */
   danger:   { base: "#9E1F38", light: "#C4485A", dark: "#6B1528", text: "#FFFFFF" },
 } as const satisfies Record<string, JewelMetal>;
 
@@ -50,12 +47,10 @@ export function metalSpecular(c: JewelMetal): string {
   return `linear-gradient(90deg, transparent, ${c.light}aa, transparent)`;
 }
 
-/** Accent edge that fades down — used on non-stat panels. */
 export function gradientBorderFill(surface: string, accent: string): string {
   return `linear-gradient(${surface}, ${surface}) padding-box, linear-gradient(to bottom, ${accent} 0%, ${accent}55 30%, transparent 68%) border-box`;
 }
 
-/** Pastel blue (slight lilac cast) — still reads blue, not purple. */
 export const LIGHT: ColorTokens = {
   bg: "#D8E4F6",
   surface: "#FFFFFF",
@@ -76,7 +71,6 @@ export const LIGHT: ColorTokens = {
   taskbarFg: "#F3F5FF",
 };
 
-/** Deep blue night — matches the pastel blue ground family. */
 export const DARK: ColorTokens = {
   bg: "#0A1424",
   surface: "#121C2E",
@@ -100,6 +94,39 @@ export const DARK: ColorTokens = {
 /** Mutable active palette — swapped on theme toggle. */
 export const C: ColorTokens = { ...LIGHT };
 
+function syncCssVariables(tokens: ColorTokens, dark: boolean) {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  root.classList.toggle("dark", dark);
+  const map: Record<string, string> = {
+    "--background": tokens.bg,
+    "--foreground": tokens.text,
+    "--card": tokens.surface,
+    "--card-foreground": tokens.text,
+    "--popover": tokens.surface,
+    "--popover-foreground": tokens.text,
+    "--primary": tokens.primary,
+    "--primary-foreground": tokens.primaryFg,
+    "--secondary": tokens.surfaceAlt,
+    "--secondary-foreground": tokens.text,
+    "--muted": tokens.surfaceAlt,
+    "--muted-foreground": tokens.textMuted,
+    "--accent": tokens.accent,
+    "--accent-foreground": dark ? tokens.primaryFg : "#F5FFFE",
+    "--destructive": tokens.danger,
+    "--border": tokens.border,
+    "--input": dark ? tokens.surfaceAlt : "transparent",
+    "--input-background": tokens.surfaceAlt,
+    "--switch-background": tokens.border,
+    "--ring": tokens.accent,
+  };
+  for (const [k, v] of Object.entries(map)) {
+    root.style.setProperty(k, v);
+  }
+}
+
+/** Apply theme immediately (call during render / event handlers — not only in useEffect). */
 export function applyColorTokens(dark: boolean) {
   Object.assign(C, dark ? DARK : LIGHT);
+  syncCssVariables(C, dark);
 }

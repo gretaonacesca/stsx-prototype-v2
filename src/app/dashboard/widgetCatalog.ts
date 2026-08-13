@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3, CheckCircle, AlertTriangle, TrendingUp, ScanLine,
   Truck, Users, ArrowLeftRight, Package,
+  Filter, GitBranch, Flame, Sparkles, LayoutTemplate, BookOpen, Map,
 } from "lucide-react";
 import { JEWEL, type JewelMetal } from "../colorTokens";
 
@@ -13,7 +14,8 @@ export const MIN_ROW_SPAN = 1;
 
 export type VizWidgetId =
   | "stat1" | "stat2" | "stat3" | "stat4"
-  | "recent" | "active-loads" | "employees" | "import-export" | "inventory";
+  | "recent" | "active-loads" | "employees" | "import-export" | "inventory"
+  | "funnel" | "sankey" | "burndown" | "kpi-hero" | "scorecard" | "story-strip" | "yard-map";
 
 export type PanelDef = {
   id: VizWidgetId;
@@ -45,6 +47,13 @@ export const VIZ_CATALOG: WidgetCatalogEntry[] = [
   { id: "employees", title: "Manage Employees", blurb: "Crew roster", defaultColSpan: 4, defaultRowSpan: 3, Icon: Users, jewel: JEWEL.indigo },
   { id: "import-export", title: "Import / Export Queue", blurb: "Pipeline status", defaultColSpan: 4, defaultRowSpan: 3, Icon: ArrowLeftRight, jewel: JEWEL.lime },
   { id: "inventory", title: "Stock & Inventory", blurb: "Levels and capacity", defaultColSpan: 4, defaultRowSpan: 3, Icon: Package, jewel: JEWEL.lime },
+  { id: "funnel", title: "Throughput Funnel", blurb: "Released → ship stages", defaultColSpan: 4, defaultRowSpan: 4, Icon: Filter, jewel: JEWEL.viridian },
+  { id: "sankey", title: "Bottleneck Sankey", blurb: "Status-code transitions", defaultColSpan: 6, defaultRowSpan: 4, Icon: GitBranch, jewel: JEWEL.indigo },
+  { id: "burndown", title: "Backlog Burn-down", blurb: "Remaining jobs this week", defaultColSpan: 4, defaultRowSpan: 3, Icon: Flame, jewel: JEWEL.lime },
+  { id: "kpi-hero", title: "KPI Hero", blurb: "Hero metric + sparkline", defaultColSpan: 4, defaultRowSpan: 3, Icon: Sparkles, jewel: JEWEL.indigo },
+  { id: "scorecard", title: "Executive Scorecard", blurb: "Safety · quality · delivery · cost", defaultColSpan: 4, defaultRowSpan: 3, Icon: LayoutTemplate, jewel: JEWEL.chrome },
+  { id: "story-strip", title: "Story Strip", blurb: "Three charts + caption", defaultColSpan: 6, defaultRowSpan: 3, Icon: BookOpen, jewel: JEWEL.viridian },
+  { id: "yard-map", title: "Yard Map", blurb: "Schematic load counts", defaultColSpan: 4, defaultRowSpan: 4, Icon: Map, jewel: JEWEL.indigo },
 ];
 
 export const PANEL_META: Record<string, { title: string; blurb: string }> = Object.fromEntries(

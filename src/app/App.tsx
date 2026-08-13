@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { LoginPage } from "./LoginPage";
 import { C, applyColorTokens } from "./colorTokens";
 import { Sidebar, TopBar, crumbsFor } from "./shell/chrome";
@@ -20,10 +20,13 @@ export default function App() {
   const [pdfSeed, setPdfSeed] = useState<PdfBlockKind | null>(null);
   const [pdfKey, setPdfKey] = useState(0);
 
-  useEffect(() => {
-    applyColorTokens(isDark);
-    document.documentElement.classList.toggle("dark", isDark);
-  }, [isDark]);
+  // Apply synchronously during render so C + CSS vars match isDark before paint.
+  applyColorTokens(isLoggedIn ? isDark : false);
+
+  const setDark = (next: boolean) => {
+    applyColorTokens(next);
+    setIsDark(next);
+  };
 
   const openPdf = (seed?: PdfBlockKind | null) => {
     setIsEditing(false);
@@ -34,7 +37,6 @@ export default function App() {
   };
 
   if (!isLoggedIn) {
-    applyColorTokens(false);
     return <LoginPage C={C} onLogin={() => setIsLoggedIn(true)} />;
   }
 
@@ -56,12 +58,13 @@ export default function App() {
           setMode("dashboard");
           setPdfSeed(null);
         }}
-        onToggleDark={() => setIsDark((v) => !v)}
+        onToggleDark={setDark}
         onLogout={() => {
           setIsLoggedIn(false);
           setIsEditing(false);
           setActiveOp(null);
           setMode("dashboard");
+          setDark(false);
         }}
       />
 
