@@ -302,7 +302,7 @@ function StatusPill({
       className="px-1.5 py-0.5 rounded"
       style={{
         fontFamily: "'DM Mono', monospace",
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 700,
         letterSpacing: "0.04em",
         ...styles,
@@ -518,8 +518,8 @@ function PanelHeader({ title, accent }: { title: string; accent: string }) {
       <span
         style={{
           fontFamily: "'DM Mono', monospace",
-          fontSize: 13,
-          fontWeight: 600,
+          fontSize: 14,
+          fontWeight: 700,
           color: accent,
           letterSpacing: "0.07em",
           textTransform: "uppercase",
@@ -544,7 +544,7 @@ function StatContent({ id }: { id: string }) {
         <span
           style={{
             fontFamily: "'Lato', sans-serif",
-            fontSize: 13,
+            fontSize: 14,
             color: metal.text,
             opacity: 0.8,
             textTransform: "uppercase",
@@ -557,10 +557,10 @@ function StatContent({ id }: { id: string }) {
         <Icon size={16} color={metal.text} strokeWidth={1.8} style={{ opacity: 0.8 }} />
       </div>
       <div className="relative z-[1]">
-        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 44, color: metal.text, lineHeight: 1 }}>
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 45, color: metal.text, lineHeight: 1 }}>
           {s.value}
         </p>
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: metal.text, marginTop: 7, opacity: 0.9 }}>
+        <p style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, color: metal.text, marginTop: 7, opacity: 0.9 }}>
           {s.sub}
         </p>
       </div>
@@ -582,7 +582,7 @@ function RecentScansContent() {
             style={{
               width: [72, 74, undefined, 32, 42, 28][i],
               fontFamily: "'DM Mono', monospace",
-              fontSize: 12,
+              fontSize: 13,
               color: C.textMuted,
               textTransform: "uppercase",
               letterSpacing: "0.05em",
@@ -599,11 +599,11 @@ function RecentScansContent() {
             className="flex items-center py-[6px]"
             style={{ borderBottom: `1.5px solid ${C.border}`, background: i % 2 === 0 ? "transparent" : `${C.surfaceAlt}55` }}
           >
-            <div className="w-[72px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary }}>{s.id}</div>
-            <div className="w-[74px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.text }}>{s.part}</div>
-            <div className="flex-1 px-2 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub }}>{s.desc}</div>
-            <div className="w-[32px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>{s.qty}</div>
-            <div className="w-[42px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>{s.time}</div>
+            <div className="w-[72px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary }}>{s.id}</div>
+            <div className="w-[74px] shrink-0 px-2" style={{  fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: C.text }}>{s.part}</div>
+            <div className="flex-1 px-2 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textSub }}>{s.desc}</div>
+            <div className="w-[32px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted }}>{s.qty}</div>
+            <div className="w-[42px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted }}>{s.time}</div>
             <div className="w-[28px] shrink-0 px-2 flex items-center">
               {s.status === "passed" && <CheckCircle size={12} color={C.primary} />}
               {s.status === "review" && <AlertTriangle size={12} color={C.warning} />}
@@ -630,7 +630,7 @@ function QuickSearchContent() {
         <input
           placeholder="Search by part, job, customer, piecemark or scan ID…"
           className="flex-1 bg-transparent outline-none"
-          style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}
+          style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: C.text }}
         />
       </div>
       <div className="flex items-center gap-2 flex-wrap">
@@ -641,7 +641,7 @@ function QuickSearchContent() {
             className="px-3 py-1 rounded-full transition-all"
             style={{
               fontFamily: "'Lato', sans-serif",
-              fontSize: 13,
+              fontSize: 14,
               background: filter === f ? JEWEL.indigo.base : C.surfaceAlt,
               color:      filter === f ? JEWEL.indigo.text : C.textMuted,
               border:     `1.5px solid ${filter === f ? JEWEL.indigo.base : C.border}`,
@@ -653,7 +653,7 @@ function QuickSearchContent() {
         ))}
       </div>
       <div>
-        <p className="mb-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        <p className="mb-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Recent searches
         </p>
         <div className="flex flex-wrap gap-2">
@@ -663,8 +663,8 @@ function QuickSearchContent() {
               className="px-3 py-1 rounded"
               style={{
                 fontFamily: "'DM Mono', monospace",
-                fontSize: 13,
-                fontWeight: 600,
+                fontSize: 14,
+                fontWeight: 700,
                 color: JEWEL.indigo.base,
                 background: `${JEWEL.indigo.base}1A`,
                 border: `1.5px solid ${JEWEL.indigo.base}77`,
@@ -692,15 +692,15 @@ function TasksContent() {
         className="flex-none flex items-center justify-between px-4 py-2"
         style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surfaceAlt }}
       >
-        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted }}>
+        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textMuted }}>
           {tasks.filter((t) => t.status === "done").length}/{tasks.length} complete
         </span>
         <button
           className="flex items-center gap-1 px-2.5 py-1 rounded"
           style={{
             fontFamily: "'Lato', sans-serif",
-            fontSize: 13,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 700,
             color: JEWEL.lime.text,
             background: JEWEL.lime.base,
             border: "none",
@@ -733,7 +733,7 @@ function TasksContent() {
               >
                 {isDone ? <CheckCircle size={14} /> : isProgress ? <Clock size={14} /> : <Circle size={14} />}
               </button>
-              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: isDone ? C.textMuted : C.text, textDecoration: isDone ? "line-through" : "none", flex: 1, lineHeight: 1.5 }}>
+              <span style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 15, color: isDone ? C.textMuted : C.text, textDecoration: isDone ? "line-through" : "none", flex: 1, lineHeight: 1.5 }}>
                 {t.text}
               </span>
               {t.priority === "high" && !isDone && (
@@ -753,9 +753,9 @@ function TimelinesContent() {
       {PROJECTS.map((p) => (
         <div key={p.name} className="py-3" style={{ borderBottom: `1.5px solid ${C.border}` }}>
           <div className="flex items-center justify-between mb-2">
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.text }}>{p.name}</span>
+            <span style={{  fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 14, color: C.text }}>{p.name}</span>
             <div className="flex items-center gap-2">
-              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.textMuted }}>Due {p.due}</span>
+              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted }}>Due {p.due}</span>
               <StatusPill tone={p.status === "at-risk" ? "warn" : "ok"}>
                 {p.status === "at-risk" ? "AT RISK" : "ON TRACK"}
               </StatusPill>
@@ -766,7 +766,7 @@ function TimelinesContent() {
           </div>
           <div className="flex justify-between mt-1">
             {["0%", `${p.progress}%`, "100%"].map((v) => (
-              <span key={v} style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted }}>{v}</span>
+              <span key={v} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted }}>{v}</span>
             ))}
           </div>
         </div>
@@ -786,12 +786,12 @@ function CalendarContent() {
     <div className="flex flex-col h-full px-4 py-3 gap-2">
       <div className="flex items-center justify-between mb-1">
         <button style={{ color: C.textMuted, cursor: "pointer" }}><ChevronLeft size={14} /></button>
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: C.text }}>August 2026</span>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 16, color: C.text }}>August 2026</span>
         <button style={{ color: C.textMuted, cursor: "pointer" }}><ChevronRight size={14} /></button>
       </div>
       <div className="grid grid-cols-7">
         {days.map((d) => (
-          <div key={d} className="text-center py-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>{d}</div>
+          <div key={d} className="text-center py-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 flex-1">
@@ -805,7 +805,7 @@ function CalendarContent() {
                   style={{
                     fontFamily: "'DM Mono', monospace",
                     fontSize: isToday ? 13 : 12,
-                    fontWeight: isToday ? 500 : 400,
+                    fontWeight: d < TODAY && !isToday ? 400 : 700,
                     color:      isToday ? C.primaryFg : d < TODAY ? C.textMuted : C.text,
                     background: isToday ? C.primary    : "transparent",
                   }}
@@ -848,10 +848,10 @@ function ActiveLoadsContent({
             }}
           >
             <Truck size={14} color={C.primary} />
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary, width: 64 }}>{l.id}</span>
-            <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{l.dest}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: C.primary, width: 64 }}>{l.id}</span>
+            <span className="flex-1 truncate" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 15, color: C.text }}>{l.dest}</span>
             <StatusPill tone={loadStatusTone(l.status)}>{l.status}</StatusPill>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>{l.eta}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted }}>{l.eta}</span>
           </div>
         );
       })}
@@ -870,7 +870,7 @@ function EmployeesContent({
     <div className="flex flex-col overflow-hidden h-full">
       <div className="flex-none flex px-4 py-1.5" style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surfaceAlt }}>
         {["Name", "Role", "Station", "Shift"].map((h) => (
-          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
+          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
         ))}
       </div>
       <div className="flex-1 overflow-y-auto">
@@ -888,10 +888,10 @@ function EmployeesContent({
                 cursor: onSelect ? "pointer" : "default",
               }}
             >
-              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{e.name}</div>
-              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textSub }}>{e.role}</div>
-              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted }}>{e.station}</div>
-              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary }}>{e.shift}</div>
+              <div className="flex-1" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 15, color: C.text }}>{e.name}</div>
+              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>{e.role}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: C.textMuted }}>{e.station}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: C.primary }}>{e.shift}</div>
             </div>
           );
         })}
@@ -924,9 +924,9 @@ function ImportExportContent({
             }}
           >
             <ArrowLeftRight size={14} color={C.textMuted} />
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary, width: 52 }}>{q.id}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary, width: 52 }}>{q.id}</span>
             <StatusPill tone="accent">{q.type}</StatusPill>
-            <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{q.name}</span>
+            <span className="flex-1 truncate" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 15, color: C.text }}>{q.name}</span>
             <StatusPill tone={queueStatusTone(q.status)}>
               {q.status}
             </StatusPill>
@@ -965,11 +965,11 @@ function InventoryContent({
           >
             <div className="flex items-center justify-between mb-1.5 gap-2">
               <div className="min-w-0">
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary }}>{s.sku}</span>
-                <span className="ml-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{s.name}</span>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary }}>{s.sku}</span>
+                <span className="ml-2" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 15, color: C.text }}>{s.name}</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted }}>
                   {s.level}/{s.capacity}
                 </span>
                 {low && <StatusPill tone="danger">LOW</StatusPill>}
@@ -994,7 +994,7 @@ function SimpleActionListContent({ title, items }: { title: string; items: strin
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `1.5px solid ${C.border}` }}>
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
           {title}
         </span>
       </div>
@@ -1003,7 +1003,7 @@ function SimpleActionListContent({ title, items }: { title: string; items: strin
           <div
             key={item}
             className="px-3 py-2.5 rounded-md"
-            style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}`, fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}
+            style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}`,  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: C.text }}
           >
             {item}
           </div>
@@ -1018,7 +1018,7 @@ function ReferenceDataListContent() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `1.5px solid ${C.border}` }}>
-        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textMuted }}>
+        <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textMuted }}>
           Open to edit customers, carriers, and codes.
         </span>
       </div>
@@ -1031,8 +1031,8 @@ function ReferenceDataListContent() {
               borderBottom: `1.5px solid ${C.border}`,
               background: i % 2 ? `${C.surfaceAlt}55` : "transparent",
               fontFamily: "'Outfit', sans-serif",
-              fontWeight: 600,
-              fontSize: 15,
+              fontWeight: 700,
+              fontSize: 16,
               color: C.text,
             }}
           >
@@ -1054,7 +1054,7 @@ function DangerZoneListContent() {
     <div className="flex flex-col h-full overflow-hidden" style={{ background: C.dangerBg }}>
       <div className="flex-none flex items-center gap-2 px-4 py-2" style={{ background: `${C.danger}18`, borderBottom: `1.5px solid ${C.danger}44` }}>
         <ShieldAlert size={14} color={C.danger} />
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.danger, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.danger, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Destructive operations
         </span>
       </div>
@@ -1073,7 +1073,7 @@ function DangerZoneListContent() {
                 background: C.surface,
               }}
             >
-              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}>{r.label}</span>
+              <span style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: C.text }}>{r.label}</span>
               <StatusPill tone={r.tone}>
                 {r.tone === "danger" ? "PURGE" : r.tone === "warn" ? "LIVE" : "RECALL"}
               </StatusPill>
@@ -1096,7 +1096,7 @@ function JobListContent({
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-none flex px-4 py-1.5" style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surfaceAlt }}>
         {["Job #", "Customer", "Name"].map((h) => (
-          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
+          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted, textTransform: "uppercase" }}>{h}</div>
         ))}
       </div>
       <div className="flex-1 overflow-y-auto">
@@ -1114,9 +1114,9 @@ function JobListContent({
                 cursor: onSelect ? "pointer" : "default",
               }}
             >
-              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary }}>{job.number}</div>
-              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted }}>{job.customer}</div>
-              <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{job.name}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: C.primary }}>{job.number}</div>
+              <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: C.textMuted }}>{job.customer}</div>
+              <div className="flex-1" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 15, color: C.text }}>{job.name}</div>
             </div>
           );
         })}
@@ -1232,10 +1232,10 @@ const WIDGET_DETAIL_TABS: Record<string, DetailTab[]> = {
 function detailField(label: string, value: string) {
   return (
     <div className="flex flex-col gap-1">
-      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
         {label}
       </span>
-      <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}>{value || "—"}</span>
+      <span style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: C.text }}>{value || "—"}</span>
     </div>
   );
 }
@@ -1258,7 +1258,7 @@ function LoadInfoRow({
         style={{
           width: 118,
           fontFamily: "'Lato', sans-serif",
-          fontSize: 14,
+          fontSize: 15,
           color: C.textSub,
         }}
       >
@@ -1301,8 +1301,8 @@ function LoadInfoSelect({
         border: "none",
         background: "transparent",
         outline: "none",
-        fontFamily: "'Lato', sans-serif",
-        fontSize: 14,
+         fontFamily: "'Lato', sans-serif", fontWeight: 700,
+        fontSize: 15,
         color: C.text,
         cursor: "pointer",
       }}
@@ -1324,8 +1324,8 @@ function LoadInfoInput({ value }: { value: string }) {
         border: "none",
         background: "transparent",
         outline: "none",
-        fontFamily: "'Lato', sans-serif",
-        fontSize: 14,
+         fontFamily: "'Lato', sans-serif", fontWeight: 700,
+        fontSize: 15,
         color: C.text,
       }}
     />
@@ -1341,7 +1341,7 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
 
   const fieldStyle = {
     fontFamily: "'Lato', sans-serif" as const,
-    fontSize: 14,
+    fontSize: 15,
     color: C.textSub,
   };
 
@@ -1426,7 +1426,7 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
             </LoadInfoRow>
           </div>
 
-          <div className="flex flex-col gap-1.5 pb-1 min-w-[200px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textSub }}>
+          <div className="flex flex-col gap-1.5 pb-1 min-w-[200px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>
             <div className="flex justify-between gap-4"><span>Bar Code ID Numbers:</span><span style={{ fontFamily: "'DM Mono', monospace" }}>{totalMarks}</span></div>
             <div className="flex justify-between gap-4"><span>Total Pieces:</span><span style={{ fontFamily: "'DM Mono', monospace" }}>{totalPieces}</span></div>
             <div className="flex justify-between gap-4"><span>Total Weight:</span><span style={{ fontFamily: "'DM Mono', monospace" }}>{load.weightLbs}</span></div>
@@ -1447,7 +1447,7 @@ function ActiveLoadInformationForm({ load }: { load: ActiveLoad }) {
               className="px-3 py-1.5 rounded-sm"
               style={{
                 fontFamily: "'Lato', sans-serif",
-                fontSize: 14,
+                fontSize: 15,
                 minWidth: 110,
                 cursor: "pointer",
                 background: btn.primary ? C.primary : C.surfaceAlt,
@@ -1469,14 +1469,14 @@ function stubForm(fields: { label: string; value?: string }[], cta = "Save") {
     <div className="flex flex-col gap-3 p-4 max-w-lg">
       {fields.map((f) => (
         <label key={f.label} className="flex flex-col gap-1">
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, textTransform: "uppercase" }}>{f.label}</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted, textTransform: "uppercase" }}>{f.label}</span>
           <input
             defaultValue={f.value ?? ""}
-            style={{ height: 36, borderRadius: 6, border: `1.5px solid ${C.border}`, background: C.surfaceAlt, padding: "0 10px", fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}
+            style={{ height: 36, borderRadius: 6, border: `1.5px solid ${C.border}`, background: C.surfaceAlt, padding: "0 10px",  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: C.text }}
           />
         </label>
       ))}
-      <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 12, cursor: "pointer" }}>
+      <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, cursor: "pointer" }}>
         {cta}
       </button>
     </div>
@@ -1498,11 +1498,11 @@ function DangerConfirmPanel({
       <div className="flex items-start gap-2">
         <ShieldAlert size={18} color={C.danger} className="mt-0.5 shrink-0" />
         <div>
-          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 17, color: C.danger }}>{title}</p>
-          <p className="mt-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub, lineHeight: 1.6 }}>{body}</p>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 18, color: C.danger }}>{title}</p>
+          <p className="mt-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 16, color: C.textSub, lineHeight: 1.6 }}>{body}</p>
         </div>
       </div>
-      <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text, cursor: "pointer" }}>
+      <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: C.text, cursor: "pointer" }}>
         <TokenCheckbox checked={armed} onChange={setArmed} />
         I understand this cannot be undone without recall / backup
       </label>
@@ -1515,7 +1515,7 @@ function DangerConfirmPanel({
           color: C.primaryFg,
           border: "none",
           fontFamily: "'DM Mono', monospace",
-          fontSize: 12,
+          fontSize: 13,
           cursor: armed ? "pointer" : "not-allowed",
           opacity: armed ? 1 : 0.6,
         }}
@@ -1542,7 +1542,7 @@ function WidgetDetailTabBody({
   if (needsSelection && !selectedKey) {
     return (
       <div className="flex items-center justify-center h-full px-6 text-center">
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textMuted, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 16, color: C.textMuted, lineHeight: 1.6 }}>
           Select an item in the list on the left to view and edit related details here.
         </p>
       </div>
@@ -1577,19 +1577,19 @@ function WidgetDetailTabBody({
           {detailField("On hand", String(item.level))}
           {detailField("Capacity", String(item.capacity))}
           <div className="flex flex-col gap-1">
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted, textTransform: "uppercase" }}>Fill</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted, textTransform: "uppercase" }}>Fill</span>
             <div className="flex items-center gap-2">
-              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}>{pct}%</span>
+              <span style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: C.text }}>{pct}%</span>
               <StatusPill tone={fillTone}>{low ? "LOW" : high ? "FULL" : "OK"}</StatusPill>
             </div>
           </div>
         </div>
       );
     }
-    if (tabId === "reorder") return <div className="p-4 flex flex-col gap-3"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>Reorder point: {Math.round(item.capacity * 0.25)}. Suggested order: {Math.max(0, Math.round(item.capacity * 0.6) - item.level)} units.</p><button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 12, border: "none", cursor: "pointer" }}>Create PO</button></div>;
+    if (tabId === "reorder") return <div className="p-4 flex flex-col gap-3"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 16, color: C.textSub }}>Reorder point: {Math.round(item.capacity * 0.25)}. Suggested order: {Math.max(0, Math.round(item.capacity * 0.6) - item.level)} units.</p><button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 13, border: "none", cursor: "pointer" }}>Create PO</button></div>;
     return (
       <div className="p-4 flex items-center gap-3">
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>Bin capacity utilization is {pct}%.</p>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 16, color: C.textSub }}>Bin capacity utilization is {pct}%.</p>
         <StatusPill tone={fillTone}>{low ? "LOW" : high ? "FULL" : "OK"}</StatusPill>
       </div>
     );
@@ -1648,7 +1648,7 @@ function WidgetDetailTabBody({
     };
     return (
       <div className="flex flex-col gap-3 p-4 max-w-lg">
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>{titles[tabId] ?? "Report"}</p>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 16, color: C.textSub }}>{titles[tabId] ?? "Report"}</p>
         {stubForm([{ label: "Job Number", value: "" }, { label: "Date Range", value: "This week" }], "Generate")}
       </div>
     );
@@ -1664,7 +1664,7 @@ function WidgetDetailTabBody({
   const meta = PANEL_META[widgetId];
   return (
     <div className="p-4 flex flex-col gap-3">
-      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub, lineHeight: 1.7 }}>
+      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 16, color: C.textSub, lineHeight: 1.7 }}>
         {meta?.description ?? "Related details for this widget."}
       </p>
       {selectedKey && detailField("Selected", selectedKey)}
@@ -1741,7 +1741,7 @@ function FloatingWindowShell({
           className="flex-none flex items-center justify-between px-4 py-3"
           style={{ background: headerBg, color: headerFg }}
         >
-          <span className="flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 21 }}>
+          <span className="flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 22 }}>
             {danger && <ShieldAlert size={18} />}
             {title}
           </span>
@@ -1851,7 +1851,7 @@ function WidgetDetailWindow({
             style={{ borderRight: isCompact ? "none" : `1.5px solid ${C.border}`, borderBottom: isCompact ? `1.5px solid ${C.border}` : "none" }}
           >
             <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `1.5px solid ${C.border}` }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
                 {selectable ? "Select an item" : "Widget"}
               </span>
             </div>
@@ -1881,7 +1881,7 @@ function WidgetDetailWindow({
                     className="px-3 py-2 whitespace-nowrap"
                     style={{
                       fontFamily: "'DM Mono', monospace",
-                      fontSize: 12,
+                      fontSize: 13,
                       letterSpacing: "0.04em",
                       textTransform: "uppercase",
                       color: active ? C.primary : C.textMuted,
@@ -1987,10 +1987,10 @@ function SettingsWindow({
     >
       <div className="p-5 flex flex-col gap-5">
         <div>
-          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: C.text, marginBottom: 6 }}>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 16, color: C.text, marginBottom: 6 }}>
             Appearance
           </p>
-          <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textMuted, marginBottom: 14, lineHeight: 1.5 }}>
+          <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textMuted, marginBottom: 14, lineHeight: 1.5 }}>
             Switch between light and dark dashboard themes.
           </p>
           <DarkModeToggle dark={isDark} onToggle={onToggleDark} onTaskbar={false} />
@@ -2036,7 +2036,7 @@ function TaskbarWindowChip({
         className="truncate"
         style={{
           fontFamily: "'DM Mono', monospace",
-          fontSize: 9,
+          fontSize: 10,
           letterSpacing: "0.04em",
           textTransform: "uppercase",
           lineHeight: 1.2,
@@ -2269,13 +2269,13 @@ function WidgetPickerDropdown({
         style={{ background: C.surface, border: `1.5px solid ${C.border}`, boxShadow: `0 12px 28px ${C.text}22`, minWidth: 220 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textMuted }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textMuted }}>
           All widgets are already on the dashboard.
         </p>
         <button
           type="button"
           className="mt-2 self-start"
-          style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary, cursor: "pointer" }}
+          style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary, cursor: "pointer" }}
           onClick={onClose}
         >
           Close
@@ -2301,7 +2301,7 @@ function WidgetPickerDropdown({
         className="flex-none flex items-center justify-between px-3 py-2"
         style={{ background: C.surfaceAlt, borderBottom: `1.5px solid ${C.border}` }}
       >
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, letterSpacing: "0.05em", color: C.text, textTransform: "uppercase" }}>
+        <span style={{  fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: "0.05em", color: C.text, textTransform: "uppercase" }}>
           Add widget
         </span>
         <button type="button" onClick={onClose} style={{ color: C.textMuted, cursor: "pointer", lineHeight: 0 }}>
@@ -2326,13 +2326,13 @@ function WidgetPickerDropdown({
               <span className="min-w-0 flex-1">
                 <span
                   className="block"
-                  style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 14, color: C.text }}
+                  style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 15, color: C.text }}
                 >
                   {opt.title}
                 </span>
                 <span
                   className="block"
-                  style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.textSub, lineHeight: 1.35 }}
+                  style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textSub, lineHeight: 1.35 }}
                 >
                   {opt.blurb}
                 </span>
@@ -2474,7 +2474,7 @@ function DarkModeToggle({
           }}
         />
       </span>
-      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: "0.04em", textTransform: "uppercase" }}>
         {dark ? "Dark" : "Light"}
       </span>
     </button>
@@ -2517,7 +2517,7 @@ function TaskbarBtn({
       <span
         style={{
           fontFamily:    "'DM Mono', monospace",
-          fontSize:       9,
+          fontSize: 10,
           letterSpacing: "0.05em",
           textTransform: "uppercase",
           lineHeight:     1.3,
@@ -2558,7 +2558,7 @@ function CompactStatStrip() {
                 className="truncate"
                 style={{
                   fontFamily: "'Lato', sans-serif",
-                  fontSize: 12,
+                  fontSize: 13,
                   color: metal.text,
                   opacity: 0.8,
                   textTransform: "uppercase",
@@ -2570,10 +2570,10 @@ function CompactStatStrip() {
               </span>
               <Icon size={14} color={metal.text} strokeWidth={1.8} className="shrink-0" style={{ opacity: 0.8 }} />
             </div>
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 28, color: metal.text, lineHeight: 1 }} className="relative z-[1]">
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 29, color: metal.text, lineHeight: 1 }} className="relative z-[1]">
               {s.value}
             </p>
-            <p className="truncate relative z-[1]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: metal.text, opacity: 0.9 }}>
+            <p className="truncate relative z-[1]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 13, color: metal.text, opacity: 0.9 }}>
               {s.sub}
             </p>
           </div>
@@ -2619,8 +2619,8 @@ function CompactCollapsible({
         <span
           style={{
             fontFamily: "'DM Mono', monospace",
-            fontSize: 13,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 700,
             color: jewel.base,
             letterSpacing: "0.07em",
             textTransform: "uppercase",
@@ -2788,7 +2788,7 @@ function AddNewJobForm({
     background: "transparent",
     outline: "none",
     fontFamily: "'Lato', sans-serif",
-    fontSize: 14,
+    fontSize: 15,
     color: C.text,
   };
 
@@ -2803,10 +2803,10 @@ function AddNewJobForm({
         opts?.metric || opts?.lbs ? (
           <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
             {opts?.lbs && (
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>lbs</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted }}>lbs</span>
             )}
             {opts?.metric && (
-              <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textSub }}>
+              <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>
                 <TokenCheckbox checked={metricJob} onChange={setMetricJob} />
                 Metric Job
               </label>
@@ -2842,7 +2842,7 @@ function AddNewJobForm({
       onSubmit={(e) => e.preventDefault()}
     >
       <div className="flex flex-col gap-2 max-w-3xl">
-        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
           {mode === "add" ? "Add New Job" : `Edit Job${job ? ` — ${job.number}` : ""}`}
         </p>
         {renderField("jobNumber", "Job Number")}
@@ -2874,7 +2874,7 @@ function AddNewJobForm({
             ["validatePipes", "Validate Pipes"],
             ["validateFittings", "Validate Fittings"],
           ] as const).map(([key, label]) => (
-            <label key={key} className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textSub }}>
+            <label key={key} className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>
               <TokenCheckbox
                 checked={checks[key]}
                 onChange={(next) => setChecks((c) => ({ ...c, [key]: next }))}
@@ -2890,7 +2890,7 @@ function AddNewJobForm({
             className="px-3 py-1.5 rounded-sm flex items-center justify-center gap-1.5"
             style={{
               fontFamily: "'Lato', sans-serif",
-              fontSize: 14,
+              fontSize: 15,
               minWidth: 110,
               cursor: "pointer",
               background: C.primary,

@@ -162,7 +162,7 @@ function AsciiLogoField({ bg, scanColor }: { bg: string; scanColor: string }) {
 
     const optsBase: AsciiOptions = {
       ...DEFAULT_OPTIONS,
-      fontSize: 5,
+      fontSize: 6,
       // Must stay > 0 — engine multiplies fontSize by charSpacing for cell size
       charSpacing: 1,
       colorMode: "fullcolor",
@@ -287,7 +287,7 @@ export function LoginPage({
     height: 44,
     padding: "0 14px",
     fontFamily: "'Lato', sans-serif",
-    fontSize: 16,
+    fontSize: 17,
     color: C.text,
     background: C.surface,
     border: `1.5px solid ${C.border}`,
@@ -326,8 +326,8 @@ export function LoginPage({
           <span
             style={{
               fontFamily: "'Outfit', sans-serif",
-              fontWeight: 600,
-              fontSize: 32,
+              fontWeight: 700,
+              fontSize: 33,
               letterSpacing: "0.18em",
               color: C.text,
               lineHeight: 1,
@@ -392,8 +392,8 @@ export function LoginPage({
               border: "none",
               cursor: "pointer",
               fontFamily: "'Outfit', sans-serif",
-              fontWeight: 600,
-              fontSize: 17,
+              fontWeight: 700,
+              fontSize: 18,
               letterSpacing: "0.04em",
               color: "#FFFFFF",
               background: C.accent,

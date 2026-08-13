@@ -16,8 +16,8 @@ const T = {
 };
 
 const labelStyle: CSSProperties = {
-  fontFamily: "'Lato', sans-serif",
-  fontSize: 15,
+  fontFamily: "'Lato', sans-serif", fontWeight: 700,
+  fontSize: 16,
   color: T.text,
   minWidth: 130,
   flexShrink: 0,
@@ -31,15 +31,15 @@ const inputStyle: CSSProperties = {
   border: `1.5px solid ${T.border}`,
   background: T.surface,
   padding: "0 10px",
-  fontFamily: "'Lato', sans-serif",
-  fontSize: 15,
+  fontFamily: "'Lato', sans-serif", fontWeight: 700,
+  fontSize: 16,
   color: T.text,
   outline: "none",
 };
 
 const hintStyle: CSSProperties = {
   fontFamily: "'Lato', sans-serif",
-  fontSize: 13,
+  fontSize: 14,
   color: T.textMuted,
   flexShrink: 0,
 };
@@ -52,7 +52,7 @@ const btnPrimary: CSSProperties = {
   background: T.primary,
   color: T.primaryFg,
   fontFamily: "'Lato', sans-serif",
-  fontSize: 15,
+  fontSize: 16,
   cursor: "pointer",
 };
 
@@ -64,7 +64,7 @@ const btnDark: CSSProperties = {
   background: T.text,
   color: T.surface,
   fontFamily: "'Lato', sans-serif",
-  fontSize: 15,
+  fontSize: 16,
   cursor: "pointer",
 };
 
@@ -195,7 +195,7 @@ function FileUploadField({ acceptLabel }: { acceptLabel: string }) {
       style={{ border: `2px dashed ${T.border}`, background: T.surfaceAlt }}
     >
       <Upload size={20} color={T.textMuted} />
-      <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.textMuted }}>
+      <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 16, color: T.textMuted }}>
         Drop file or browse · {acceptLabel}
       </span>
       <button type="button" style={btnPrimary}>Choose File</button>
@@ -224,7 +224,7 @@ function NestedTabs({
             className="px-3 py-2"
             style={{
               fontFamily: "'DM Mono', monospace",
-              fontSize: 12,
+              fontSize: 13,
               letterSpacing: "0.04em",
               textTransform: "uppercase",
               cursor: "pointer",
@@ -326,7 +326,7 @@ export function ImportFilterForm({
         )}
 
         {kind === "kiss" && (
-          <label className="flex items-center gap-[7px] mt-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.text, cursor: "pointer" }}>
+          <label className="flex items-center gap-[7px] mt-1" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: T.text, cursor: "pointer" }}>
             <TokenCheckbox />
             Use KISS File Instead of PowerFab
           </label>
@@ -337,10 +337,10 @@ export function ImportFilterForm({
             className="mt-2 p-3 rounded-md flex flex-col gap-2"
             style={{ background: T.dangerBg, border: `1.5px solid ${T.danger}` }}
           >
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: T.danger }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 16, color: T.danger }}>
               Import Options
             </span>
-            <span style={{ fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, color: T.text }}>
+            <span style={{ fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 15, color: T.text }}>
               Item Wt Rounding
             </span>
             {([
@@ -348,7 +348,7 @@ export function ImportFilterForm({
               ["typical", "Typical Rounding"],
               ["up", "Always Round Up"],
             ] as const).map(([id, label]) => (
-              <label key={id} className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.text, cursor: "pointer" }}>
+              <label key={id} className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: T.text, cursor: "pointer" }}>
                 <TokenRadio name="rounding" checked={rounding === id} onChange={() => setRounding(id)} />
                 {label}
               </label>
@@ -356,7 +356,7 @@ export function ImportFilterForm({
           </div>
         )}
 
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: T.textMuted, marginTop: 4 }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: T.textMuted, marginTop: 4 }}>
           * Multiple filter items may be separated by commas. i.e. 1,2,3
         </p>
 
@@ -426,25 +426,25 @@ function ListPane({
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <div className="flex-none flex items-center gap-3 px-3 py-2" style={{ borderBottom: `1.5px solid ${T.border}`, background: T.surfaceAlt }}>
-        <button type="button" style={{ ...btnDark, height: 30, fontSize: 14 }}>{addLabel}</button>
+        <button type="button" style={{ ...btnDark, height: 30, fontSize: 15 }}>{addLabel}</button>
         {onToggleInactive && (
-          <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: T.text, cursor: "pointer" }}>
+          <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 15, color: T.text, cursor: "pointer" }}>
             <TokenCheckbox checked={!!showInactive} onChange={onToggleInactive} />
             Show InActive
           </label>
         )}
         {title && (
-          <span className="ml-auto" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: T.textMuted, textTransform: "uppercase" }}>{title}</span>
+          <span className="ml-auto" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: T.textMuted, textTransform: "uppercase" }}>{title}</span>
         )}
       </div>
       <div className="flex-none flex px-3 py-1.5" style={{ borderBottom: `1.5px solid ${T.border}`, background: T.surfaceAlt }}>
         {headers.map((h) => (
-          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: T.textMuted, textTransform: "uppercase" }}>{h}</div>
+          <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: T.textMuted, textTransform: "uppercase" }}>{h}</div>
         ))}
       </div>
       <div className="flex-1 overflow-y-auto">
         {rows.length === 0 ? (
-          <p className="px-3 py-4" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: T.textMuted }}>No results found.</p>
+          <p className="px-3 py-4" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.textMuted }}>No results found.</p>
         ) : (
           rows.map((r) => {
             const on = selectedKey === r.key;
@@ -460,7 +460,7 @@ function ListPane({
                 }}
               >
                 {r.cells.map((c, i) => (
-                  <div key={i} className="flex-1 truncate" style={{ fontFamily: i === 0 ? "'DM Mono', monospace" : "'Lato', sans-serif", fontSize: 14, color: i === 0 ? T.primary : T.text }}>{c}</div>
+                  <div key={i} className="flex-1 truncate" style={{ fontFamily: i === 0 ? "'DM Mono', monospace" : "'Lato', sans-serif", fontSize: 15, color: i === 0 ? T.primary : T.text }}>{c}</div>
                 ))}
               </div>
             );
@@ -487,7 +487,7 @@ export function CustomerEditorPanel() {
         />
       </div>
       <div className="min-h-0 flex flex-col overflow-hidden p-3 gap-3">
-        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 18, color: T.text }}>{cust.name}</p>
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 19, color: T.text }}>{cust.name}</p>
         <NestedTabs
           tabs={[
             { id: "customer", label: "Customer" },
@@ -563,7 +563,7 @@ export function CarrierEditorPanel() {
         <div className="flex-1 overflow-y-auto flex flex-col gap-2.5">
           <FormRow label="Carrier #" required><SelectInput options={SAMPLE_CARRIERS.map((c) => c.id)} defaultValue={carrier?.id} /></FormRow>
           <FormRow label="Carrier Name"><TextInput defaultValue={carrier?.name} /></FormRow>
-          <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.text, cursor: "pointer" }}>
+          <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: T.text, cursor: "pointer" }}>
             <TokenCheckbox defaultChecked /> Active
           </label>
           <FormRow label="Line1"><TextInput /></FormRow>
@@ -620,7 +620,7 @@ export function StatusCodesEditorPanel() {
           <FormRow label="Employee Class Codes"><SelectInput options={["<None>", "Fabricator", "Welder"]} /></FormRow>
           <div className="flex flex-col gap-2 mt-2 pt-2" style={{ borderTop: `1.5px solid ${T.border}` }}>
             {STATUS_FLAGS.map((f) => (
-              <label key={f} className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.text, cursor: "pointer" }}>
+              <label key={f} className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: T.text, cursor: "pointer" }}>
                 <TokenCheckbox
                   checked={!!flags[f]}
                   onChange={(v) => setFlags((prev) => ({ ...prev, [f]: v }))}
@@ -661,10 +661,10 @@ export function RoutingCodesEditorPanel() {
         <FormRow label="Description">
           <TextInput defaultValue="Imported Route Code." />
         </FormRow>
-        <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.text, cursor: "pointer" }}>
+        <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: T.text, cursor: "pointer" }}>
           <TokenCheckbox defaultChecked /> Allow Additional Status Codes
         </label>
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: T.textMuted }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: T.textMuted }}>
           Select a code and then double-click to move to Select or deSelect.
         </p>
         <div className="flex-1 min-h-0 grid grid-cols-2 gap-3">
@@ -673,7 +673,7 @@ export function RoutingCodesEditorPanel() {
             { title: "Selected Status Codes", items: selectedCodes, target: "avail" as const },
           ].map((box) => (
             <div key={box.title} className="flex flex-col min-h-0 rounded-md overflow-hidden" style={{ border: `1.5px solid ${T.border}` }}>
-              <div className="px-2 py-1.5" style={{ background: T.surfaceAlt, fontFamily: "'DM Mono', monospace", fontSize: 10, color: T.textMuted, textTransform: "uppercase" }}>
+              <div className="px-2 py-1.5" style={{ background: T.surfaceAlt, fontFamily: "'DM Mono', monospace", fontSize: 11, color: T.textMuted, textTransform: "uppercase" }}>
                 {box.title}
               </div>
               <div className="flex-1 overflow-y-auto">
@@ -682,7 +682,7 @@ export function RoutingCodesEditorPanel() {
                     key={item}
                     type="button"
                     className="w-full text-left px-2 py-1.5"
-                    style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: T.text, borderBottom: `1.5px solid ${T.border}`, background: "transparent", cursor: "pointer" }}
+                    style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 15, color: T.text, borderBottom: `1.5px solid ${T.border}`, background: "transparent", cursor: "pointer" }}
                     onDoubleClick={() => {
                       if (box.target === "sel") setSelectedCodes((s) => [...s, item]);
                       else setSelectedCodes((s) => s.filter((x) => x !== item));
@@ -712,7 +712,7 @@ export function EmployeeInfoEditor({
     : [emp.name, ""];
   return (
     <div className="flex flex-col h-full min-h-0 p-3 gap-3">
-      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 18, color: T.text }}>{emp.name}</p>
+      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 19, color: T.text }}>{emp.name}</p>
       <NestedTabs
         tabs={[
           { id: "employee", label: "Employee" },
@@ -735,13 +735,13 @@ export function EmployeeInfoEditor({
             <FormRow label="3rd Party Login"><TextInput /></FormRow>
             <FormRow label="Email"><TextInput /></FormRow>
             <FormRow label="Phone"><TextInput /></FormRow>
-            <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.text, cursor: "pointer" }}>
+            <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: T.text, cursor: "pointer" }}>
               <TokenCheckbox /> Activity Logging
             </label>
-            <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.text, cursor: "pointer" }}>
+            <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 16, color: T.text, cursor: "pointer" }}>
               <TokenCheckbox defaultChecked /> Employee Active
             </label>
-            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: T.textMuted }}>Login Name: Not associated</p>
+            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.textMuted }}>Login Name: Not associated</p>
           </>
         )}
         {tab === "personal" && (
