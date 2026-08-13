@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  Search, Plus, Settings, HelpCircle, FileDown, LayoutGrid, X,
+  Search, Plus, Settings, HelpCircle, FileDown, LayoutGrid, X, Minus,
   CheckCircle, AlertTriangle, XCircle, TrendingUp, BarChart3,
   ChevronLeft, ChevronRight, ChevronDown, Circle, Clock, ScanLine,
   Truck, Users, ArrowLeftRight, Package, Moon, Sun, LogOut,
@@ -97,7 +97,7 @@ const WIDGET_CATALOG: WidgetCatalogEntry[] = [
   { id: "stat4", title: "On-Time Rate", blurb: "KPI — delivery performance", description: "Percentage of jobs delivered on or before the scheduled completion date. Calculated over a rolling 30-day window and compared to the previous period.", defaultColSpan: 2, defaultRowSpan: 1, Icon: TrendingUp },
   { id: "recent", title: "Recent Scans", blurb: "Live shop-floor scan feed", description: "Live feed of the most recent part scans from all scanner units on the shop floor, sorted newest-first. Click any row to open the full scan record and traceability chain.", defaultColSpan: 4, defaultRowSpan: 2, Icon: ScanLine },
   { id: "search", title: "Quick Search", blurb: "Search jobs, parts, customers", description: "Search across all jobs, part numbers, customers, and scan records from one place. Use Find a Piecemark for floor lookups.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Search },
-  { id: "tasks", title: "Today's Tasks", blurb: "Personal daily checklist", description: "Your personal task list for the current working day. High-priority items are flagged in amber. Check off tasks as you complete them — progress is saved automatically.", defaultColSpan: 4, defaultRowSpan: 2, Icon: CheckCircle },
+  { id: "tasks", title: "Today's Tasks", blurb: "Personal daily checklist", description: "Your personal task list for the current working day. High-priority items are flagged in red. Check off tasks as you complete them — progress is saved automatically.", defaultColSpan: 4, defaultRowSpan: 2, Icon: CheckCircle },
   { id: "timelines", title: "Project Timelines", blurb: "Job progress vs schedule", description: "Gantt-style progress view for all active jobs. Progress is calculated from scanned milestones against the planned schedule. At-risk jobs are tracking behind their baseline.", defaultColSpan: 4, defaultRowSpan: 2, Icon: BarChart3 },
   { id: "calendar", title: "Calendar", blurb: "Deadlines and events", description: "Monthly overview. Job deadlines, planned site visits, compliance review dates, and team events appear as marked days. Click any date to see what is scheduled.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Circle },
   { id: "active-loads", title: "Active Loads", blurb: "Loads in transit / staging", description: "Track active outbound and inbound loads — staging status, destination, and estimated departure or arrival times across the yard.", defaultColSpan: 4, defaultRowSpan: 2, Icon: Truck },
@@ -247,32 +247,32 @@ const STATS: {
   Icon: typeof BarChart3;
 }[] = [
   { id: "stat1", label: "Active Jobs",     value: "47",    sub: "+3 since yesterday", metal: JEWEL.viridian, Icon: BarChart3 },
-  { id: "stat2", label: "Scans Today",     value: "183",   sub: "94.0% pass rate",    metal: JEWEL.amber,    Icon: CheckCircle },
+  { id: "stat2", label: "Scans Today",     value: "183",   sub: "94.0% pass rate",    metal: JEWEL.chrome,   Icon: CheckCircle },
   { id: "stat3", label: "Pending Reviews", value: "12",    sub: "3 overdue",          metal: JEWEL.indigo,   Icon: AlertTriangle },
-  { id: "stat4", label: "On-Time Rate",    value: "94.2%", sub: "↑ 2.1pp this week", metal: JEWEL.cherry,   Icon: TrendingUp },
+  { id: "stat4", label: "On-Time Rate",    value: "94.2%", sub: "↑ 2.1pp this week", metal: JEWEL.lime,     Icon: TrendingUp },
 ];
 
 function jewelForStat(id: string): JewelMetal {
   return STATS.find((s) => s.id === id)?.metal ?? JEWEL.indigo;
 }
 
-/** Per-widget jewel accent — ~equal viridian / amber / indigo; cherry only on records-danger. */
+/** Per-widget accents — former amber edges → lime; records-danger keeps red. */
 const PANEL_JEWEL: Record<string, JewelMetal> = {
   recent: JEWEL.viridian,
   timelines: JEWEL.viridian,
   calendar: JEWEL.viridian,
   "active-loads": JEWEL.viridian,
-  tasks: JEWEL.amber,
-  "import-export": JEWEL.amber,
-  "piecemark-entry": JEWEL.amber,
-  "admin-system": JEWEL.amber,
-  inventory: JEWEL.amber,
+  tasks: JEWEL.lime,
+  "import-export": JEWEL.lime,
+  "piecemark-entry": JEWEL.lime,
+  "admin-system": JEWEL.lime,
+  inventory: JEWEL.lime,
   search: JEWEL.indigo,
   employees: JEWEL.indigo,
   "job-piecemark": JEWEL.indigo,
   "reports-labels": JEWEL.indigo,
   "reference-data": JEWEL.indigo,
-  "records-danger": JEWEL.cherry,
+  "records-danger": JEWEL.danger,
 };
 
 function panelJewel(id: string): JewelMetal {
@@ -283,7 +283,8 @@ function StatusPill({
   tone,
   children,
 }: {
-  tone: "ok" | "warn" | "danger";
+  /** ok=green success · warn=amber medium · danger=red high · accent=indigo neutral · muted=quiet meta */
+  tone: "ok" | "warn" | "danger" | "accent" | "muted";
   children: React.ReactNode;
 }) {
   const styles =
@@ -291,7 +292,11 @@ function StatusPill({
       ? { color: C.primary, background: `${C.primary}2E`, border: `1.5px solid ${C.primary}AA` }
       : tone === "warn"
       ? { color: C.warning, background: `${C.warning}33`, border: `1.5px solid ${C.warning}BB` }
-      : { color: C.danger, background: `${C.danger}2E`, border: `1.5px solid ${C.danger}AA` };
+      : tone === "danger"
+      ? { color: C.danger, background: `${C.danger}2E`, border: `1.5px solid ${C.danger}AA` }
+      : tone === "accent"
+      ? { color: C.accent, background: `${C.accent}22`, border: `1.5px solid ${C.accent}88` }
+      : { color: C.textMuted, background: C.surfaceAlt, border: `1.5px solid ${C.border}` };
   return (
     <span
       className="px-1.5 py-0.5 rounded"
@@ -306,6 +311,28 @@ function StatusPill({
       {children}
     </span>
   );
+}
+
+function loadStatusTone(status: string): "ok" | "warn" | "danger" | "accent" | "muted" {
+  switch (status) {
+    case "Arriving":
+    case "Delivered":
+      return "ok";
+    case "Loading":
+    case "On hold":
+      return "warn";
+    case "Staging":
+    case "In transit":
+      return "accent";
+    default:
+      return "muted";
+  }
+}
+
+function queueStatusTone(status: string): "ok" | "warn" | "danger" | "accent" {
+  if (status === "Failed") return "danger";
+  if (status === "Running") return "ok";
+  return "accent"; // Queued / waiting
 }
 
 const SCANS = [
@@ -447,9 +474,34 @@ const AUG_OFFSET = 5; // Monday-first: blank cells before Aug 1 (Saturday)
 const AUG_DAYS   = 31;
 const TODAY       = 2; // August 2, 2026
 
-/** Shared dim: hover sibling ghost ↔ dashboard behind modal (midpoint of the two extremes). */
+/** Shared dim: hover sibling ghost ↔ dashboard behind open windows. */
 const GHOST_OPACITY = 0.58;
 const GHOST_SATURATE = "saturate(0.58)";
+
+const KISS_WINDOW_ID = "kiss-import";
+const SETTINGS_WINDOW_ID = "settings";
+
+type AppWindow = {
+  id: string;
+  minimized: boolean;
+  z: number;
+};
+
+function windowTitle(id: string): string {
+  if (id === KISS_WINDOW_ID) return "KISS Import";
+  if (id === SETTINGS_WINDOW_ID) return "Settings";
+  return PANEL_META[id]?.title ?? id;
+}
+
+function windowAccent(id: string): string {
+  if (id === KISS_WINDOW_ID) return C.primary;
+  if (id === SETTINGS_WINDOW_ID) return C.accent;
+  return panelJewel(id).base;
+}
+
+function nextZ(windows: AppWindow[]): number {
+  return windows.reduce((m, w) => Math.max(m, w.z), 0) + 1;
+}
 
 // ─── Panel content components ─────────────────────────────────────────────────
 
@@ -649,8 +701,8 @@ function TasksContent() {
             fontFamily: "'Lato', sans-serif",
             fontSize: 13,
             fontWeight: 600,
-            color: JEWEL.amber.text,
-            background: JEWEL.amber.base,
+            color: JEWEL.lime.text,
+            background: JEWEL.lime.base,
             border: "none",
             cursor: "pointer",
           }}
@@ -685,7 +737,7 @@ function TasksContent() {
                 {t.text}
               </span>
               {t.priority === "high" && !isDone && (
-                <StatusPill tone="warn">HIGH</StatusPill>
+                <StatusPill tone="danger">HIGH</StatusPill>
               )}
             </div>
           );
@@ -798,7 +850,7 @@ function ActiveLoadsContent({
             <Truck size={14} color={C.primary} />
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.primary, width: 64 }}>{l.id}</span>
             <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{l.dest}</span>
-            <StatusPill tone="ok">{l.status}</StatusPill>
+            <StatusPill tone={loadStatusTone(l.status)}>{l.status}</StatusPill>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>{l.eta}</span>
           </div>
         );
@@ -873,11 +925,9 @@ function ImportExportContent({
           >
             <ArrowLeftRight size={14} color={C.textMuted} />
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary, width: 52 }}>{q.id}</span>
-            <span className="px-1.5 py-0.5 rounded" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.textMuted, background: C.surfaceAlt }}>{q.type}</span>
+            <StatusPill tone="accent">{q.type}</StatusPill>
             <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{q.name}</span>
-            <StatusPill
-              tone={q.status === "Failed" ? "danger" : q.status === "Running" ? "ok" : "warn"}
-            >
+            <StatusPill tone={queueStatusTone(q.status)}>
               {q.status}
             </StatusPill>
           </div>
@@ -913,19 +963,24 @@ function InventoryContent({
               cursor: onSelect ? "pointer" : "default",
             }}
           >
-            <div className="flex items-center justify-between mb-1.5">
-              <div>
+            <div className="flex items-center justify-between mb-1.5 gap-2">
+              <div className="min-w-0">
                 <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.primary }}>{s.sku}</span>
                 <span className="ml-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>{s.name}</span>
               </div>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: low ? C.danger : high ? C.warning : C.textMuted }}>
-                {s.level}/{s.capacity}
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted }}>
+                  {s.level}/{s.capacity}
+                </span>
+                {low && <StatusPill tone="danger">LOW</StatusPill>}
+                {high && <StatusPill tone="ok">FULL</StatusPill>}
+                {!low && !high && <StatusPill tone="warn">OK</StatusPill>}
+              </div>
             </div>
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}` }}>
               <div
                 className="h-full rounded-full"
-                style={{ width: `${pct}%`, background: low ? C.danger : high ? C.warning : C.primary }}
+                style={{ width: `${pct}%`, background: low ? C.danger : high ? C.primary : C.warning }}
               />
             </div>
           </div>
@@ -991,7 +1046,7 @@ function ReferenceDataListContent() {
 
 function DangerZoneListContent() {
   const rows = [
-    { label: "Active records", tone: "warning" as const },
+    { label: "Active records", tone: "warn" as const },
     { label: "Deleted (recoverable)", tone: "muted" as const },
     { label: "Purge queue", tone: "danger" as const },
   ];
@@ -1004,21 +1059,27 @@ function DangerZoneListContent() {
         </span>
       </div>
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
-        {rows.map((r) => (
-          <div
-            key={r.label}
-            className="px-3 py-2.5 rounded-md"
-            style={{
-              border: `1.5px solid ${r.tone === "danger" ? C.danger : C.border}`,
-              background: C.surface,
-              fontFamily: "'Lato', sans-serif",
-              fontSize: 15,
-              color: r.tone === "danger" ? C.danger : C.text,
-            }}
-          >
-            {r.label}
-          </div>
-        ))}
+        {rows.map((r) => {
+          const edge =
+            r.tone === "danger" ? C.danger
+            : r.tone === "warn" ? C.warning
+            : C.border;
+          return (
+            <div
+              key={r.label}
+              className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-md"
+              style={{
+                border: `1.5px solid ${edge}`,
+                background: C.surface,
+              }}
+            >
+              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}>{r.label}</span>
+              <StatusPill tone={r.tone}>
+                {r.tone === "danger" ? "PURGE" : r.tone === "warn" ? "LIVE" : "RECALL"}
+              </StatusPill>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -1505,9 +1566,33 @@ function WidgetDetailTabBody({
     const item = INVENTORY_STOCK.find((s) => s.sku === selectedKey);
     if (!item) return null;
     const pct = Math.round((item.level / item.capacity) * 100);
-    if (tabId === "item") return <div className="grid grid-cols-2 gap-4 p-4">{detailField("SKU", item.sku)}{detailField("Name", item.name)}{detailField("On hand", String(item.level))}{detailField("Capacity", String(item.capacity))}{detailField("Fill", `${pct}%`)}</div>;
+    const low = pct < 25;
+    const high = pct > 85;
+    const fillTone = low ? "danger" as const : high ? "ok" as const : "warn" as const;
+    if (tabId === "item") {
+      return (
+        <div className="grid grid-cols-2 gap-4 p-4">
+          {detailField("SKU", item.sku)}
+          {detailField("Name", item.name)}
+          {detailField("On hand", String(item.level))}
+          {detailField("Capacity", String(item.capacity))}
+          <div className="flex flex-col gap-1">
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted, textTransform: "uppercase" }}>Fill</span>
+            <div className="flex items-center gap-2">
+              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.text }}>{pct}%</span>
+              <StatusPill tone={fillTone}>{low ? "LOW" : high ? "FULL" : "OK"}</StatusPill>
+            </div>
+          </div>
+        </div>
+      );
+    }
     if (tabId === "reorder") return <div className="p-4 flex flex-col gap-3"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>Reorder point: {Math.round(item.capacity * 0.25)}. Suggested order: {Math.max(0, Math.round(item.capacity * 0.6) - item.level)} units.</p><button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, fontFamily: "'DM Mono', monospace", fontSize: 12, border: "none", cursor: "pointer" }}>Create PO</button></div>;
-    return <div className="p-4"><p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>Bin capacity utilization is {pct}%.</p></div>;
+    return (
+      <div className="p-4 flex items-center gap-3">
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: C.textSub }}>Bin capacity utilization is {pct}%.</p>
+        <StatusPill tone={fillTone}>{low ? "LOW" : high ? "FULL" : "OK"}</StatusPill>
+      </div>
+    );
   }
 
   if (widgetId === "import-export") {
@@ -1587,22 +1672,137 @@ function WidgetDetailTabBody({
   );
 }
 
-function WidgetDetailModal({
-  open,
+function FloatingWindowShell({
+  title,
+  headerBg,
+  headerFg = "#FFFFFF",
+  isCompact,
+  maxWidth,
+  height,
+  zIndex,
+  isFocused,
+  minimized,
+  danger,
+  stackOffset,
+  onFocus,
+  onMinimize,
+  onClose,
+  children,
+}: {
+  title: string;
+  headerBg: string;
+  headerFg?: string;
+  isCompact: boolean;
+  maxWidth: number | string;
+  height: string;
+  zIndex: number;
+  isFocused: boolean;
+  minimized: boolean;
+  danger?: boolean;
+  stackOffset: number;
+  onFocus: () => void;
+  onMinimize: () => void;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  if (minimized) {
+    return (
+      <div
+        aria-hidden
+        style={{ display: "none" }}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 flex items-end sm:items-center justify-center pointer-events-none"
+      style={{ zIndex: 60 + zIndex }}
+    >
+      <div
+        className="w-full overflow-hidden flex flex-col pointer-events-auto"
+        onMouseDown={onFocus}
+        style={{
+          maxWidth: isCompact ? "100%" : maxWidth,
+          height: isCompact ? "90vh" : height,
+          background: C.surface,
+          border: `1.5px solid ${headerBg}`,
+          borderRadius: isCompact ? "16px 16px 0 0" : 12,
+          boxShadow: isFocused
+            ? `0 28px 64px ${headerBg}44, 0 0 0 1px ${headerBg}55`
+            : `0 24px 60px ${C.text}14`,
+          margin: isCompact ? 0 : 20,
+          transform: isCompact ? undefined : `translate(${stackOffset * 18}px, ${stackOffset * 14}px)`,
+        }}
+      >
+        <div
+          className="flex-none flex items-center justify-between px-4 py-3"
+          style={{ background: headerBg, color: headerFg }}
+        >
+          <span className="flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 21 }}>
+            {danger && <ShieldAlert size={18} />}
+            {title}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              title="Minimize"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMinimize();
+              }}
+              style={{ color: headerFg, cursor: "pointer", lineHeight: 0, opacity: 0.9 }}
+            >
+              <Minus size={18} />
+            </button>
+            <button
+              type="button"
+              title="Close"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+              style={{ color: headerFg, cursor: "pointer", lineHeight: 0 }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WidgetDetailWindow({
   widgetId,
   isCompact,
+  zIndex,
+  isFocused,
+  minimized,
+  stackOffset,
+  onFocus,
+  onMinimize,
   onClose,
 }: {
-  open: boolean;
-  widgetId: string | null;
+  widgetId: string;
   isCompact: boolean;
+  zIndex: number;
+  isFocused: boolean;
+  minimized: boolean;
+  stackOffset: number;
+  onFocus: () => void;
+  onMinimize: () => void;
   onClose: () => void;
 }) {
   const [tabId, setTabId] = useState("info");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open || !widgetId) return;
     const tabs = WIDGET_DETAIL_TABS[widgetId] ?? WIDGET_DETAIL_TABS.default;
     setTabId(tabs[0].id);
     setSelectedKey(
@@ -1612,129 +1812,251 @@ function WidgetDetailModal({
         : widgetId === "job-piecemark" ? EXISTING_JOBS[0]?.number ?? null
         : null
     );
-  }, [open, widgetId]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (ev: KeyboardEvent) => {
-      if (ev.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!open || !widgetId) return null;
+  }, [widgetId]);
 
   const meta = PANEL_META[widgetId];
   const tabs = WIDGET_DETAIL_TABS[widgetId] ?? WIDGET_DETAIL_TABS.default;
   const selectable = ["active-loads", "employees", "inventory", "job-piecemark"].includes(widgetId);
   const isDanger = WIDGET_CATALOG.find((w) => w.id === widgetId)?.danger === true;
   const headerJewel = panelJewel(widgetId);
-  /** Full-window editors — no left preview/list pane */
   const fullWindow = widgetId === "reference-data" || widgetId === "piecemark-entry";
   const showTabs = tabs.length > 1;
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
-      style={{ background: "transparent" }}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <FloatingWindowShell
+      title={meta?.title ?? widgetId}
+      headerBg={headerJewel.base}
+      isCompact={isCompact}
+      maxWidth={1080}
+      height="min(780px, 88vh)"
+      zIndex={zIndex}
+      isFocused={isFocused}
+      minimized={minimized}
+      danger={isDanger}
+      stackOffset={stackOffset}
+      onFocus={onFocus}
+      onMinimize={onMinimize}
+      onClose={onClose}
     >
       <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{
-          maxWidth: isCompact ? "100%" : 1080,
-          height: isCompact ? "90vh" : "min(780px, 88vh)",
-          background: C.surface,
-          border: `1.5px solid ${C.border}`,
-          borderRadius: isCompact ? "16px 16px 0 0" : 12,
-          boxShadow: `0 24px 60px ${C.text}14`,
-          margin: isCompact ? 0 : 20,
-        }}
+        className={`flex-1 min-h-0 ${
+          fullWindow
+            ? "flex flex-col"
+            : `grid ${isCompact ? "grid-rows-2" : "grid-cols-[minmax(280px,0.95fr)_1.2fr]"}`
+        }`}
       >
-        <div
-          className="flex-none flex items-center justify-between px-4 py-3"
-          style={{
-            background: headerJewel.base,
-            color: "#FFFFFF",
-          }}
-        >
-          <span className="flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 21 }}>
-            {isDanger && <ShieldAlert size={18} />}
-            {meta?.title ?? widgetId}
-          </span>
-          <button type="button" onClick={onClose} style={{ color: C.primaryFg, cursor: "pointer", lineHeight: 0 }}>
-            <X size={18} />
-          </button>
-        </div>
+        {!fullWindow && (
+          <div
+            className="min-h-0 flex flex-col overflow-hidden"
+            style={{ borderRight: isCompact ? "none" : `1.5px solid ${C.border}`, borderBottom: isCompact ? `1.5px solid ${C.border}` : "none" }}
+          >
+            <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `1.5px solid ${C.border}` }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                {selectable ? "Select an item" : "Widget"}
+              </span>
+            </div>
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <PanelContent
+                id={widgetId}
+                selectedKey={selectedKey}
+                onSelect={selectable ? setSelectedKey : undefined}
+              />
+            </div>
+          </div>
+        )}
 
-        <div
-          className={`flex-1 min-h-0 ${
-            fullWindow
-              ? "flex flex-col"
-              : `grid ${isCompact ? "grid-rows-2" : "grid-cols-[minmax(280px,0.95fr)_1.2fr]"}`
-          }`}
-        >
-          {!fullWindow && (
+        <div className="min-h-0 flex flex-col overflow-hidden flex-1" style={{ background: C.bg }}>
+          {showTabs && (
             <div
-              className="min-h-0 flex flex-col overflow-hidden"
-              style={{ borderRight: isCompact ? "none" : `1.5px solid ${C.border}`, borderBottom: isCompact ? `1.5px solid ${C.border}` : "none" }}
+              className="flex-none flex items-end gap-1 px-3 pt-2 overflow-x-auto"
+              style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surface }}
             >
-              <div className="flex-none px-4 py-2" style={{ background: C.surfaceAlt, borderBottom: `1.5px solid ${C.border}` }}>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: C.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                  {selectable ? "Select an item" : "Widget"}
-                </span>
-              </div>
-              <div className="flex-1 min-h-0 overflow-hidden">
-                <PanelContent
-                  id={widgetId}
-                  selectedKey={selectedKey}
-                  onSelect={selectable ? setSelectedKey : undefined}
-                />
-              </div>
+              {tabs.map((t) => {
+                const active = t.id === tabId;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTabId(t.id)}
+                    className="px-3 py-2 whitespace-nowrap"
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: 12,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: active ? C.primary : C.textMuted,
+                      borderBottom: active ? `2px solid ${C.primary}` : "2px solid transparent",
+                      background: "transparent",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
             </div>
           )}
-
-          <div className="min-h-0 flex flex-col overflow-hidden flex-1" style={{ background: C.bg }}>
-            {showTabs && (
-              <div
-                className="flex-none flex items-end gap-1 px-3 pt-2 overflow-x-auto"
-                style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surface }}
-              >
-                {tabs.map((t) => {
-                  const active = t.id === tabId;
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setTabId(t.id)}
-                      className="px-3 py-2 whitespace-nowrap"
-                      style={{
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: 12,
-                        letterSpacing: "0.04em",
-                        textTransform: "uppercase",
-                        color: active ? C.primary : C.textMuted,
-                        borderBottom: active ? `2px solid ${C.primary}` : "2px solid transparent",
-                        background: "transparent",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {t.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            <div className="flex-1 min-h-0 overflow-y-auto" style={{ background: C.surface }}>
-              <WidgetDetailTabBody widgetId={widgetId} tabId={tabId} selectedKey={selectedKey} />
-            </div>
+          <div className="flex-1 min-h-0 overflow-y-auto" style={{ background: C.surface }}>
+            <WidgetDetailTabBody widgetId={widgetId} tabId={tabId} selectedKey={selectedKey} />
           </div>
         </div>
       </div>
-    </div>
+    </FloatingWindowShell>
+  );
+}
+
+function KissImportWindow({
+  isCompact,
+  zIndex,
+  isFocused,
+  minimized,
+  stackOffset,
+  onFocus,
+  onMinimize,
+  onClose,
+}: {
+  isCompact: boolean;
+  zIndex: number;
+  isFocused: boolean;
+  minimized: boolean;
+  stackOffset: number;
+  onFocus: () => void;
+  onMinimize: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <FloatingWindowShell
+      title="KISS Import"
+      headerBg={C.primary}
+      headerFg={C.primaryFg}
+      isCompact={isCompact}
+      maxWidth={640}
+      height="min(640px, 85vh)"
+      zIndex={zIndex}
+      isFocused={isFocused}
+      minimized={minimized}
+      stackOffset={stackOffset}
+      onFocus={onFocus}
+      onMinimize={onMinimize}
+      onClose={onClose}
+    >
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ImportFilterForm kind="kiss" onClose={onClose} />
+      </div>
+    </FloatingWindowShell>
+  );
+}
+
+function SettingsWindow({
+  isCompact,
+  zIndex,
+  isFocused,
+  minimized,
+  stackOffset,
+  isDark,
+  onToggleDark,
+  onFocus,
+  onMinimize,
+  onClose,
+}: {
+  isCompact: boolean;
+  zIndex: number;
+  isFocused: boolean;
+  minimized: boolean;
+  stackOffset: number;
+  isDark: boolean;
+  onToggleDark: () => void;
+  onFocus: () => void;
+  onMinimize: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <FloatingWindowShell
+      title="Settings"
+      headerBg={C.accent}
+      isCompact={isCompact}
+      maxWidth={420}
+      height="min(360px, 70vh)"
+      zIndex={zIndex}
+      isFocused={isFocused}
+      minimized={minimized}
+      stackOffset={stackOffset}
+      onFocus={onFocus}
+      onMinimize={onMinimize}
+      onClose={onClose}
+    >
+      <div className="p-5 flex flex-col gap-5">
+        <div>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: C.text, marginBottom: 6 }}>
+            Appearance
+          </p>
+          <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textMuted, marginBottom: 14, lineHeight: 1.5 }}>
+            Switch between light and dark dashboard themes.
+          </p>
+          <DarkModeToggle dark={isDark} onToggle={onToggleDark} onTaskbar={false} />
+        </div>
+      </div>
+    </FloatingWindowShell>
+  );
+}
+
+function TaskbarWindowChip({
+  title,
+  accent,
+  minimized,
+  focused,
+  onActivate,
+  onClose,
+}: {
+  title: string;
+  accent: string;
+  minimized: boolean;
+  focused: boolean;
+  onActivate: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onActivate}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md max-w-[140px] shrink-0"
+      style={{
+        background: focused && !minimized ? `${accent}55` : `${accent}33`,
+        border: focused && !minimized
+          ? `1.5px solid ${accent}`
+          : `1.5px solid ${accent}99`,
+        color: C.taskbarFg,
+        cursor: "pointer",
+        opacity: minimized ? 0.72 : 1,
+        boxShadow: focused && !minimized ? `inset 0 0 0 1px ${accent}44` : undefined,
+      }}
+      title={minimized ? `Restore ${title}` : title}
+    >
+      <span
+        className="truncate"
+        style={{
+          fontFamily: "'DM Mono', monospace",
+          fontSize: 9,
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+          lineHeight: 1.2,
+        }}
+      >
+        {title}
+      </span>
+      <span
+        role="button"
+        tabIndex={-1}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        style={{ lineHeight: 0, opacity: 0.85 }}
+        title="Close"
+      >
+        <X size={12} strokeWidth={2.5} />
+      </span>
+    </button>
   );
 }
 
@@ -2095,20 +2417,31 @@ function EmptyCellAdd({
 function DarkModeToggle({
   dark,
   onToggle,
+  onTaskbar = true,
 }: {
   dark: boolean;
   onToggle: () => void;
+  onTaskbar?: boolean;
 }) {
+  const fg = onTaskbar ? C.taskbarFg : C.text;
+  const trackBg = onTaskbar
+    ? (dark ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.18)")
+    : (dark ? C.primary : C.positiveBg);
+  const trackBorder = onTaskbar
+    ? "1.5px solid rgba(255,255,255,0.35)"
+    : `1.5px solid ${C.border}`;
+  const thumbBg = onTaskbar ? C.taskbarFg : (dark ? C.primaryFg : C.text);
+
   return (
     <button
       type="button"
       onClick={onToggle}
       className="flex items-center gap-2 rounded-md px-2 py-1.5"
       style={{
-        background: "transparent",
-        border: "none",
+        background: onTaskbar ? "transparent" : C.surfaceAlt,
+        border: onTaskbar ? "none" : `1.5px solid ${C.border}`,
         cursor: "pointer",
-        color: C.taskbarFg,
+        color: fg,
       }}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={dark}
@@ -2121,8 +2454,8 @@ function DarkModeToggle({
           width: 36,
           height: 20,
           borderRadius: 10,
-          background: dark ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.18)",
-          border: "1.5px solid rgba(255,255,255,0.35)",
+          background: trackBg,
+          border: trackBorder,
           flexShrink: 0,
           transition: "background 160ms ease, border-color 160ms ease",
         }}
@@ -2135,7 +2468,7 @@ function DarkModeToggle({
             width: 14,
             height: 14,
             borderRadius: "50%",
-            background: C.taskbarFg,
+            background: thumbBg,
             boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
             transition: "left 160ms ease",
           }}
@@ -2573,82 +2906,26 @@ function AddNewJobForm({
   );
 }
 
-function KissImportModal({
-  open,
-  isCompact,
-  onClose,
-}: {
-  open: boolean;
-  isCompact: boolean;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (ev: KeyboardEvent) => {
-      if (ev.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
-      style={{ background: "transparent" }}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{
-          maxWidth: isCompact ? "100%" : 640,
-          maxHeight: isCompact ? "92vh" : "85vh",
-          background: C.surface,
-          border: `1.5px solid ${C.border}`,
-          borderRadius: isCompact ? "16px 16px 0 0" : 12,
-          boxShadow: `0 24px 60px ${C.text}14`,
-          margin: isCompact ? 0 : 20,
-        }}
-      >
-        <div className="flex-none flex items-center justify-between px-4 py-3" style={{ background: C.primary, color: C.primaryFg }}>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 21 }}>KISS Import</span>
-          <button type="button" onClick={onClose} style={{ color: C.primaryFg, cursor: "pointer", lineHeight: 0 }}>
-            <X size={18} />
-          </button>
-        </div>
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <ImportFilterForm kind="kiss" onClose={onClose} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const isCompact = useIsCompact();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDark, setIsDark] = useState(false);
-  const [isKissImportOpen, setIsKissImportOpen] = useState(false);
-  const [panels, setPanels]       = useState<PanelDef[]>(INIT);
+  const [panels, setPanels] = useState<PanelDef[]>(INIT);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [detailWidgetId, setDetailWidgetId] = useState<string | null>(null);
+  const [windows, setWindows] = useState<AppWindow[]>([]);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [pickerCell, setPickerCell] = useState<{ col: number; row: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // Keep token object in sync with theme on the same render as the toggle.
   applyColorTokens(isDark);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
-  // Leave edit mode when switching to compact viewport
   useEffect(() => {
     if (isCompact && isEditing) {
       setIsEditing(false);
@@ -2658,6 +2935,68 @@ export default function App() {
     }
   }, [isCompact, isEditing]);
 
+  const openOrFocusWindow = useCallback((id: string) => {
+    setIsEditing(false);
+    setDraggingId(null);
+    setPickerCell(null);
+    setWindows((prev) => {
+      const z = nextZ(prev);
+      const existing = prev.find((w) => w.id === id);
+      if (existing) {
+        return prev.map((w) => (w.id === id ? { ...w, minimized: false, z } : w));
+      }
+      return [...prev, { id, minimized: false, z }];
+    });
+    setFocusedId(id);
+  }, []);
+
+  const minimizeWindow = useCallback((id: string) => {
+    setWindows((prev) => {
+      const next = prev.map((w) => (w.id === id ? { ...w, minimized: true } : w));
+      setFocusedId((focused) => {
+        if (focused !== id) return focused;
+        const remaining = next.filter((w) => !w.minimized).sort((a, b) => b.z - a.z);
+        return remaining[0]?.id ?? null;
+      });
+      return next;
+    });
+  }, []);
+
+  const closeWindow = useCallback((id: string) => {
+    setWindows((prev) => prev.filter((w) => w.id !== id));
+    setFocusedId((prev) => (prev === id ? null : prev));
+  }, []);
+
+  const focusWindow = useCallback((id: string) => {
+    setWindows((prev) => {
+      const z = nextZ(prev);
+      return prev.map((w) => (w.id === id ? { ...w, minimized: false, z } : w));
+    });
+    setFocusedId(id);
+  }, []);
+
+  const activateChip = useCallback((id: string) => {
+    const win = windows.find((w) => w.id === id);
+    if (!win) return;
+    if (win.minimized || focusedId !== id) {
+      focusWindow(id);
+    } else {
+      minimizeWindow(id);
+    }
+  }, [windows, focusedId, focusWindow, minimizeWindow]);
+
+  // Escape minimizes the focused window
+  useEffect(() => {
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key !== "Escape" || !focusedId) return;
+      const win = windows.find((w) => w.id === focusedId);
+      if (!win || win.minimized) return;
+      minimizeWindow(focusedId);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [focusedId, windows, minimizeWindow]);
+
   const usedIds = new Set(panels.map((p) => p.id));
   const availableWidgets = WIDGET_CATALOG.filter((w) => !usedIds.has(w.id));
   const emptyCells = isEditing ? getEmptyCells(panels) : [];
@@ -2666,8 +3005,8 @@ export default function App() {
     e.stopPropagation();
     setPanels((prev) => prev.filter((p) => p.id !== id));
     setPickerCell(null);
-    setDetailWidgetId((prev) => (prev === id ? null : prev));
-  }, []);
+    closeWindow(id);
+  }, [closeWindow]);
 
   const handleAddWidget = useCallback((widgetId: WidgetTypeId, col: number, row: number) => {
     setPanels((prev) => {
@@ -2678,26 +3017,19 @@ export default function App() {
     setPickerCell(null);
   }, []);
 
-  // Click: open widget detail popup
   const handlePanelClick = useCallback(
     (e: React.MouseEvent, id: string) => {
       if (isEditing) return;
       e.stopPropagation();
-      setDetailWidgetId(id);
+      openOrFocusWindow(id);
     },
-    [isEditing]
+    [isEditing, openOrFocusWindow]
   );
 
-  const handleCloseDetail = useCallback(() => {
-    setDetailWidgetId(null);
-  }, []);
-
-  // Click on grid background dismisses picker
   const handleGridClick = useCallback(() => {
     setPickerCell(null);
   }, []);
 
-  // Drag to move panel anywhere on the 12×8 grid
   const startMove = useCallback(
     (e: React.MouseEvent, panelId: string) => {
       if (!isEditing) return;
@@ -2743,7 +3075,6 @@ export default function App() {
     [isEditing, panels]
   );
 
-  // Stretch from any edge / corner
   const startResize = useCallback(
     (e: React.MouseEvent, panelId: string, edge: ResizeEdge) => {
       e.preventDefault();
@@ -2778,20 +3109,20 @@ export default function App() {
 
   const toggleEdit = () => {
     setIsEditing((v) => !v);
-    setDetailWidgetId(null);
     setHoveredId(null);
     setDraggingId(null);
     setPickerCell(null);
   };
 
-  const openKissImport = useCallback(() => {
-    setIsKissImportOpen(true);
-    setDetailWidgetId(null);
-  }, []);
-
   const anyHovered = hoveredId !== null;
-  const isDetailOpen = detailWidgetId !== null;
-  const isModalOpen = isDetailOpen || isKissImportOpen;
+  const hasOpenWindow = windows.some((w) => !w.minimized);
+  const showPdf = windows.some(
+    (w) => !w.minimized && w.id !== KISS_WINDOW_ID && w.id !== SETTINGS_WINDOW_ID
+  );
+
+  const openVisible = windows
+    .filter((w) => !w.minimized)
+    .sort((a, b) => a.z - b.z);
 
   if (!isLoggedIn) {
     applyColorTokens(false);
@@ -2806,108 +3137,119 @@ export default function App() {
       <div
         className="flex-1 min-h-0 flex flex-col"
         style={{
-          opacity: isModalOpen ? GHOST_OPACITY : 1,
-          filter: isModalOpen ? GHOST_SATURATE : "none",
+          opacity: hasOpenWindow ? GHOST_OPACITY : 1,
+          filter: hasOpenWindow ? GHOST_SATURATE : "none",
           transition: "opacity 180ms ease, filter 180ms ease",
-          pointerEvents: isModalOpen ? "none" : undefined,
         }}
       >
-      {isCompact ? (
-        <CompactDashboard />
-      ) : (
-        /* Bento grid area — desktop */
-        <div className="flex-1 min-h-0 overflow-hidden p-4 pb-3" onClick={handleGridClick}>
-          <div
-            ref={gridRef}
-            className="relative grid h-full"
-            style={{
-              gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-              gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-              gap: GAP,
-            }}
-          >
-            {isEditing && (
-              <div
-                className="absolute inset-0 grid pointer-events-none"
-                style={{
-                  gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                  gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-                  gap: GAP,
-                  zIndex: 0,
-                }}
-              >
-                {Array.from({ length: COLS * ROWS }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="rounded-md"
-                    style={{ background: `${C.accent}06`, border: `1px dashed ${C.accent}28` }}
-                  />
-                ))}
-              </div>
-            )}
+        {isCompact ? (
+          <CompactDashboard />
+        ) : (
+          <div className="flex-1 min-h-0 overflow-hidden p-4 pb-3" onClick={handleGridClick}>
+            <div
+              ref={gridRef}
+              className="relative grid h-full"
+              style={{
+                gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+                gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+                gap: GAP,
+              }}
+            >
+              {isEditing && (
+                <div
+                  className="absolute inset-0 grid pointer-events-none"
+                  style={{
+                    gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+                    gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+                    gap: GAP,
+                    zIndex: 0,
+                  }}
+                >
+                  {Array.from({ length: COLS * ROWS }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="rounded-md"
+                      style={{ background: `${C.accent}06`, border: `1px dashed ${C.accent}28` }}
+                    />
+                  ))}
+                </div>
+              )}
 
-            {isEditing && emptyCells.map(({ col, row }) => (
-              <EmptyCellAdd
-                key={`empty-${col}-${row}`}
-                col={col}
-                row={row}
-                isOpen={pickerCell?.col === col && pickerCell?.row === row}
-                options={availableWidgets}
-                onOpen={() => setPickerCell({ col, row })}
-                onClose={() => setPickerCell(null)}
-                onPick={(id) => handleAddWidget(id, col, row)}
-              />
-            ))}
-
-            {panels.map((panel) => {
-              const isHovered = hoveredId === panel.id;
-              const isGhosted = anyHovered && !isHovered && !isEditing;
-              return (
-                <BentoPanel
-                  key={panel.id}
-                  panel={panel}
-                  isEditing={isEditing}
-                  isHovered={isHovered}
-                  isGhosted={isGhosted}
-                  isDragging={draggingId === panel.id}
-                  onMouseEnter={() => !isEditing && setHoveredId(panel.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  onClick={(e) => handlePanelClick(e, panel.id)}
-                  onStartResize={startResize}
-                  onStartMove={startMove}
-                  onDelete={handleDeletePanel}
+              {isEditing && emptyCells.map(({ col, row }) => (
+                <EmptyCellAdd
+                  key={`empty-${col}-${row}`}
+                  col={col}
+                  row={row}
+                  isOpen={pickerCell?.col === col && pickerCell?.row === row}
+                  options={availableWidgets}
+                  onOpen={() => setPickerCell({ col, row })}
+                  onClose={() => setPickerCell(null)}
+                  onPick={(id) => handleAddWidget(id, col, row)}
                 />
-              );
-            })}
-          </div>
-        </div>
-      )}
+              ))}
 
-      {/* Fixed taskbar */}
+              {panels.map((panel) => {
+                const isHovered = hoveredId === panel.id;
+                const isGhosted = anyHovered && !isHovered && !isEditing;
+                return (
+                  <BentoPanel
+                    key={panel.id}
+                    panel={panel}
+                    isEditing={isEditing}
+                    isHovered={isHovered}
+                    isGhosted={isGhosted}
+                    isDragging={draggingId === panel.id}
+                    onMouseEnter={() => !isEditing && setHoveredId(panel.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    onClick={(e) => handlePanelClick(e, panel.id)}
+                    onStartResize={startResize}
+                    onStartMove={startMove}
+                    onDelete={handleDeletePanel}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Taskbar — always interactive */}
       <div
-        className="flex-none flex items-center gap-2 px-3 sm:px-6"
+        className="flex-none flex items-center gap-2 px-3 sm:px-6 relative z-[200]"
         style={{
           height: 75,
           background: C.taskbarBg,
           borderTop: `1.5px solid ${JEWEL.indigo.dark}`,
         }}
       >
-        <div className={`flex justify-start shrink-0 ${isCompact ? "" : "flex-1 min-w-0"}`}>
-          <DarkModeToggle dark={isDark} onToggle={() => setIsDark((v) => !v)} />
+        <div className={`flex justify-start items-center gap-1.5 shrink-0 min-w-0 overflow-x-auto ${isCompact ? "" : "flex-1"}`}>
+          {windows.map((w) => (
+            <TaskbarWindowChip
+              key={w.id}
+              title={windowTitle(w.id)}
+              accent={windowAccent(w.id)}
+              minimized={w.minimized}
+              focused={focusedId === w.id && !w.minimized}
+              onActivate={() => activateChip(w.id)}
+              onClose={() => closeWindow(w.id)}
+            />
+          ))}
         </div>
+
         <div className={`flex items-center justify-center gap-2 min-w-0 ${isCompact ? "flex-1" : ""}`}>
-          {isCompact ? (
+          {showPdf ? (
+            <TaskbarBtn icon={FileDown} label="Report PDF" primary grow={isCompact} />
+          ) : isCompact ? (
             <>
-              <TaskbarBtn icon={HelpCircle} label="FAQ & Support" grow />
-              <TaskbarBtn icon={ScanLine}   label="New Scan" primary grow onClick={openKissImport} />
-              <TaskbarBtn icon={Settings}   label="Settings" grow />
+              <TaskbarBtn icon={HelpCircle} label="FAQ" grow />
+              <TaskbarBtn icon={ScanLine} label="New Scan" primary grow onClick={() => openOrFocusWindow(KISS_WINDOW_ID)} />
+              <TaskbarBtn icon={Settings} label="Settings" grow onClick={() => openOrFocusWindow(SETTINGS_WINDOW_ID)} active={focusedId === SETTINGS_WINDOW_ID} />
             </>
           ) : (
             <>
-              <TaskbarBtn icon={Settings}   label="Settings"      />
+              <TaskbarBtn icon={Settings} label="Settings" onClick={() => openOrFocusWindow(SETTINGS_WINDOW_ID)} active={focusedId === SETTINGS_WINDOW_ID} />
               <TaskbarBtn icon={HelpCircle} label="FAQ & Support" />
-              <TaskbarBtn icon={Upload}     label="KISS Import"   primary onClick={openKissImport} />
-              <TaskbarBtn icon={FileDown}   label="Report PDF"    />
+              <TaskbarBtn icon={Upload} label="KISS Import" primary onClick={() => openOrFocusWindow(KISS_WINDOW_ID)} />
               <TaskbarBtn
                 icon={isEditing ? X : LayoutGrid}
                 label={isEditing ? "Exit Edit" : "Edit Dashboard"}
@@ -2917,6 +3259,7 @@ export default function App() {
             </>
           )}
         </div>
+
         <div className={`flex justify-end shrink-0 ${isCompact ? "" : "flex-1 min-w-0"}`}>
           <TaskbarBtn
             icon={LogOut}
@@ -2924,20 +3267,42 @@ export default function App() {
             onClick={() => {
               setIsLoggedIn(false);
               setIsEditing(false);
-              setDetailWidgetId(null);
-              setIsKissImportOpen(false);
+              setWindows([]);
+              setFocusedId(null);
             }}
           />
         </div>
       </div>
-      </div>
-      <KissImportModal open={isKissImportOpen} isCompact={isCompact} onClose={() => setIsKissImportOpen(false)} />
-      <WidgetDetailModal
-        open={isDetailOpen}
-        widgetId={detailWidgetId}
-        isCompact={isCompact}
-        onClose={handleCloseDetail}
-      />
+
+      {/* Floating windows */}
+      {windows.map((w) => {
+        const stackOffset = Math.max(0, openVisible.findIndex((o) => o.id === w.id));
+        const common = {
+          isCompact,
+          zIndex: w.z,
+          isFocused: focusedId === w.id && !w.minimized,
+          minimized: w.minimized,
+          stackOffset,
+          onFocus: () => focusWindow(w.id),
+          onMinimize: () => minimizeWindow(w.id),
+          onClose: () => closeWindow(w.id),
+        };
+        if (w.id === KISS_WINDOW_ID) {
+          return <KissImportWindow key={w.id} {...common} />;
+        }
+        if (w.id === SETTINGS_WINDOW_ID) {
+          return (
+            <SettingsWindow
+              key={w.id}
+              {...common}
+              isDark={isDark}
+              onToggleDark={() => setIsDark((v) => !v)}
+            />
+          );
+        }
+        return <WidgetDetailWindow key={w.id} widgetId={w.id} {...common} />;
+      })}
     </div>
   );
 }
+

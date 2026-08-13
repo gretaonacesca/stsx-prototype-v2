@@ -29,9 +29,13 @@ export type JewelMetal = {
 
 export const JEWEL = {
   viridian: { base: "#0D8C7E", light: "#12B09E", dark: "#096A5F", text: "#FFFFFF" },
-  amber:    { base: "#C97D08", light: "#F09A1A", dark: "#9C5F06", text: "#FFFFFF" },
+  /** Darker chrome / gunmetal silver */
+  chrome:   { base: "#5A616C", light: "#A8B2BE", dark: "#2E333B", text: "#FFFFFF" },
   indigo:   { base: "#3F52CC", light: "#5A6EE0", dark: "#2E3AA0", text: "#FFFFFF" },
-  cherry:   { base: "#8B1A2E", light: "#B52038", dark: "#620F1E", text: "#FFFFFF" },
+  /** Jewel-tone lime (replaces former cherry on KPIs / former amber panel edges) */
+  lime:     { base: "#6BCB2A", light: "#8FE04A", dark: "#3F8F12", text: "#FFFFFF" },
+  /** Red — records danger widget only */
+  danger:   { base: "#9E1F38", light: "#C4485A", dark: "#6B1528", text: "#FFFFFF" },
 } as const satisfies Record<string, JewelMetal>;
 
 export function metalFill(c: JewelMetal): string {
@@ -63,8 +67,8 @@ export const LIGHT: ColorTokens = {
   primary: "#0D8C7E",
   primaryFg: "#F5FFFE",
   accent: "#3F52CC",
-  warning: "#C97D08",
-  warningBg: "#FFF3D6",
+  warning: "#C4A012",
+  warningBg: "#F7F3D4",
   danger: "#9E1F38",
   dangerBg: "#FDE8EC",
   positiveBg: "#D4F5EE",
@@ -84,8 +88,8 @@ export const DARK: ColorTokens = {
   primary: "#3DCFC0",
   primaryFg: "#0A1424",
   accent: "#7088F0",
-  warning: "#E8BA60",
-  warningBg: "#2A2010",
+  warning: "#D4C04A",
+  warningBg: "#242010",
   danger: "#E05570",
   dangerBg: "#1E0810",
   positiveBg: "#0F2A24",
