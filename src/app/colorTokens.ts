@@ -91,6 +91,27 @@ export const DARK: ColorTokens = {
   taskbarFg: "#F3F5FF",
 };
 
+/** Always-light palette for PDF / print blocks (colorful, paper-friendly). */
+export const PRINT: ColorTokens = {
+  bg: "#FFFFFF",
+  surface: "#FFFFFF",
+  surfaceAlt: "#F3F6FB",
+  border: "#C5D0E0",
+  text: "#0F1520",
+  textSub: "#1A2333",
+  textMuted: "#3A4A68",
+  primary: "#0D8C7E",
+  primaryFg: "#F5FFFE",
+  accent: "#3F52CC",
+  warning: "#C4A012",
+  warningBg: "#F7F3D4",
+  danger: "#9E1F38",
+  dangerBg: "#FDE8EC",
+  positiveBg: "#D4F5EE",
+  taskbarBg: "#3F52CC",
+  taskbarFg: "#F3F5FF",
+};
+
 /** Mutable active palette — swapped on theme toggle. */
 export const C: ColorTokens = { ...LIGHT };
 

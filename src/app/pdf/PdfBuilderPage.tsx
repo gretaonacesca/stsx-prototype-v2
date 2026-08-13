@@ -529,8 +529,8 @@ function BlockPreview({ kind, timeRange }: { kind: PdfBlockKind; timeRange: Time
   if (kind.startsWith("stat")) return <StatCard id={kind} />;
   if (kind === "kpi-hero") return <VizBody id="kpi-hero" timeRange={timeRange} />;
   return (
-    <VizPanelFrame id={kind as VizWidgetId}>
-      <VizBody id={kind as VizWidgetId} timeRange={timeRange} />
+    <VizPanelFrame id={kind as VizWidgetId} print>
+      <VizBody id={kind as VizWidgetId} timeRange={timeRange} print />
     </VizPanelFrame>
   );
 }

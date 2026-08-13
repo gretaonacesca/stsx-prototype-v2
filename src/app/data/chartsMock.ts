@@ -126,6 +126,7 @@ export const YARD_BAYS: YardBay[] = [
   { id: "gate", label: "Ship gate", x: 76, y: 42, w: 18, h: 24, loads: 2, kind: "ship" },
 ];
 
+/** Age-of-stock helper — unused in yard map after print tones refactor; keep export for consumers. */
 export function yardKindColor(kind: YardBay["kind"]): string {
   if (kind === "dock") return C.primary;
   if (kind === "bay") return C.accent;

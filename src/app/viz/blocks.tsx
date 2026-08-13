@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { CheckCircle, AlertTriangle, XCircle, FileDown } from "lucide-react";
 import {
-  C, JEWEL, metalFill, metalShadow, metalSpecular, gradientBorderFill, type JewelMetal,
+  C, JEWEL, metalFill, metalShadow, metalSpecular, gradientBorderFill, PRINT, type JewelMetal,
 } from "../colorTokens";
 import {
   STATS, SCANS, ACTIVE_LOADS, EMPLOYEES, IMPORT_EXPORT_QUEUE, INVENTORY_STOCK,
@@ -331,9 +331,11 @@ export function PdfHoverButton({ onClick }: { onClick: () => void }) {
 export function VizBody({
   id,
   timeRange,
+  print,
 }: {
   id: VizWidgetId;
   timeRange?: TimeRange;
+  print?: boolean;
 }) {
   if (id.startsWith("stat")) return <StatCard id={id} />;
   if (id === "recent") return <RecentScansTable timeRange={timeRange} />;
@@ -341,13 +343,13 @@ export function VizBody({
   if (id === "employees") return <EmployeesTable />;
   if (id === "import-export") return <ImportQueueTable timeRange={timeRange} />;
   if (id === "inventory") return <InventoryPanel />;
-  if (id === "funnel") return <ThroughputFunnel />;
-  if (id === "sankey") return <BottleneckSankey />;
-  if (id === "burndown") return <BacklogBurndown />;
+  if (id === "funnel") return <ThroughputFunnel print={print} />;
+  if (id === "sankey") return <BottleneckSankey print={print} />;
+  if (id === "burndown") return <BacklogBurndown print={print} />;
   if (id === "kpi-hero") return <KpiHero />;
-  if (id === "scorecard") return <ExecutiveScorecard />;
-  if (id === "story-strip") return <StoryStrip />;
-  if (id === "yard-map") return <YardMapLite />;
+  if (id === "scorecard") return <ExecutiveScorecard print={print} />;
+  if (id === "story-strip") return <StoryStrip print={print} />;
+  if (id === "yard-map") return <YardMapLite print={print} />;
   return null;
 }
 
@@ -355,27 +357,32 @@ export function VizPanelFrame({
   id,
   children,
   isStat,
+  print,
 }: {
   id: VizWidgetId;
   children: ReactNode;
   isStat?: boolean;
+  print?: boolean;
 }) {
   const jewel = panelJewel(id);
   const title = PANEL_META[id]?.title ?? id;
   if (isStat || id.startsWith("stat") || id === "kpi-hero") {
     return <div className="h-full w-full">{children}</div>;
   }
+  const surface = print ? PRINT.surface : C.surface;
   return (
     <div
       className="h-full w-full flex flex-col overflow-hidden rounded-[10px]"
       style={{
-        background: gradientBorderFill(C.surface, jewel.base),
+        background: gradientBorderFill(surface, jewel.base),
         border: "1.5px solid transparent",
-        boxShadow: `0 1px 0 ${jewel.light}22 inset`,
+        boxShadow: print ? "none" : `0 1px 0 ${jewel.light}22 inset`,
       }}
     >
-      <PanelHeader title={title} accent={jewel.base} />
-      <div className="flex-1 min-h-0">{children}</div>
+      <PanelHeader title={title} accent={jewel.base} print={print} />
+      <div className="flex-1 min-h-0" style={{ background: print ? PRINT.surface : undefined }}>
+        {children}
+      </div>
     </div>
   );
 }

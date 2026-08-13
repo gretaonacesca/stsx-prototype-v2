@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { C } from "../colorTokens";
+import { C, PRINT } from "../colorTokens";
 
 export function StatusPill({
   tone,
@@ -56,11 +56,21 @@ export function queueStatusTone(status: string): "ok" | "warn" | "danger" | "acc
   return "accent";
 }
 
-export function PanelHeader({ title, accent }: { title: string; accent: string }) {
+export function PanelHeader({
+  title,
+  accent,
+  print,
+}: {
+  title: string;
+  accent: string;
+  print?: boolean;
+}) {
+  const bg = print ? PRINT.surface : C.surface;
+  const border = print ? PRINT.border : C.border;
   return (
     <div
       className="flex-none flex items-center px-4 py-2.5"
-      style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, minHeight: 36 }}
+      style={{ background: bg, borderBottom: `1px solid ${border}`, minHeight: 36 }}
     >
       <span
         style={{
