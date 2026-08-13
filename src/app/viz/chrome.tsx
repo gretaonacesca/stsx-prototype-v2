@@ -1,0 +1,79 @@
+import type { ReactNode } from "react";
+import { C } from "../colorTokens";
+
+export function StatusPill({
+  tone,
+  children,
+}: {
+  tone: "ok" | "warn" | "danger" | "accent" | "muted";
+  children: ReactNode;
+}) {
+  const styles =
+    tone === "ok"
+      ? { color: C.primary, background: `${C.primary}2E`, border: `1.5px solid ${C.primary}AA` }
+      : tone === "warn"
+      ? { color: C.warning, background: `${C.warning}33`, border: `1.5px solid ${C.warning}BB` }
+      : tone === "danger"
+      ? { color: C.danger, background: `${C.danger}2E`, border: `1.5px solid ${C.danger}AA` }
+      : tone === "accent"
+      ? { color: C.accent, background: `${C.accent}22`, border: `1.5px solid ${C.accent}88` }
+      : { color: C.textMuted, background: C.surfaceAlt, border: `1.5px solid ${C.border}` };
+  return (
+    <span
+      className="px-1.5 py-0.5 rounded"
+      style={{
+        fontFamily: "'DM Mono', monospace",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        ...styles,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function loadStatusTone(status: string): "ok" | "warn" | "danger" | "accent" | "muted" {
+  switch (status) {
+    case "Arriving":
+    case "Delivered":
+      return "ok";
+    case "Loading":
+    case "On hold":
+      return "warn";
+    case "Staging":
+    case "In transit":
+      return "accent";
+    default:
+      return "muted";
+  }
+}
+
+export function queueStatusTone(status: string): "ok" | "warn" | "danger" | "accent" {
+  if (status === "Failed") return "danger";
+  if (status === "Running") return "ok";
+  return "accent";
+}
+
+export function PanelHeader({ title, accent }: { title: string; accent: string }) {
+  return (
+    <div
+      className="flex-none flex items-center px-4 py-2.5"
+      style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, minHeight: 36 }}
+    >
+      <span
+        style={{
+          fontFamily: "'DM Mono', monospace",
+          fontSize: 14,
+          fontWeight: 700,
+          color: accent,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+        }}
+      >
+        {title}
+      </span>
+    </div>
+  );
+}
