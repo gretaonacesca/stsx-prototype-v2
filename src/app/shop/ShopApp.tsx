@@ -6,6 +6,8 @@ import { ShopHome, type ShopTab } from "./ShopHome";
 import { LogActionPage } from "./LogActionPage";
 import { MoveLoadPage } from "./MoveLoadPage";
 import { LookupPage } from "./LookupPage";
+import { InventoryPage } from "./InventoryPage";
+import { BundlesPage } from "./BundlesPage";
 
 const TABS: { id: ShopTab; label: string; Icon: typeof Home }[] = [
   { id: "home", label: "Home", Icon: Home },
@@ -19,6 +21,8 @@ const TITLES: Record<ShopTab, string> = {
   log: "Log an Action",
   move: "Move a Load",
   lookup: "Look Up a Piece",
+  inventory: "Inventory",
+  bundles: "Bundles & Cutlists",
 };
 
 export function ShopApp({
@@ -73,6 +77,8 @@ export function ShopApp({
       {tab === "log" && <LogActionPage onSaved={setLastAction} />}
       {tab === "move" && <MoveLoadPage onSaved={setLastAction} />}
       {tab === "lookup" && <LookupPage />}
+      {tab === "inventory" && <InventoryPage onSaved={setLastAction} />}
+      {tab === "bundles" && <BundlesPage onSaved={setLastAction} />}
 
       <nav
         className="flex-none grid grid-cols-4"

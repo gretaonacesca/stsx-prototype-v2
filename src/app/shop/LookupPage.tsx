@@ -49,10 +49,10 @@ export function LookupPage() {
         {result && (
           <>
             <ResultCard title={result.piecemark}>
-              <ResultField label="Job #" value={result.jobNumber} />
-              <ResultField label="Location" value={result.location} />
               <ResultField label="Material" value={result.material} />
               <ResultField label="Qty" value={result.qty} />
+              <ResultField label="Job #" value={result.jobNumber} />
+              <ResultField label="Location" value={result.location} />
               <div className="flex flex-col gap-1">
                 <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: C.text }}>
                   Status
@@ -83,25 +83,24 @@ export function LookupPage() {
 
             {full && (
               <ResultCard title="History">
-                <ResultField label="Entry" value={result.entry} />
-                <ResultField label="Sequence #" value={result.sequence} />
                 <ResultField label="Item Length" value={result.itemLength} />
-                <ResultField label="Item Weight" value={result.itemWeight} />
-                <ResultField label="Width" value={result.width} />
                 <ResultField label="Bundled" value={result.bundled} />
+                <ResultField label="Locn Pcs" value={result.locnPcs} />
+                <ResultField label="Locn Wt" value={result.locnWt} />
+                <ResultField label="Width" value={result.width} />
+                <ResultField label="Wt" value={result.wt} />
                 <ResultField label="Grade" value={result.grade} />
                 <ResultField label="Heat" value={result.heat} />
+                <ResultField label="PO Number" value={result.poNumber} />
                 <ResultField label="Division" value={result.division} />
-                <ResultField label="Route" value={result.route} />
+                <ResultField label="Route code" value={result.route} />
                 <ResultField label="Lot Number" value={result.lot} />
                 <ResultField label="Sheet Number" value={result.sheet} />
                 <ResultField label="Finish" value={result.finish} />
                 <ResultField label="Create Date" value={result.createDate} />
-                <ResultField label="On Hold" value={result.onHold} />
+                <ResultField label="On Hold Flag" value={result.onHold} />
                 <ResultField label="On Hold Date" value={result.onHoldDate} />
                 <ResultField label="Off Hold Date" value={result.offHoldDate} />
-                <ResultField label="Prev Status" value={result.prevStatus} />
-                <ResultField label="Prev Location" value={result.prevLocation} />
               </ResultCard>
             )}
           </>

@@ -1,7 +1,7 @@
-import { ClipboardCheck, Truck, Search, Home } from "lucide-react";
+import { ClipboardCheck, Truck, Search, Package, Layers } from "lucide-react";
 import { C } from "../colorTokens";
 
-export type ShopTab = "home" | "log" | "move" | "lookup";
+export type ShopTab = "home" | "log" | "move" | "lookup" | "inventory" | "bundles";
 
 export function ShopHome({
   lastAction,
@@ -10,11 +10,12 @@ export function ShopHome({
   lastAction: string | null;
   onGo: (tab: ShopTab) => void;
 }) {
-  const tiles: { id: ShopTab; label: string; blurb: string; Icon: typeof Home }[] = [
-    { id: "home", label: "Home", blurb: "Shop destinations and last action", Icon: Home },
+  const tiles: { id: ShopTab; label: string; blurb: string; Icon: typeof ClipboardCheck }[] = [
     { id: "log", label: "Log an Action", blurb: "Inspection, labor, saw, transaction", Icon: ClipboardCheck },
-    { id: "move", label: "Move a Load", blurb: "Receive, ship, return", Icon: Truck },
+    { id: "move", label: "Move a Load", blurb: "Receive, ship, return, final ship", Icon: Truck },
     { id: "lookup", label: "Look Up a Piece", blurb: "Find piecemark and history", Icon: Search },
+    { id: "inventory", label: "Inventory", blurb: "ASN receive, audit, move, sweep, TFS", Icon: Package },
+    { id: "bundles", label: "Bundles & Cutlists", blurb: "Build, checklist, cut", Icon: Layers },
   ];
 
   return (

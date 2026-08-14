@@ -33,6 +33,27 @@ export type PieceRecord = {
   onHoldDate: string;
   offHoldDate: string;
   division: string;
+  poNumber: string;
+  primaryLocation: string;
+  secondaryLocation: string;
+  reportQty: string;
+  remains: string;
+  qtyFound: string;
+  qtyMovedIn: string;
+  qtyMovedOut: string;
+  sweepComplete: string;
+  asn: string;
+  lastQuantity: string;
+  ordered: string;
+  mill: string;
+  country: string;
+  bol: string;
+  bundleNumber: string;
+  associatedCuts: string;
+  aLength: string;
+  aWidth: string;
+  percentComplete: string;
+  heatSerial: string;
 };
 
 export const PIECES: PieceRecord[] = [
@@ -69,6 +90,27 @@ export const PIECES: PieceRecord[] = [
     onHoldDate: "—",
     offHoldDate: "—",
     division: "SHOP",
+    poNumber: "PO-8841",
+    primaryLocation: "Bay 2",
+    secondaryLocation: "—",
+    reportQty: "24",
+    remains: "0",
+    qtyFound: "24",
+    qtyMovedIn: "24",
+    qtyMovedOut: "0",
+    sweepComplete: "No",
+    asn: "ASN-2201",
+    lastQuantity: "24",
+    ordered: "24",
+    mill: "Nucor",
+    country: "USA",
+    bol: "BOL-4412",
+    bundleNumber: "BND-1042",
+    associatedCuts: "3",
+    aLength: "24'-6\"",
+    aWidth: "—",
+    percentComplete: "40",
+    heatSerial: "HS-8831",
   },
   {
     entry: "SC-2841",
@@ -103,6 +145,27 @@ export const PIECES: PieceRecord[] = [
     onHoldDate: "2026-08-08",
     offHoldDate: "—",
     division: "SHOP",
+    poNumber: "—",
+    primaryLocation: "Hold rack",
+    secondaryLocation: "—",
+    reportQty: "0",
+    remains: "0",
+    qtyFound: "0",
+    qtyMovedIn: "0",
+    qtyMovedOut: "0",
+    sweepComplete: "No",
+    asn: "—",
+    lastQuantity: "0",
+    ordered: "0",
+    mill: "—",
+    country: "—",
+    bol: "—",
+    bundleNumber: "—",
+    associatedCuts: "0",
+    aLength: "8'-0\"",
+    aWidth: "—",
+    percentComplete: "0",
+    heatSerial: "—",
   },
 ];
 

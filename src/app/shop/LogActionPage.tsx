@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { toast } from "sonner";
 import { C } from "../colorTokens";
 import { ScanBar } from "./components/ScanBar";
 import { ShopInput } from "./components/ShopField";
 import { ResultCard, ResultField } from "./components/ResultCard";
 import { ModeChips, SubmitButton } from "./components/ModeChips";
-import { lookupByEntry, type PieceRecord } from "./mock";
+import { useShopSave } from "./useShopSave";
 import { StatusPill } from "../viz/chrome";
 
 export type LogMode = "inspection" | "labor" | "saw" | "transaction";
@@ -28,22 +27,7 @@ export function LogActionPage({ onSaved }: { onSaved?: (summary: string) => void
   const [percent, setPercent] = useState("");
   const [grade, setGrade] = useState("");
   const [heat, setHeat] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<PieceRecord | null>(null);
-
-  const submit = async () => {
-    if (!entry.trim()) {
-      toast.error("Entry is required");
-      return;
-    }
-    setBusy(true);
-    await new Promise((r) => setTimeout(r, 300));
-    const rec = lookupByEntry(entry);
-    setResult(rec);
-    setBusy(false);
-    toast.success("Scan saved");
-    onSaved?.(`${MODES.find((m) => m.id === mode)?.label} · ${rec.piecemark}`);
-  };
+  const { busy, result, save } = useShopSave(onSaved);
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -70,14 +54,21 @@ export function LogActionPage({ onSaved }: { onSaved?: (summary: string) => void
           )}
         </div>
 
-        <SubmitButton label="Save action" busy={busy} onClick={submit} />
+        <SubmitButton
+          label="Save action"
+          busy={busy}
+          onClick={() => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.piecemark}`)}
+        />
 
         {result && (
           <ResultCard title="Piece">
-            <ResultField label="Locn Pcs/Wt" value={`${result.locnPcs} / ${result.locnWt}`} />
+            <ResultField label="Locn Pcs" value={result.locnPcs} />
+            <ResultField label="Locn Wt" value={result.locnWt} />
             <ResultField label="Piecemark" value={result.piecemark} />
+            {mode === "labor" && <ResultField label="Percent Complete" value={result.percentComplete} />}
             <ResultField label="Job #" value={result.jobNumber} />
             <ResultField label="Sequence #" value={result.sequence} />
+            <ResultField label="Lot #" value={result.lot} />
             <div className="flex flex-col gap-1">
               <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: C.text }}>
                 Prev Status
