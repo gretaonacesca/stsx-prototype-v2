@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LoginPage } from "./LoginPage";
 import { C, applyColorTokens } from "./colorTokens";
 import { Sidebar, TopBar, crumbsFor } from "./shell/chrome";
@@ -6,12 +6,30 @@ import { DashboardPage } from "./dashboard/DashboardPage";
 import { OperationModal } from "./ops/OperationModal";
 import { renderOperation } from "./ops/registry";
 import { PdfBuilderPage, type PdfBlockKind } from "./pdf/PdfBuilderPage";
+import { ShopApp } from "./shop/ShopApp";
 import type { OperationId } from "./nav/catalog";
 import type { VizWidgetId } from "./dashboard/widgetCatalog";
+
+const SHOP_BREAKPOINT = 1024;
+
+function useIsShop() {
+  const [shop, setShop] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < SHOP_BREAKPOINT : false
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${SHOP_BREAKPOINT - 1}px)`);
+    const onChange = () => setShop(mql.matches);
+    onChange();
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+  return shop;
+}
 
 type Mode = "dashboard" | "pdf";
 
 export default function App() {
+  const isShop = useIsShop();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -28,6 +46,14 @@ export default function App() {
     setIsDark(next);
   };
 
+  const logout = () => {
+    setIsLoggedIn(false);
+    setIsEditing(false);
+    setActiveOp(null);
+    setMode("dashboard");
+    setDark(false);
+  };
+
   const openPdf = (seed?: PdfBlockKind | null) => {
     setIsEditing(false);
     setActiveOp(null);
@@ -38,6 +64,10 @@ export default function App() {
 
   if (!isLoggedIn) {
     return <LoginPage C={C} onLogin={() => setIsLoggedIn(true)} />;
+  }
+
+  if (isShop) {
+    return <ShopApp isDark={isDark} onToggleDark={setDark} onLogout={logout} />;
   }
 
   const crumbs = crumbsFor(activeOp, mode === "pdf");
@@ -59,13 +89,7 @@ export default function App() {
           setPdfSeed(null);
         }}
         onToggleDark={setDark}
-        onLogout={() => {
-          setIsLoggedIn(false);
-          setIsEditing(false);
-          setActiveOp(null);
-          setMode("dashboard");
-          setDark(false);
-        }}
+        onLogout={logout}
       />
 
       <div className="flex-1 min-h-0 flex">
