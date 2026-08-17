@@ -39,7 +39,7 @@ export function OperationModal({
             color: "#fff",
           }}
         >
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 20 }}>{title}</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 20 }}>{title}</span>
           <button
             type="button"
             onClick={onClose}

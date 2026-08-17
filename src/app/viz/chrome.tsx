@@ -24,7 +24,7 @@ export function StatusPill({
       style={{
         fontFamily: "'DM Mono', monospace",
         fontSize: 11,
-        fontWeight: 700,
+        fontWeight: 400,
         letterSpacing: "0.04em",
         ...styles,
       }}
@@ -76,7 +76,7 @@ export function PanelHeader({
         style={{
           fontFamily: "'DM Mono', monospace",
           fontSize: 14,
-          fontWeight: 700,
+          fontWeight: 400,
           color: accent,
           letterSpacing: "0.07em",
           textTransform: "uppercase",

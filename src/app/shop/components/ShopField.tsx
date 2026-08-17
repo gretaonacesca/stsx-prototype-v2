@@ -4,7 +4,7 @@ import { C } from "../../colorTokens";
 const labelStyle: CSSProperties = {
   fontFamily: "'DM Mono', monospace",
   fontSize: 12,
-  fontWeight: 700,
+  fontWeight: 400,
   letterSpacing: "0.04em",
   textTransform: "uppercase",
   color: C.text,
@@ -36,7 +36,7 @@ export function ShopInput({
           padding: "0 14px",
           fontFamily: "'Lato', sans-serif",
           fontSize: 16,
-          fontWeight: 700,
+          fontWeight: 400,
           color: C.text,
           outline: "none",
         }}
@@ -53,7 +53,7 @@ export function ShopReadonly({ label, value }: { label: string; value: string })
         style={{
           fontFamily: "'Lato', sans-serif",
           fontSize: 16,
-          fontWeight: 700,
+          fontWeight: 400,
           color: C.text,
           minHeight: 24,
         }}

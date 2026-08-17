@@ -25,7 +25,7 @@ export function ModeChips<T extends string>({
               border: `1.5px solid ${on ? C.accent : C.border}`,
               cursor: "pointer",
               fontFamily: "'Outfit', sans-serif",
-              fontWeight: 700,
+              fontWeight: 400,
               fontSize: 14,
               minHeight: 44,
             }}
@@ -61,7 +61,7 @@ export function SubmitButton({
         border: "none",
         cursor: busy ? "wait" : "pointer",
         fontFamily: "'Outfit', sans-serif",
-        fontWeight: 700,
+        fontWeight: 400,
         fontSize: 16,
         opacity: busy ? 0.7 : 1,
       }}

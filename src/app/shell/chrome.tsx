@@ -31,7 +31,7 @@ export function Sidebar({
       }}
     >
       <div className="px-4 py-3" style={{ borderBottom: `1.5px solid ${C.border}` }}>
-        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 18, color: C.text }}>STSX</p>
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.text }}>STSX</p>
         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Operations
         </p>
@@ -49,7 +49,7 @@ export function Sidebar({
                 onClick={() => setOpenCats((p) => ({ ...p, [cat.id]: !p[cat.id] }))}
               >
                 <Icon size={16} color={C.accent} />
-                <span className="flex-1 text-left" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 14 }}>
+                <span className="flex-1 text-left" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 14 }}>
                   {cat.label}
                 </span>
                 {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -70,7 +70,7 @@ export function Sidebar({
                           borderLeft: active ? `3px solid ${C.accent}` : "3px solid transparent",
                           cursor: "pointer",
                           fontFamily: "'Lato', sans-serif",
-                          fontWeight: 700,
+                          fontWeight: 400,
                           fontSize: 13,
                           color: C.text,
                         }}
@@ -126,7 +126,7 @@ export function TopBar({
             <span
               style={{
                 fontFamily: i === crumbs.length - 1 ? "'Outfit', sans-serif" : "'Lato', sans-serif",
-                fontWeight: 700,
+                fontWeight: 400,
                 fontSize: i === crumbs.length - 1 ? 16 : 14,
                 color: C.text,
               }}
@@ -201,7 +201,7 @@ function TopBtn({
         cursor: "pointer",
         fontFamily: "'DM Mono', monospace",
         fontSize: 12,
-        fontWeight: 700,
+        fontWeight: 400,
       }}
     >
       <Icon size={14} />

@@ -336,8 +336,8 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
         style={{ width: 240, background: C.surface, borderRight: `1.5px solid ${C.border}` }}
       >
         <div className="px-3 py-3" style={{ borderBottom: `1.5px solid ${C.border}` }}>
-          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 16, color: C.text }}>Blocks</p>
-          <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, fontWeight: 700, color: C.text }}>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 16, color: C.text }}>Blocks</p>
+          <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, fontWeight: 400, color: C.text }}>
             Snap to {gridCols}×{gridRows} grid
           </p>
         </div>
@@ -352,7 +352,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
               style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}` }}
             >
               <GripVertical size={14} color={C.text} />
-              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, fontWeight: 700, color: C.text }}>
+              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, fontWeight: 400, color: C.text }}>
                 {item.label}
               </span>
             </div>
@@ -372,7 +372,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
               cursor: exporting ? "wait" : "pointer",
               fontFamily: "'DM Mono', monospace",
               fontSize: 13,
-              fontWeight: 700,
+              fontWeight: 400,
             }}
           >
             <Download size={14} />
@@ -400,7 +400,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
                   cursor: "pointer",
                   fontFamily: "'DM Mono', monospace",
                   fontSize: 12,
-                  fontWeight: 700,
+                  fontWeight: 400,
                 }}
               >
                 Page {i + 1}
@@ -432,7 +432,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
               color: C.text,
               fontFamily: "'DM Mono', monospace",
               fontSize: 12,
-              fontWeight: 700,
+              fontWeight: 400,
             }}
           >
             <Plus size={12} /> A4 page
@@ -452,7 +452,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
                   cursor: "pointer",
                   fontFamily: "'DM Mono', monospace",
                   fontSize: 12,
-                  fontWeight: 700,
+                  fontWeight: 400,
                   textTransform: "capitalize",
                 }}
               >
@@ -472,7 +472,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
                 cursor: "pointer",
                 fontFamily: "'DM Mono', monospace",
                 fontSize: 12,
-                fontWeight: 700,
+                fontWeight: 400,
               }}
             >
               <Trash2 size={12} /> Delete module

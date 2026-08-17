@@ -17,12 +17,12 @@ import {
 function Placeholder({ title, body }: { title: string; body: string }) {
   return (
     <div className="p-5 flex flex-col gap-3">
-      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 18, color: C.text }}>{title}</p>
-      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text, lineHeight: 1.6 }}>{body}</p>
+      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.text }}>{title}</p>
+      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text, lineHeight: 1.6 }}>{body}</p>
       <button
         type="button"
         className="self-start px-3 py-1.5 rounded-md"
-        style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+        style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
       >
         Continue
       </button>
@@ -34,7 +34,7 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1">
       <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text, textTransform: "uppercase" }}>{label}</span>
-      <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text }}>{value || "—"}</span>
+      <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>{value || "—"}</span>
     </div>
   );
 }
@@ -62,7 +62,7 @@ function JobForm({ mode }: { mode: "add" | "edit" }) {
   const job = EXISTING_JOBS[0];
   return (
     <div className="p-5 flex flex-col gap-3">
-      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 700, color: C.text }}>
+      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: C.text }}>
         {mode === "add" ? "Create a new job (prototype form)." : `Editing job ${job.number} — ${job.name}.`}
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -86,7 +86,7 @@ function JobForm({ mode }: { mode: "add" | "edit" }) {
                 padding: "0 10px",
                 fontFamily: "'Lato', sans-serif",
                 fontSize: 15,
-                fontWeight: 700,
+                fontWeight: 400,
                 color: C.text,
               }}
             />
@@ -96,7 +96,7 @@ function JobForm({ mode }: { mode: "add" | "edit" }) {
       <button
         type="button"
         className="self-start px-3 py-1.5 rounded-md mt-2"
-        style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+        style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
       >
         {mode === "add" ? "Create Job" : "Save Changes"}
       </button>
@@ -119,7 +119,7 @@ function FindPiecemark() {
             padding: "0 10px",
             fontFamily: "'Lato', sans-serif",
             fontSize: 15,
-            fontWeight: 700,
+            fontWeight: 400,
             color: C.text,
           }}
         />
@@ -127,7 +127,7 @@ function FindPiecemark() {
       <button
         type="button"
         className="self-start px-3 py-1.5 rounded-md"
-        style={{ background: C.accent, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+        style={{ background: C.accent, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
       >
         Find
       </button>
@@ -138,16 +138,16 @@ function FindPiecemark() {
 function DangerConfirm({ title, body }: { title: string; body: string }) {
   return (
     <div className="p-5 flex flex-col gap-3" style={{ background: C.dangerBg }}>
-      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 18, color: C.danger }}>{title}</p>
-      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text, lineHeight: 1.6 }}>{body}</p>
-      <label className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text }}>
+      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.danger }}>{title}</p>
+      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text, lineHeight: 1.6 }}>{body}</p>
+      <label className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
         <TokenCheckbox />
         I understand this cannot be undone
       </label>
       <button
         type="button"
         className="self-start px-3 py-1.5 rounded-md"
-        style={{ background: C.danger, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+        style={{ background: C.danger, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
       >
         Confirm
       </button>
@@ -161,10 +161,10 @@ function InventoryOp({ kind }: { kind: "item" | "reorder" | "capacity" }) {
   if (kind === "reorder") {
     return (
       <div className="p-5 flex flex-col gap-3">
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
           Reorder point: {Math.round(item.capacity * 0.25)}. Suggested order: {Math.max(0, Math.round(item.capacity * 0.6) - item.level)} units for {item.sku}.
         </p>
-        <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+        <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}>
           Create PO
         </button>
       </div>
@@ -173,7 +173,7 @@ function InventoryOp({ kind }: { kind: "item" | "reorder" | "capacity" }) {
   if (kind === "capacity") {
     return (
       <div className="p-5">
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
           Bin capacity utilization for {item.name} is {pct}%.
         </p>
       </div>

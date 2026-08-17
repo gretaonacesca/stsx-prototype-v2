@@ -54,7 +54,7 @@ export function LookupPage() {
               <ResultField label="Job #" value={result.jobNumber} />
               <ResultField label="Location" value={result.location} />
               <div className="flex flex-col gap-1">
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: C.text }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 400, letterSpacing: "0.04em", textTransform: "uppercase", color: C.text }}>
                   Status
                 </span>
                 <StatusPill tone={result.onHold === "Yes" ? "warn" : "ok"}>
@@ -73,7 +73,7 @@ export function LookupPage() {
                 border: `1.5px solid ${C.border}`,
                 cursor: "pointer",
                 fontFamily: "'Outfit', sans-serif",
-                fontWeight: 700,
+                fontWeight: 400,
                 fontSize: 14,
                 color: C.text,
               }}

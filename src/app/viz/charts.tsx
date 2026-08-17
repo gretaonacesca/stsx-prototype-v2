@@ -20,7 +20,7 @@ function tipStyle(T: ColorTokens) {
     border: `1.5px solid ${T.border}`,
     borderRadius: 8,
     fontFamily: "'Lato', sans-serif",
-    fontWeight: 700,
+    fontWeight: 400,
     fontSize: 12,
     color: T.text,
   };
@@ -58,14 +58,14 @@ export function ThroughputFunnel({ print }: VizOpts = {}) {
               fill={T.text}
               stroke="none"
               dataKey="name"
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700 }}
+              style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 400 }}
             />
             <LabelList
               position="center"
               fill="#fff"
               stroke="none"
               dataKey="value"
-              style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700 }}
+              style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 400 }}
             />
           </Funnel>
         </FunnelChart>
@@ -101,7 +101,7 @@ export function BottleneckSankey({ print }: VizOpts = {}) {
           fill={T.text}
           fontSize={11}
           fontFamily="'DM Mono', monospace"
-          fontWeight={700}
+          fontWeight={400}
         >
           {name}
         </text>
@@ -133,7 +133,7 @@ export function BacklogBurndown({ print }: VizOpts = {}) {
   const gradId = print ? "burnFillPrint" : "burnFill";
   return (
     <div className="h-full w-full min-h-0 p-2 flex flex-col" style={{ background: print ? T.surface : undefined }}>
-      <p className="px-1 pb-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, fontWeight: 700, color: T.text }}>
+      <p className="px-1 pb-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, fontWeight: 400, color: T.text }}>
         Remaining jobs (week)
       </p>
       <div className="flex-1 min-h-0">
@@ -167,11 +167,11 @@ export function KpiHero() {
       }}
     >
       <div>
-        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.9 }}>
+        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 400, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.9 }}>
           {k.label}
         </p>
         <div className="flex items-end gap-3 mt-1">
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 48, lineHeight: 1 }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 48, lineHeight: 1 }}>
             {k.value}
             <span style={{ fontSize: 20, marginLeft: 4, opacity: 0.85 }}>{k.unit}</span>
           </span>
@@ -181,7 +181,7 @@ export function KpiHero() {
               background: k.deltaPositive ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.25)",
               fontFamily: "'DM Mono', monospace",
               fontSize: 13,
-              fontWeight: 700,
+              fontWeight: 400,
             }}
           >
             {k.delta}
@@ -214,13 +214,13 @@ export function ExecutiveScorecard({ print }: VizOpts = {}) {
               border: `1.5px solid ${accent}88`,
             }}
           >
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: accent, textTransform: "uppercase" }}>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 400, color: accent, textTransform: "uppercase" }}>
               {s.label}
             </span>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 28, color: T.text, lineHeight: 1.1 }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 28, color: T.text, lineHeight: 1.1 }}>
               {s.value}
             </span>
-            <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, fontWeight: 700, color: T.textSub }}>
+            <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, fontWeight: 400, color: T.textSub }}>
               {s.sub}
             </span>
           </div>
@@ -242,7 +242,7 @@ export function StoryStrip({ print }: VizOpts = {}) {
             className="min-h-0 flex flex-col rounded-md p-1.5"
             style={{ background: print ? "#F7F9FC" : T.surfaceAlt, border: print ? `1px solid ${T.border}` : undefined }}
           >
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 700, color: T.text, textTransform: "uppercase" }}>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 400, color: T.text, textTransform: "uppercase" }}>
               {c.title}
             </span>
             <div className="flex-1 min-h-0">
@@ -263,7 +263,7 @@ export function StoryStrip({ print }: VizOpts = {}) {
           border: `1.5px solid ${T.accent}55`,
           fontFamily: "'Lato', sans-serif",
           fontSize: 13,
-          fontWeight: 700,
+          fontWeight: 400,
           color: T.text,
           lineHeight: 1.45,
         }}
@@ -299,20 +299,20 @@ export function YardMapLite({ print }: VizOpts = {}) {
                 border: `1.5px solid ${color}`,
               }}
             >
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 700, color: T.text, textTransform: "uppercase" }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 400, color: T.text, textTransform: "uppercase" }}>
                 {b.label}
               </span>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 20, color, lineHeight: 1 }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 20, color, lineHeight: 1 }}>
                 {b.loads}
               </span>
-              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 10, fontWeight: 700, color: T.textMuted }}>loads</span>
+              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 10, fontWeight: 400, color: T.textMuted }}>loads</span>
             </div>
           );
         })}
       </div>
       <div className="flex gap-3 px-1">
         {(["dock", "bay", "staging", "ship"] as const).map((k) => (
-          <span key={k} className="flex items-center gap-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 700, color: T.text, textTransform: "uppercase" }}>
+          <span key={k} className="flex items-center gap-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, fontWeight: 400, color: T.text, textTransform: "uppercase" }}>
             <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: yardColor(k, T) }} />
             {k}
           </span>

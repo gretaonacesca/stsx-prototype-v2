@@ -28,7 +28,7 @@ export function ScanBar({
           padding: "0 14px",
           fontFamily: "'DM Mono', monospace",
           fontSize: 16,
-          fontWeight: 700,
+          fontWeight: 400,
           color: C.text,
           outline: "none",
         }}

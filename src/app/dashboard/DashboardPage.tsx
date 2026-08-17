@@ -200,7 +200,7 @@ export function DashboardPage({
               ))}
               <div className="h-full w-full">
                 <VizPanelFrame id={panel.id} isStat={isStat}>
-                  <VizBody id={panel.id} />
+                  <VizBody id={panel.id} isEditing={isEditing} />
                 </VizPanelFrame>
               </div>
             </div>
@@ -248,7 +248,7 @@ function EmptyCellAdd({
           style={{ background: C.surface, border: `1.5px solid ${C.border}` }}
         >
           {options.length === 0 ? (
-            <p className="px-2 py-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, fontWeight: 700, color: C.text }}>
+            <p className="px-2 py-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, fontWeight: 400, color: C.text }}>
               All widgets placed
             </p>
           ) : (
@@ -261,7 +261,7 @@ function EmptyCellAdd({
                 onClick={() => onPick(o.id)}
               >
                 <o.Icon size={14} color={o.jewel.base} />
-                <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, fontWeight: 700, color: C.text }}>{o.title}</span>
+                <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, fontWeight: 400, color: C.text }}>{o.title}</span>
               </button>
             ))
           )}

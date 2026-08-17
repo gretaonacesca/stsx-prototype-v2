@@ -326,7 +326,7 @@ export function LoginPage({
           <span
             style={{
               fontFamily: "'Outfit', sans-serif",
-              fontWeight: 700,
+              fontWeight: 400,
               fontSize: 33,
               letterSpacing: "0.18em",
               color: C.text,
@@ -392,7 +392,7 @@ export function LoginPage({
               border: "none",
               cursor: "pointer",
               fontFamily: "'Outfit', sans-serif",
-              fontWeight: 700,
+              fontWeight: 400,
               fontSize: 18,
               letterSpacing: "0.04em",
               color: "#FFFFFF",

@@ -49,7 +49,7 @@ export function ShopApp({
       >
         <p
           className="flex-1 min-w-0 truncate"
-          style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 18, color: C.text }}
+          style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.text }}
         >
           {TITLES[tab]}
         </p>
@@ -105,7 +105,7 @@ export function ShopApp({
               }}
             >
               <t.Icon size={22} strokeWidth={on ? 2.4 : 1.8} />
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 11 }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 11 }}>
                 {t.label}
               </span>
             </button>

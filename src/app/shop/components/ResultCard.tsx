@@ -20,7 +20,7 @@ export function ResultCard({
       <p
         style={{
           fontFamily: "'Outfit', sans-serif",
-          fontWeight: 700,
+          fontWeight: 400,
           fontSize: 16,
           color: C.text,
         }}

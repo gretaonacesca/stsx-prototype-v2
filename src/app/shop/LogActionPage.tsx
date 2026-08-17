@@ -70,7 +70,7 @@ export function LogActionPage({ onSaved }: { onSaved?: (summary: string) => void
             <ResultField label="Sequence #" value={result.sequence} />
             <ResultField label="Lot #" value={result.lot} />
             <div className="flex flex-col gap-1">
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: C.text }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 400, letterSpacing: "0.04em", textTransform: "uppercase", color: C.text }}>
                 Prev Status
               </span>
               <StatusPill tone="accent">{result.prevStatus}</StatusPill>

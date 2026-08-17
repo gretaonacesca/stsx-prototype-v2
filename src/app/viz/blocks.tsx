@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { CheckCircle, AlertTriangle, XCircle, FileDown } from "lucide-react";
 import {
   C, JEWEL, metalFill, metalShadow, metalSpecular, gradientBorderFill, PRINT, type JewelMetal,
@@ -15,6 +15,80 @@ import {
   ExecutiveScorecard, StoryStrip, YardMapLite,
 } from "./charts";
 import logoUrl from "../../assets/stsx-logo.png";
+
+function ImageSplashWidget({ isEditing }: { isEditing?: boolean }) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [imageUrl]);
+
+  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      setError("Use a JPEG or PNG image.");
+      e.currentTarget.value = "";
+      return;
+    }
+    setError(null);
+    setImageUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+  };
+
+  return (
+    <div className="h-full w-full p-3 flex flex-col gap-2">
+      {isEditing && (
+        <label
+          className="inline-flex items-center w-fit px-3 py-1.5 rounded-md"
+          style={{
+            background: C.surfaceAlt,
+            border: `1.5px solid ${C.border}`,
+            cursor: "pointer",
+            fontFamily: "'Lato', sans-serif",
+            fontSize: 13,
+            color: C.text,
+          }}
+        >
+          Upload image
+          <input
+            type="file"
+            accept="image/jpeg,image/png"
+            onChange={onFileChange}
+            style={{ display: "none" }}
+          />
+        </label>
+      )}
+
+      <div
+        className="flex-1 min-h-0 rounded-md overflow-hidden flex items-center justify-center"
+        style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}` }}
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt="Splash upload"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.textMuted }}>
+            Upload a JPEG or PNG splash image
+          </p>
+        )}
+      </div>
+      {error && (
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, color: C.danger }}>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function StatCard({ id }: { id: string }) {
   const s = STATS.find((x) => x.id === id);
@@ -35,7 +109,7 @@ export function StatCard({ id }: { id: string }) {
           style={{
             fontFamily: "'DM Mono', monospace",
             fontSize: 14,
-            fontWeight: 700,
+            fontWeight: 400,
             letterSpacing: "0.06em",
             textTransform: "uppercase",
             opacity: 0.92,
@@ -46,10 +120,10 @@ export function StatCard({ id }: { id: string }) {
         <Icon size={18} strokeWidth={2} />
       </div>
       <div className="relative z-[1]">
-        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 45, lineHeight: 1 }}>
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 45, lineHeight: 1 }}>
           {s.value}
         </p>
-        <p style={{ fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, marginTop: 7, opacity: 0.9 }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 14, marginTop: 7, opacity: 0.9 }}>
           {s.sub}
         </p>
       </div>
@@ -74,7 +148,7 @@ function FilterChip({
       style={{
         fontFamily: "'Lato', sans-serif",
         fontSize: 13,
-        fontWeight: 700,
+        fontWeight: 400,
         border: `1.5px solid ${active ? JEWEL.indigo.base : C.border}`,
         background: active ? JEWEL.indigo.base : C.surfaceAlt,
         color: active ? JEWEL.indigo.text : C.text,
@@ -157,9 +231,9 @@ export function RecentScansTable({
       <div className="flex-1 overflow-y-auto">
         {rows.map((s) => (
           <div key={s.id} className="flex items-center py-1.5" style={{ borderBottom: `1px solid ${C.border}` }}>
-            <div className="w-[72px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: C.primary }}>{s.id}</div>
-            <div className="w-[74px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: C.text }}>{s.part}</div>
-            <div className="flex-1 px-2 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 700, color: C.text }}>{s.desc}</div>
+            <div className="w-[72px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, color: C.primary }}>{s.id}</div>
+            <div className="w-[74px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, color: C.text }}>{s.part}</div>
+            <div className="flex-1 px-2 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: C.text }}>{s.desc}</div>
             <div className="w-[32px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.text }}>{s.qty}</div>
             <div className="w-[42px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.text }}>{s.time}</div>
             <div className="w-[28px] shrink-0 flex justify-center">
@@ -185,8 +259,8 @@ export function ActiveLoadsTable({ timeRange = "all" }: { timeRange?: TimeRange 
             className="flex items-center gap-2 px-2 py-2 rounded-md"
             style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}` }}
           >
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, color: C.primary, width: 64 }}>{l.id}</span>
-            <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text }}>{l.dest}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 400, color: C.primary, width: 64 }}>{l.id}</span>
+            <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>{l.dest}</span>
             <StatusPill tone={loadStatusTone(l.status)}>{l.status}</StatusPill>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.text }}>{l.eta}</span>
           </div>
@@ -207,10 +281,10 @@ export function EmployeesTable() {
       <div className="flex-1 overflow-y-auto">
         {EMPLOYEES.map((e) => (
           <div key={e.name} className="flex px-3 py-2" style={{ borderBottom: `1px solid ${C.border}` }}>
-            <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text }}>{e.name}</div>
-            <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text }}>{e.role}</div>
-            <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, color: C.text }}>{e.station}</div>
-            <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, color: C.primary }}>{e.shift}</div>
+            <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>{e.name}</div>
+            <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>{e.role}</div>
+            <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 400, color: C.text }}>{e.station}</div>
+            <div className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 400, color: C.primary }}>{e.shift}</div>
           </div>
         ))}
       </div>
@@ -225,9 +299,9 @@ export function ImportQueueTable({ timeRange = "all" }: { timeRange?: TimeRange 
       {rows.map((q) => (
         <div key={q.id} className="flex items-center gap-2 px-2 py-2 rounded-md" style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}` }}>
           <ArrowLeftRightIcon />
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: C.primary, width: 52 }}>{q.id}</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, color: C.primary, width: 52 }}>{q.id}</span>
           <StatusPill tone="muted">{q.type}</StatusPill>
-          <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text }}>{q.name}</span>
+          <span className="flex-1 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>{q.name}</span>
           <StatusPill tone={queueStatusTone(q.status)}>{q.status}</StatusPill>
         </div>
       ))}
@@ -249,8 +323,8 @@ export function InventoryPanel() {
           <div key={s.sku}>
             <div className="flex items-center justify-between mb-1">
               <div>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: C.primary }}>{s.sku}</span>
-                <span className="ml-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 700, color: C.text }}>{s.name}</span>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, color: C.primary }}>{s.sku}</span>
+                <span className="ml-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>{s.name}</span>
               </div>
               <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: C.text }}>
                 {s.level}/{s.capacity}
@@ -291,15 +365,15 @@ export function CompanyHeader({ showEditPencil = false }: { showEditPencil?: boo
             className="absolute left-0 top-full mt-2 z-10 px-3 py-2 rounded-md shadow-lg"
             style={{ background: C.surface, border: `1.5px solid ${C.border}`, whiteSpace: "nowrap" }}
           >
-            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, fontWeight: 700, color: C.text }}>
+            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, fontWeight: 400, color: C.text }}>
               Edit logo — coming soon
             </p>
           </div>
         )}
       </div>
       <div>
-        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 22, color: C.text }}>STSX Fabrication</p>
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 700, color: C.text }}>Operations report</p>
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 22, color: C.text }}>STSX Fabrication</p>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: C.text }}>Operations report</p>
       </div>
     </div>
   );
@@ -330,10 +404,12 @@ export function PdfHoverButton({ onClick }: { onClick: () => void }) {
 
 export function VizBody({
   id,
+  isEditing,
   timeRange,
   print,
 }: {
   id: VizWidgetId;
+  isEditing?: boolean;
   timeRange?: TimeRange;
   print?: boolean;
 }) {
@@ -350,6 +426,7 @@ export function VizBody({
   if (id === "scorecard") return <ExecutiveScorecard print={print} />;
   if (id === "story-strip") return <StoryStrip print={print} />;
   if (id === "yard-map") return <YardMapLite print={print} />;
+  if (id === "image-splash") return <ImageSplashWidget isEditing={isEditing} />;
   return null;
 }
 

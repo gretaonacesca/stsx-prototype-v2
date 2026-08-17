@@ -28,7 +28,7 @@ export function ShopHome({
             border: `1.5px solid ${C.border}`,
             fontFamily: "'Lato', sans-serif",
             fontSize: 14,
-            fontWeight: 700,
+            fontWeight: 400,
             color: C.text,
           }}
         >
@@ -55,10 +55,10 @@ export function ShopHome({
             <t.Icon size={24} />
           </span>
           <span className="flex flex-col gap-0.5">
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 18, color: C.text }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.text }}>
               {t.label}
             </span>
-            <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 700, color: C.text }}>
+            <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: C.text }}>
               {t.blurb}
             </span>
           </span>

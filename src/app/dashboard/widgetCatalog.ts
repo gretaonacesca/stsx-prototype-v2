@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3, CheckCircle, AlertTriangle, TrendingUp, ScanLine,
   Truck, Users, ArrowLeftRight, Package,
-  Filter, GitBranch, Flame, Sparkles, LayoutTemplate, BookOpen, Map,
+  Filter, GitBranch, Flame, Sparkles, LayoutTemplate, BookOpen, Map, Image,
 } from "lucide-react";
 import { JEWEL, type JewelMetal } from "../colorTokens";
 
@@ -15,7 +15,8 @@ export const MIN_ROW_SPAN = 1;
 export type VizWidgetId =
   | "stat1" | "stat2" | "stat3" | "stat4"
   | "recent" | "active-loads" | "employees" | "import-export" | "inventory"
-  | "funnel" | "sankey" | "burndown" | "kpi-hero" | "scorecard" | "story-strip" | "yard-map";
+  | "funnel" | "sankey" | "burndown" | "kpi-hero" | "scorecard" | "story-strip" | "yard-map"
+  | "image-splash";
 
 export type PanelDef = {
   id: VizWidgetId;
@@ -54,6 +55,7 @@ export const VIZ_CATALOG: WidgetCatalogEntry[] = [
   { id: "scorecard", title: "Executive Scorecard", blurb: "Safety · quality · delivery · cost", defaultColSpan: 4, defaultRowSpan: 3, Icon: LayoutTemplate, jewel: JEWEL.chrome },
   { id: "story-strip", title: "Story Strip", blurb: "Three charts + caption", defaultColSpan: 6, defaultRowSpan: 3, Icon: BookOpen, jewel: JEWEL.viridian },
   { id: "yard-map", title: "Yard Map", blurb: "Schematic load counts", defaultColSpan: 4, defaultRowSpan: 4, Icon: Map, jewel: JEWEL.indigo },
+  { id: "image-splash", title: "Image Splash", blurb: "Upload a static JPEG/PNG splash", defaultColSpan: 4, defaultRowSpan: 3, Icon: Image, jewel: JEWEL.chrome },
 ];
 
 export const PANEL_META: Record<string, { title: string; blurb: string }> = Object.fromEntries(
