@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Home, ClipboardCheck, Truck, Search, LogOut, Moon, Sun } from "lucide-react";
 import { Toaster } from "sonner";
 import { C } from "../colorTokens";
 import { ShopHome, type ShopTab } from "./ShopHome";
+import { FieldKeyBadge } from "./components/FieldKeyBadge";
 import { LogActionPage } from "./LogActionPage";
 import { MoveLoadPage } from "./MoveLoadPage";
 import { LookupPage } from "./LookupPage";
@@ -37,6 +38,16 @@ export function ShopApp({
   const [tab, setTab] = useState<ShopTab>("home");
   const [lastAction, setLastAction] = useState<string | null>("Inspection · B-1042-A");
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "F1") return;
+      e.preventDefault();
+      setTab("home");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: C.bg }}>
       <header
@@ -48,7 +59,7 @@ export function ShopApp({
         }}
       >
         <p
-          className="flex-1 min-w-0 truncate"
+          className="flex-1 min-w-0 truncate flex items-center gap-2"
           style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.text }}
         >
           {TITLES[tab]}
@@ -105,7 +116,8 @@ export function ShopApp({
               }}
             >
               <t.Icon size={22} strokeWidth={on ? 2.4 : 1.8} />
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 11 }}>
+              <span className="flex items-center gap-0.5" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 11 }}>
+                {t.id === "home" && <FieldKeyBadge letter="F1" />}
                 {t.label}
               </span>
             </button>

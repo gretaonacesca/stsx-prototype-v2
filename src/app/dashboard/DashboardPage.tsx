@@ -7,6 +7,7 @@ import {
   type PanelDef, type VizWidgetId, type ResizeEdge,
 } from "./widgetCatalog";
 import { VizBody, VizPanelFrame, PdfHoverButton } from "../viz/blocks";
+import { WidgetModal } from "./WidgetModal";
 
 export function DashboardPage({
   isEditing,
@@ -19,6 +20,7 @@ export function DashboardPage({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [pickerCell, setPickerCell] = useState<{ col: number; row: number } | null>(null);
+  const [expandedId, setExpandedId] = useState<VizWidgetId | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const usedIds = new Set(panels.map((p) => p.id));
@@ -101,112 +103,103 @@ export function DashboardPage({
   }, [isEditing]);
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden p-4" onClick={() => setPickerCell(null)}>
-      <div
-        ref={gridRef}
-        className="relative grid h-full"
-        style={{
-          gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-          gap: GAP,
-        }}
-      >
-        {isEditing && (
-          <div
-            className="absolute inset-0 grid pointer-events-none"
-            style={{
-              gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-              gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-              gap: GAP,
-              zIndex: 0,
-            }}
-          >
-            {Array.from({ length: COLS * ROWS }).map((_, i) => (
-              <div key={i} className="rounded-md" style={{ background: `${C.accent}06`, border: `1px dashed ${C.accent}28` }} />
-            ))}
-          </div>
-        )}
+    <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 min-h-0 overflow-hidden p-4" onClick={() => setPickerCell(null)}>
+        <div
+          ref={gridRef}
+          className="relative grid h-full"
+          style={{
+            gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+            gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+            gap: GAP,
+          }}
+        >
+          {isEditing && emptyCells.map(({ col, row }) => (
+            <EmptyCellAdd
+              key={`empty-${col}-${row}`}
+              col={col}
+              row={row}
+              isOpen={pickerCell?.col === col && pickerCell?.row === row}
+              options={available}
+              onOpen={() => setPickerCell({ col, row })}
+              onClose={() => setPickerCell(null)}
+              onPick={(id) => handleAdd(id, col, row)}
+            />
+          ))}
 
-        {isEditing && emptyCells.map(({ col, row }) => (
-          <EmptyCellAdd
-            key={`empty-${col}-${row}`}
-            col={col}
-            row={row}
-            isOpen={pickerCell?.col === col && pickerCell?.row === row}
-            options={available}
-            onOpen={() => setPickerCell({ col, row })}
-            onClose={() => setPickerCell(null)}
-            onPick={(id) => handleAdd(id, col, row)}
-          />
-        ))}
-
-        {panels.map((panel) => {
-          const isHovered = hoveredId === panel.id;
-          const isGhosted = anyHovered && !isHovered;
-          const isStat = panel.id.startsWith("stat") || panel.id === "kpi-hero";
-          return (
-            <div
-              key={panel.id}
-              className="group relative min-h-0"
-              style={{
-                gridColumn: `${panel.colStart} / span ${panel.colSpan}`,
-                gridRow: `${panel.rowStart} / span ${panel.rowSpan}`,
-                opacity: isGhosted ? 0.58 : 1,
-                filter: isGhosted ? "saturate(0.58)" : "none",
-                transition: "opacity 180ms ease, filter 180ms ease",
-                zIndex: draggingId === panel.id ? 20 : 1,
-                cursor: isEditing ? "grab" : "default",
-                outline: isEditing ? `1.5px dashed ${C.accent}88` : undefined,
-                outlineOffset: 2,
-                borderRadius: 10,
-              }}
-              onMouseEnter={() => !isEditing && setHoveredId(panel.id)}
-              onMouseLeave={() => setHoveredId(null)}
-              onMouseDown={(e) => isEditing && startMove(e, panel.id)}
-            >
-              {!isEditing && <PdfHoverButton onClick={() => onAddToPdf(panel.id)} />}
-              {isEditing && (
-                <button
-                  type="button"
-                  title="Remove"
-                  className="absolute top-1 right-1 z-30 w-7 h-7 rounded-md flex items-center justify-center"
-                  style={{ background: C.danger, color: "#fff", border: "none", cursor: "pointer" }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(panel.id);
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
-                >
-                  <X size={14} />
-                </button>
-              )}
-              {isEditing && (Object.keys(EDGE_CURSORS) as ResizeEdge[]).map((edge) => (
-                <div
-                  key={edge}
-                  onMouseDown={(e) => startResize(e, panel.id, edge)}
-                  style={{
-                    position: "absolute",
-                    zIndex: 25,
-                    cursor: EDGE_CURSORS[edge],
-                    ...(edge.includes("n") ? { top: 0, height: 8 } : {}),
-                    ...(edge.includes("s") ? { bottom: 0, height: 8 } : {}),
-                    ...(edge.includes("e") ? { right: 0, width: 8 } : {}),
-                    ...(edge.includes("w") ? { left: 0, width: 8 } : {}),
-                    ...(edge.length === 1 && (edge === "n" || edge === "s") ? { left: 8, right: 8 } : {}),
-                    ...(edge.length === 1 && (edge === "e" || edge === "w") ? { top: 8, bottom: 8 } : {}),
-                    ...(edge.length === 2 ? { width: 14, height: 14 } : {}),
-                  }}
-                />
-              ))}
-              <div className="h-full w-full">
-                <VizPanelFrame id={panel.id} isStat={isStat}>
-                  <VizBody id={panel.id} isEditing={isEditing} />
-                </VizPanelFrame>
+          {panels.map((panel) => {
+            const isHovered = hoveredId === panel.id;
+            const isGhosted = anyHovered && !isHovered;
+            const isStat = panel.id.startsWith("stat") || panel.id === "kpi-hero";
+            return (
+              <div
+                key={panel.id}
+                className="group relative min-h-0"
+                style={{
+                  gridColumn: `${panel.colStart} / span ${panel.colSpan}`,
+                  gridRow: `${panel.rowStart} / span ${panel.rowSpan}`,
+                  opacity: isGhosted ? 0.58 : 1,
+                  filter: isGhosted ? "saturate(0.58)" : "none",
+                  transition: "opacity 180ms ease, filter 180ms ease",
+                  zIndex: draggingId === panel.id ? 20 : 1,
+                  cursor: isEditing ? "grab" : "pointer",
+                  outline: isEditing ? `1.5px dashed ${C.accent}88` : undefined,
+                  outlineOffset: 2,
+                  borderRadius: 10,
+                }}
+                onMouseEnter={() => !isEditing && setHoveredId(panel.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                onMouseDown={(e) => isEditing && startMove(e, panel.id)}
+                onClick={() => {
+                  if (!isEditing) setExpandedId(panel.id);
+                }}
+              >
+                {!isEditing && <PdfHoverButton onClick={() => onAddToPdf(panel.id)} />}
+                {isEditing && (
+                  <button
+                    type="button"
+                    title="Remove"
+                    className="absolute top-1 right-1 z-30 w-7 h-7 rounded-md flex items-center justify-center"
+                    style={{ background: C.danger, color: "#fff", border: "none", cursor: "pointer" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(panel.id);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+                {isEditing && (Object.keys(EDGE_CURSORS) as ResizeEdge[]).map((edge) => (
+                  <div
+                    key={edge}
+                    onMouseDown={(e) => startResize(e, panel.id, edge)}
+                    style={{
+                      position: "absolute",
+                      zIndex: 25,
+                      cursor: EDGE_CURSORS[edge],
+                      ...(edge.includes("n") ? { top: 0, height: 8 } : {}),
+                      ...(edge.includes("s") ? { bottom: 0, height: 8 } : {}),
+                      ...(edge.includes("e") ? { right: 0, width: 8 } : {}),
+                      ...(edge.includes("w") ? { left: 0, width: 8 } : {}),
+                      ...(edge.length === 1 && (edge === "n" || edge === "s") ? { left: 8, right: 8 } : {}),
+                      ...(edge.length === 1 && (edge === "e" || edge === "w") ? { top: 8, bottom: 8 } : {}),
+                      ...(edge.length === 2 ? { width: 14, height: 14 } : {}),
+                    }}
+                  />
+                ))}
+                <div className="h-full w-full pointer-events-none">
+                  <VizPanelFrame id={panel.id} isStat={isStat}>
+                    <VizBody id={panel.id} isEditing={isEditing} />
+                  </VizPanelFrame>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
+
+      {expandedId && <WidgetModal widgetId={expandedId} onClose={() => setExpandedId(null)} />}
     </div>
   );
 }
@@ -228,20 +221,26 @@ function EmptyCellAdd({
   onClose: () => void;
   onPick: (id: VizWidgetId) => void;
 }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <div
-      className="relative flex items-center justify-center"
+      className="relative flex items-center justify-center group/empty"
       style={{ gridColumn: col, gridRow: row, zIndex: isOpen ? 30 : 2 }}
       onClick={(e) => e.stopPropagation()}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <button
-        type="button"
-        onClick={onOpen}
-        className="w-9 h-9 rounded-md flex items-center justify-center"
-        style={{ background: `${C.accent}18`, border: `1.5px dashed ${C.accent}`, color: C.accent, cursor: "pointer" }}
-      >
-        <Plus size={18} />
-      </button>
+      {(hovered || isOpen) && (
+        <button
+          type="button"
+          onClick={onOpen}
+          className="w-9 h-9 rounded-md flex items-center justify-center"
+          style={{ background: `${C.accent}18`, border: `1.5px solid ${C.accent}`, color: C.accent, cursor: "pointer" }}
+        >
+          <Plus size={18} />
+        </button>
+      )}
       {isOpen && (
         <div
           className="absolute top-10 left-1/2 -translate-x-1/2 z-40 w-56 max-h-64 overflow-y-auto rounded-md shadow-xl p-1"

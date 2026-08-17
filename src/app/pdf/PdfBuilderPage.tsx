@@ -25,7 +25,7 @@ const GRID_GAP_PX = 8;
 const A4_PORTRAIT = { w: 794, h: 1123 };
 const A4_LANDSCAPE = { w: 1123, h: 794 };
 
-export type PdfBlockKind = VizWidgetId | "company-header";
+export type PdfBlockKind = VizWidgetId | "company-header" | "text-field";
 
 export type PdfBlock = {
   id: string;
@@ -34,6 +34,7 @@ export type PdfBlock = {
   row: number;
   colSpan: number;
   rowSpan: number;
+  text?: string;
 };
 
 export type PdfPage = {
@@ -53,6 +54,7 @@ function defaultSpan(kind: PdfBlockKind, orientation: PageOrientation): { colSpa
   const { cols, rows } = gridDims(orientation);
   const full = cols;
   if (kind === "company-header") return { colSpan: full, rowSpan: 2 };
+  if (kind === "text-field") return { colSpan: Math.min(4, cols), rowSpan: 1 };
   if (kind.startsWith("stat")) return { colSpan: Math.min(3, cols), rowSpan: Math.min(3, rows) };
   if (kind === "kpi-hero") return { colSpan: Math.min(4, cols), rowSpan: Math.min(3, rows) };
   if (kind === "recent" || kind === "sankey" || kind === "story-strip") return { colSpan: full, rowSpan: Math.min(4, rows) };
@@ -71,7 +73,9 @@ function clampBlock(b: PdfBlock, orientation: PageOrientation): PdfBlock {
 
 function makeBlock(kind: PdfBlockKind, orientation: PageOrientation, col = 1, row = 1): PdfBlock {
   const { colSpan, rowSpan } = defaultSpan(kind, orientation);
-  return clampBlock({ id: uid(), kind, col, row, colSpan, rowSpan }, orientation);
+  const block = clampBlock({ id: uid(), kind, col, row, colSpan, rowSpan }, orientation);
+  if (kind === "text-field") return { ...block, text: "Enter text…" };
+  return block;
 }
 
 /** Map pointer inside the grid element to a 1-based cell. */
@@ -94,6 +98,7 @@ function pointerToCell(
 
 const PALETTE: { kind: PdfBlockKind; label: string }[] = [
   { kind: "company-header", label: "Company header" },
+  { kind: "text-field", label: "Text field" },
   ...VIZ_CATALOG.map((w) => ({ kind: w.id as PdfBlockKind, label: w.title })),
 ];
 
@@ -106,6 +111,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
   const [activePage, setActivePage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
+  const [showPageNumbers, setShowPageNumbers] = useState(true);
   const [exporting, setExporting] = useState(false);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const gridRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -292,7 +298,12 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
           minWidth: 0,
         }}
       >
-        <BlockPreview kind={b.kind} timeRange={timeRange} />
+        <BlockPreview
+          block={b}
+          timeRange={timeRange}
+          selected={interactive && selectedId === b.id}
+          onTextChange={(text) => updateBlock(b.id, { text })}
+        />
         {interactive && selectedId === b.id && (
           <>
             <button
@@ -360,6 +371,17 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
         </div>
         <div className="p-3 flex flex-col gap-2" style={{ borderTop: `1.5px solid ${C.border}` }}>
           <TimeRangeBar value={timeRange} onChange={setTimeRange} />
+          <label
+            className="flex items-center gap-2 cursor-pointer"
+            style={{ fontFamily: "'Lato', sans-serif", fontSize: 13, color: C.text }}
+          >
+            <input
+              type="checkbox"
+              checked={showPageNumbers}
+              onChange={(e) => setShowPageNumbers(e.target.checked)}
+            />
+            Show page numbers
+          </label>
           <button
             type="button"
             onClick={handleExport}
@@ -488,6 +510,9 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
             orientation={orientation}
             gridCols={gridCols}
             gridRows={gridRows}
+            pageNumber={activePage + 1}
+            totalPages={pages.length}
+            showPageNumbers={showPageNumbers}
             onDragOver={(e) => e.preventDefault()}
             onDrop={onDropCanvas}
             onClickBlank={() => setSelectedId(null)}
@@ -509,6 +534,9 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
                   orientation={orientation}
                   gridCols={gridCols}
                   gridRows={gridRows}
+                  pageNumber={i + 1}
+                  totalPages={pages.length}
+                  showPageNumbers={showPageNumbers}
                   gridRef={(el) => {
                     gridRefs.current[i] = el;
                   }}
@@ -524,7 +552,48 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
   );
 }
 
-function BlockPreview({ kind, timeRange }: { kind: PdfBlockKind; timeRange: TimeRange }) {
+function BlockPreview({
+  block,
+  timeRange,
+  selected,
+  onTextChange,
+}: {
+  block: PdfBlock;
+  timeRange: TimeRange;
+  selected?: boolean;
+  onTextChange?: (text: string) => void;
+}) {
+  const { kind } = block;
+  if (kind === "text-field") {
+    return (
+      <div className="h-full w-full p-2 flex items-center">
+        {selected ? (
+          <textarea
+            value={block.text ?? ""}
+            onChange={(e) => onTextChange?.(e.target.value)}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full h-full resize-none rounded-md p-2"
+            style={{
+              fontFamily: "'Lato', sans-serif",
+              fontSize: 14,
+              color: C.text,
+              background: C.surfaceAlt,
+              border: `1.5px solid ${C.accent}`,
+              outline: "none",
+            }}
+          />
+        ) : (
+          <p
+            className="w-full px-2"
+            style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text, whiteSpace: "pre-wrap" }}
+          >
+            {block.text || "Enter text…"}
+          </p>
+        )}
+      </div>
+    );
+  }
   if (kind === "company-header") return <CompanyHeader showEditPencil />;
   if (kind.startsWith("stat")) return <StatCard id={kind} />;
   if (kind === "kpi-hero") return <VizBody id="kpi-hero" timeRange={timeRange} />;
@@ -542,6 +611,9 @@ const A4Page = forwardRef<
     orientation?: PageOrientation;
     gridCols: number;
     gridRows: number;
+    pageNumber?: number;
+    totalPages?: number;
+    showPageNumbers?: boolean;
     onDragOver?: (e: DragEvent) => void;
     onDrop?: (e: DragEvent) => void;
     onClickBlank?: () => void;
@@ -553,6 +625,9 @@ const A4Page = forwardRef<
   orientation = "portrait",
   gridCols,
   gridRows,
+  pageNumber,
+  totalPages,
+  showPageNumbers,
   onDragOver,
   onDrop,
   onClickBlank,
@@ -612,6 +687,14 @@ const A4Page = forwardRef<
           {children}
         </div>
       </div>
+      {showPageNumbers && pageNumber != null && (
+        <div
+          className="absolute left-0 right-0 flex justify-center pointer-events-none"
+          style={{ bottom: "2%", fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.textMuted }}
+        >
+          {totalPages != null && totalPages > 1 ? `${pageNumber} / ${totalPages}` : `${pageNumber}`}
+        </div>
+      )}
     </div>
   );
 });

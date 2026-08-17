@@ -2,7 +2,8 @@ import { useState } from "react";
 import { ScanBar } from "./components/ScanBar";
 import { ShopInput } from "./components/ShopField";
 import { ResultCard, ResultField } from "./components/ResultCard";
-import { ModeChips, SubmitButton } from "./components/ModeChips";
+import { SubmitButton } from "./components/ModeChips";
+import { ShopKeyScope } from "./keypad/ShopKeyScope";
 import { useShopSave } from "./useShopSave";
 
 export type MoveMode = "receive" | "ship" | "return" | "sequence" | "final";
@@ -26,31 +27,29 @@ export function MoveLoadPage({ onSaved }: { onSaved?: (summary: string) => void 
   const [sequence, setSequence] = useState("");
   const { busy, result, save } = useShopSave(onSaved);
 
+  const submit = () => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.loadNumber}`);
+
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+    <ShopKeyScope
+      onSubmit={submit}
+      submitLabel="Save"
+      modeOptions={MODES}
+      modeValue={mode}
+      onModeChange={(id) => setMode(id as MoveMode)}
+    >
       <ScanBar value={entry} onChange={setEntry} />
-      <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-4">
-        <ModeChips options={MODES} value={mode} onChange={setMode} />
-
-        <div className="flex flex-col gap-3">
-          <ShopInput label="Status / Station" value={station} onChange={setStation} />
-          <ShopInput label="Job Number" value={job} onChange={setJob} />
-          {mode === "sequence" && (
-            <ShopInput label="Sequence Number" value={sequence} onChange={setSequence} />
-          )}
-          <ShopInput label="Load Number" value={load} onChange={setLoad} />
-          <ShopInput label="Location" value={location} onChange={setLocation} />
-          {mode !== "final" && (
-            <ShopInput label="Previous ID" value={prevId} onChange={setPrevId} />
-          )}
-        </div>
-
-        <SubmitButton
-          label="Save load"
-          busy={busy}
-          onClick={() => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.loadNumber}`)}
-        />
-
+      <div className="px-3 py-3 flex flex-col gap-3">
+        <ShopInput letter="S" label="Status / Station" value={station} onChange={setStation} />
+        <ShopInput letter="J" label="Job Number" value={job} onChange={setJob} />
+        {mode === "sequence" && (
+          <ShopInput letter="U" label="Sequence Number" value={sequence} onChange={setSequence} />
+        )}
+        <ShopInput letter="L" label="Load Number" value={load} onChange={setLoad} />
+        <ShopInput letter="C" label="Location" value={location} onChange={setLocation} />
+        {mode !== "final" && (
+          <ShopInput letter="D" label="Previous ID" value={prevId} onChange={setPrevId} />
+        )}
+        <SubmitButton label="Save load" busy={busy} onClick={submit} />
         {result && (
           <ResultCard title="Load">
             <ResultField label="Ct" value={result.ct} />
@@ -70,6 +69,6 @@ export function MoveLoadPage({ onSaved }: { onSaved?: (summary: string) => void 
           </ResultCard>
         )}
       </div>
-    </div>
+    </ShopKeyScope>
   );
 }

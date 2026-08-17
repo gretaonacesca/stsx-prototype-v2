@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { ScanBar } from "./components/ScanBar";
-import { ShopInput } from "./components/ShopField";
+import { ShopInput, ShopSelect } from "./components/ShopField";
 import { ResultCard, ResultField } from "./components/ResultCard";
-import { ModeChips, SubmitButton } from "./components/ModeChips";
+import { SubmitButton } from "./components/ModeChips";
+import { ShopKeyScope } from "./keypad/ShopKeyScope";
 import { useShopSave } from "./useShopSave";
 
 export type InventoryMode = "receive" | "audit" | "move" | "status" | "sweep" | "tfs";
@@ -33,44 +34,45 @@ export function InventoryPage({ onSaved }: { onSaved?: (summary: string) => void
   const { busy, result, save } = useShopSave(onSaved);
 
   const showLocation = mode === "receive" || mode === "move" || mode === "tfs";
+  const submit = () => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.material}`);
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+    <ShopKeyScope
+      onSubmit={submit}
+      submitLabel="Save"
+      modeOptions={MODES}
+      modeValue={mode}
+      onModeChange={(id) => setMode(id as InventoryMode)}
+    >
       <ScanBar value={entry} onChange={setEntry} />
-      <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-4">
-        <ModeChips options={MODES} value={mode} onChange={setMode} />
-
-        <div className="flex flex-col gap-3">
-          {mode === "audit" && (
-            <ShopInput label="Audit barcode" value={auditBc} onChange={setAuditBc} />
-          )}
-          {mode === "sweep" && (
-            <ShopInput label="Sweep barcode" value={sweepBc} onChange={setSweepBc} />
-          )}
-          <ShopInput label="ASN barcode" value={asn} onChange={setAsn} />
-          {mode === "audit" && (
-            <>
-              <ShopInput label="Copies" value={copies} onChange={setCopies} />
-              <ShopInput label="Bundled (Y/N)" value={bundled} onChange={setBundled} />
-              <ShopInput label="Quantity" value={qty} onChange={setQty} />
-            </>
-          )}
-          {mode === "tfs" && (
-            <>
-              <ShopInput label="Quantity" value={qty} onChange={setQty} />
-              <ShopInput label="TFS job" value={tfsJob} onChange={setTfsJob} />
-              <ShopInput label="Width" value={width} onChange={setWidth} />
-              <ShopInput label="Length" value={length} onChange={setLength} />
-              <ShopInput label="RTS job" value={rtsJob} onChange={setRtsJob} />
-            </>
-          )}
-          {showLocation && (
-            <ShopInput label="Location" value={location} onChange={setLocation} />
-          )}
-        </div>
-
-        <SubmitButton label="Save inventory" busy={busy} onClick={() => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.material}`)} />
-
+      <div className="px-3 py-3 flex flex-col gap-3">
+        {mode === "audit" && (
+          <ShopInput letter="I" label="Audit barcode" value={auditBc} onChange={setAuditBc} />
+        )}
+        {mode === "sweep" && (
+          <ShopInput letter="K" label="Sweep barcode" value={sweepBc} onChange={setSweepBc} />
+        )}
+        <ShopInput letter="A" label="ASN barcode" value={asn} onChange={setAsn} />
+        {mode === "audit" && (
+          <>
+            <ShopInput letter="P" label="Copies" value={copies} onChange={setCopies} />
+            <ShopSelect letter="B" label="Bundled (Y/N)" value={bundled} onChange={setBundled} options={["No", "Yes"]} />
+            <ShopInput letter="Q" label="Quantity" value={qty} onChange={setQty} />
+          </>
+        )}
+        {mode === "tfs" && (
+          <>
+            <ShopInput letter="Q" label="Quantity" value={qty} onChange={setQty} />
+            <ShopInput letter="T" label="TFS job" value={tfsJob} onChange={setTfsJob} />
+            <ShopInput letter="W" label="Width" value={width} onChange={setWidth} />
+            <ShopInput letter="N" label="Length" value={length} onChange={setLength} />
+            <ShopInput letter="R" label="RTS job" value={rtsJob} onChange={setRtsJob} />
+          </>
+        )}
+        {showLocation && (
+          <ShopInput letter="C" label="Location" value={location} onChange={setLocation} />
+        )}
+        <SubmitButton label="Save inventory" busy={busy} onClick={submit} />
         {result && (
           <ResultCard title="Inventory">
             <ResultField label="Material" value={result.material} />
@@ -126,6 +128,6 @@ export function InventoryPage({ onSaved }: { onSaved?: (summary: string) => void
           </ResultCard>
         )}
       </div>
-    </div>
+    </ShopKeyScope>
   );
 }

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { ScanBar } from "./components/ScanBar";
-import { ShopInput } from "./components/ShopField";
+import { ShopInput, ShopSelect } from "./components/ShopField";
 import { ResultCard, ResultField } from "./components/ResultCard";
-import { ModeChips, SubmitButton } from "./components/ModeChips";
+import { SubmitButton } from "./components/ModeChips";
+import { ShopKeyScope } from "./keypad/ShopKeyScope";
 import { useShopSave } from "./useShopSave";
 
 export type BundlesMode = "build" | "checklist" | "status" | "cut";
@@ -42,62 +43,60 @@ export function BundlesPage({ onSaved }: { onSaved?: (summary: string) => void }
   const [length, setLength] = useState("");
   const { busy, result, save } = useShopSave(onSaved);
 
+  const submit = () => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.material}`);
+
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+    <ShopKeyScope
+      onSubmit={submit}
+      submitLabel="Save"
+      modeOptions={MODES}
+      modeValue={mode}
+      onModeChange={(id) => setMode(id as BundlesMode)}
+    >
       <ScanBar value={entry} onChange={setEntry} />
-      <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-4">
-        <ModeChips options={MODES} value={mode} onChange={setMode} />
-
-        <div className="flex flex-col gap-3">
-          {mode === "build" && (
-            <>
-              <ShopInput label="Status / Station" value={station} onChange={setStation} />
-              <ShopInput label="Job Number" value={job} onChange={setJob} />
-              <ShopInput label="Bundle" value={bundle} onChange={setBundle} />
-              <ShopInput label="Location" value={location} onChange={setLocation} />
-              <ShopInput label="Previous ID" value={prevId} onChange={setPrevId} />
-            </>
-          )}
-          {mode === "checklist" && (
-            <>
-              <ShopInput label="Stock Location" value={stockLoc} onChange={setStockLoc} />
-              <ShopInput label="Country of origin" value={country} onChange={setCountry} />
-              <ShopInput label="Mill of origin" value={mill} onChange={setMill} />
-              <ShopInput label="BOL #" value={bol} onChange={setBol} />
-              <ShopInput label="Barcode" value={barcode} onChange={setBarcode} />
-              <ShopInput label="Bundled (Y/N)" value={bundled} onChange={setBundled} />
-              <ShopInput label="Finalize (Y/N)" value={finalize} onChange={setFinalize} />
-              <ShopInput label="Remarks" value={remarks} onChange={setRemarks} />
-              <ShopInput label="Copies" value={copies} onChange={setCopies} />
-              <ShopInput label="Heat Serial #" value={heatSerial} onChange={setHeatSerial} />
-              <ShopInput label="Heat" value={heat} onChange={setHeat} />
-              <ShopInput label="Quantity" value={qty} onChange={setQty} />
-            </>
-          )}
-          {mode === "status" && (
-            <ShopInput label="Barcode" value={barcode} onChange={setBarcode} />
-          )}
-          {mode === "cut" && (
-            <>
-              <ShopInput label="Status / Station" value={station} onChange={setStation} />
-              <ShopInput label="Location" value={location} onChange={setLocation} />
-              <ShopInput label="Cut list ID" value={cutListId} onChange={setCutListId} />
-              <ShopInput label="Strike thrus" value={strike} onChange={setStrike} />
-              <ShopInput label="Print cutlist IDs" value={printIds} onChange={setPrintIds} />
-              <ShopInput label="ASN barcode" value={asn} onChange={setAsn} />
-              <ShopInput label="Quantity" value={qty} onChange={setQty} />
-              <ShopInput label="Width" value={width} onChange={setWidth} />
-              <ShopInput label="Length" value={length} onChange={setLength} />
-            </>
-          )}
-        </div>
-
-        <SubmitButton
-          label="Save"
-          busy={busy}
-          onClick={() => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.material}`)}
-        />
-
+      <div className="px-3 py-3 flex flex-col gap-3">
+        {mode === "build" && (
+          <>
+            <ShopInput letter="S" label="Status / Station" value={station} onChange={setStation} />
+            <ShopInput letter="J" label="Job Number" value={job} onChange={setJob} />
+            <ShopInput letter="B" label="Bundle" value={bundle} onChange={setBundle} />
+            <ShopInput letter="C" label="Location" value={location} onChange={setLocation} />
+            <ShopInput letter="D" label="Previous ID" value={prevId} onChange={setPrevId} />
+          </>
+        )}
+        {mode === "checklist" && (
+          <>
+            <ShopInput letter="C" label="Stock Location" value={stockLoc} onChange={setStockLoc} />
+            <ShopInput letter="O" label="Country of origin" value={country} onChange={setCountry} />
+            <ShopInput letter="M" label="Mill of origin" value={mill} onChange={setMill} />
+            <ShopInput letter="L" label="BOL #" value={bol} onChange={setBol} />
+            <ShopInput letter="K" label="Barcode" value={barcode} onChange={setBarcode} />
+            <ShopSelect letter="B" label="Bundled (Y/N)" value={bundled} onChange={setBundled} options={["No", "Yes"]} />
+            <ShopSelect letter="F" label="Finalize (Y/N)" value={finalize} onChange={setFinalize} options={["No", "Yes"]} />
+            <ShopInput letter="R" label="Remarks" value={remarks} onChange={setRemarks} />
+            <ShopInput letter="P" label="Copies" value={copies} onChange={setCopies} />
+            <ShopInput letter="Y" label="Heat Serial #" value={heatSerial} onChange={setHeatSerial} />
+            <ShopInput letter="H" label="Heat" value={heat} onChange={setHeat} />
+            <ShopInput letter="Q" label="Quantity" value={qty} onChange={setQty} />
+          </>
+        )}
+        {mode === "status" && (
+          <ShopInput letter="K" label="Barcode" value={barcode} onChange={setBarcode} />
+        )}
+        {mode === "cut" && (
+          <>
+            <ShopInput letter="S" label="Status / Station" value={station} onChange={setStation} />
+            <ShopInput letter="C" label="Location" value={location} onChange={setLocation} />
+            <ShopInput letter="I" label="Cut list ID" value={cutListId} onChange={setCutListId} />
+            <ShopSelect letter="T" label="Strike thrus" value={strike} onChange={setStrike} options={["Yes", "No"]} />
+            <ShopSelect letter="P" label="Print cutlist IDs" value={printIds} onChange={setPrintIds} options={["Yes", "No"]} />
+            <ShopInput letter="A" label="ASN barcode" value={asn} onChange={setAsn} />
+            <ShopInput letter="Q" label="Quantity" value={qty} onChange={setQty} />
+            <ShopInput letter="W" label="Width" value={width} onChange={setWidth} />
+            <ShopInput letter="N" label="Length" value={length} onChange={setLength} />
+          </>
+        )}
+        <SubmitButton label="Save" busy={busy} onClick={submit} />
         {result && mode === "build" && (
           <ResultCard title="Bundle">
             <ResultField label="Bndl Number #" value={result.bundleNumber} />
@@ -138,6 +137,6 @@ export function BundlesPage({ onSaved }: { onSaved?: (summary: string) => void }
           </ResultCard>
         )}
       </div>
-    </div>
+    </ShopKeyScope>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { C } from "../colorTokens";
 import { ScanBar } from "./components/ScanBar";
@@ -6,6 +6,8 @@ import { ShopInput } from "./components/ShopField";
 import { ResultCard, ResultField } from "./components/ResultCard";
 import { SubmitButton } from "./components/ModeChips";
 import { EmptyState } from "./components/EmptyState";
+import { FieldKeyBadge } from "./components/FieldKeyBadge";
+import { ShopKeyScope, useShopKeysOptional } from "./keypad/ShopKeyScope";
 import { findPiece, type PieceRecord } from "./mock";
 import { StatusPill } from "../viz/chrome";
 
@@ -35,11 +37,11 @@ export function LookupPage() {
   };
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+    <ShopKeyScope onSubmit={submit} submitLabel="Look up">
       <ScanBar value={entry} onChange={setEntry} />
-      <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-4">
-        <ShopInput label="Job Number" value={job} onChange={setJob} />
-        <ShopInput label="Piecemark" value={mark} onChange={setMark} />
+      <div className="px-3 py-3 flex flex-col gap-3">
+        <ShopInput letter="J" label="Job Number" value={job} onChange={setJob} />
+        <ShopInput letter="P" label="Piecemark" value={mark} onChange={setMark} />
         <SubmitButton label="Look up" busy={busy} busyLabel="Looking…" onClick={submit} />
 
         {searched && !result && (
@@ -64,22 +66,7 @@ export function LookupPage() {
               <ResultField label="Load Number" value={result.loadNumber} />
             </ResultCard>
 
-            <button
-              type="button"
-              onClick={() => setFull((v) => !v)}
-              className="self-start px-3 py-2 rounded-lg"
-              style={{
-                background: C.surface,
-                border: `1.5px solid ${C.border}`,
-                cursor: "pointer",
-                fontFamily: "'Outfit', sans-serif",
-                fontWeight: 400,
-                fontSize: 14,
-                color: C.text,
-              }}
-            >
-              {full ? "Hide full history" : "View full history"}
-            </button>
+            <HistoryToggle full={full} onToggle={() => setFull((v) => !v)} />
 
             {full && (
               <ResultCard title="History">
@@ -106,6 +93,39 @@ export function LookupPage() {
           </>
         )}
       </div>
-    </div>
+    </ShopKeyScope>
+  );
+}
+
+function HistoryToggle({ full, onToggle }: { full: boolean; onToggle: () => void }) {
+  const ctx = useShopKeysOptional();
+  const ref = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!ctx || !el) return;
+    ctx.registerField({ id: "history", letter: "H", el });
+    return () => ctx.unregisterField("history");
+  }, [ctx]);
+
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={onToggle}
+      className="self-start px-3 py-2 rounded-lg flex items-center gap-2"
+      style={{
+        background: C.surface,
+        border: `1.5px solid ${C.border}`,
+        cursor: "pointer",
+        fontFamily: "'Outfit', sans-serif",
+        fontWeight: 400,
+        fontSize: 14,
+        color: C.text,
+      }}
+    >
+      <FieldKeyBadge letter="H" />
+      {full ? "Hide full history" : "View full history"}
+    </button>
   );
 }
