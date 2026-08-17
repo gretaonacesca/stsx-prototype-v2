@@ -11,23 +11,24 @@ export function ResultCard({
 }) {
   return (
     <div
-      className="rounded-xl p-4 flex flex-col gap-3"
+      className="rounded-lg px-3 py-2 flex flex-col gap-0"
       style={{
         background: C.surface,
         border: `1.5px solid ${C.border}`,
       }}
     >
       <p
+        className="py-1"
         style={{
           fontFamily: "'Outfit', sans-serif",
           fontWeight: 400,
-          fontSize: 16,
+          fontSize: 14,
           color: C.text,
         }}
       >
         {title}
       </p>
-      <div className="grid grid-cols-2 gap-3">{children}</div>
+      <div className="flex flex-col">{children}</div>
     </div>
   );
 }

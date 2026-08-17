@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Home, ClipboardCheck, Truck, Search, LogOut, Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Sun } from "lucide-react";
 import { Toaster } from "sonner";
 import { C } from "../colorTokens";
 import { ShopHome, type ShopTab } from "./ShopHome";
@@ -9,13 +9,6 @@ import { MoveLoadPage } from "./MoveLoadPage";
 import { LookupPage } from "./LookupPage";
 import { InventoryPage } from "./InventoryPage";
 import { BundlesPage } from "./BundlesPage";
-
-const TABS: { id: ShopTab; label: string; Icon: typeof Home }[] = [
-  { id: "home", label: "Home", Icon: Home },
-  { id: "log", label: "Log", Icon: ClipboardCheck },
-  { id: "move", label: "Move", Icon: Truck },
-  { id: "lookup", label: "Lookup", Icon: Search },
-];
 
 const TITLES: Record<ShopTab, string> = {
   home: "Shop floor",
@@ -92,37 +85,32 @@ export function ShopApp({
       {tab === "bundles" && <BundlesPage onSaved={setLastAction} />}
 
       <nav
-        className="flex-none grid grid-cols-4"
+        className="flex-none flex items-center justify-center"
         style={{
-          minHeight: 64,
+          minHeight: 48,
           background: C.surface,
           borderTop: `1.5px solid ${C.border}`,
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
-        {TABS.map((t) => {
-          const on = t.id === tab;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className="flex flex-col items-center justify-center gap-0.5"
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: on ? C.accent : C.text,
-              }}
-            >
-              <t.Icon size={22} strokeWidth={on ? 2.4 : 1.8} />
-              <span className="flex items-center gap-0.5" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 11 }}>
-                {t.id === "home" && <FieldKeyBadge letter="F1" />}
-                {t.label}
-              </span>
-            </button>
-          );
-        })}
+        <button
+          type="button"
+          onClick={() => setTab("home")}
+          className="flex items-center justify-center gap-1.5"
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: tab === "home" ? C.accent : C.text,
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 400,
+            fontSize: 14,
+            padding: "8px 16px",
+          }}
+        >
+          <FieldKeyBadge letter="F1" />
+          Home
+        </button>
       </nav>
       <Toaster position="top-center" richColors />
     </div>

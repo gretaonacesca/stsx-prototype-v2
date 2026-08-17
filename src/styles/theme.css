@@ -204,3 +204,13 @@
     line-height: 1.5;
   }
 }
+
+.shop-key-badge {
+  background-color: #111111;
+  color: #ffffff;
+}
+
+.dark .shop-key-badge {
+  background-color: #ffffff;
+  color: #111111;
+}

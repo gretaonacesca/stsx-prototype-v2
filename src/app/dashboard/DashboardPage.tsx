@@ -225,8 +225,14 @@ function EmptyCellAdd({
 
   return (
     <div
-      className="relative flex items-center justify-center group/empty"
-      style={{ gridColumn: col, gridRow: row, zIndex: isOpen ? 30 : 2 }}
+      className="relative flex items-center justify-center group/empty rounded-md"
+      style={{
+        gridColumn: col,
+        gridRow: row,
+        zIndex: isOpen ? 30 : 2,
+        background: `${C.accent}06`,
+        border: `1px dashed ${C.accent}28`,
+      }}
       onClick={(e) => e.stopPropagation()}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -235,10 +241,11 @@ function EmptyCellAdd({
         <button
           type="button"
           onClick={onOpen}
-          className="w-9 h-9 rounded-md flex items-center justify-center"
-          style={{ background: `${C.accent}18`, border: `1.5px solid ${C.accent}`, color: C.accent, cursor: "pointer" }}
+          className="w-full h-full flex items-center justify-center"
+          style={{ background: "transparent", border: "none", color: C.accent, cursor: "pointer" }}
+          aria-label="Add widget"
         >
-          <Plus size={18} />
+          <Plus size={22} strokeWidth={1.75} />
         </button>
       )}
       {isOpen && (

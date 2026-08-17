@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
-import { C } from "../../colorTokens";
+import { C, JEWEL } from "../../colorTokens";
 import { MOCK_SCAN_ID } from "../mock";
 import { FieldLabel } from "./FieldKeyBadge";
 import { useShopKeysOptional } from "../keypad/ShopKeyScope";
+
+const LIME = JEWEL.lime.base;
 
 export function ScanBar({
   value,
@@ -23,23 +25,23 @@ export function ScanBar({
 
   const focused = {
     outline: "none",
-    border: `3px solid ${C.warning}`,
-    boxShadow: `0 0 0 2px ${C.accent}`,
-    background: C.surfaceAlt,
+    border: `2px solid ${LIME}`,
+    boxShadow: `0 0 0 1px ${C.accent}`,
+    background: `${LIME}44`,
   };
   const idle = {
     outline: "none",
-    border: `1.5px solid ${C.accent}`,
+    border: `1.5px solid ${LIME}`,
     boxShadow: "none",
-    background: C.surfaceAlt,
+    background: `${LIME}33`,
   };
 
   return (
     <div
-      className="flex-none sticky top-0 z-10 flex items-end gap-2 px-3 py-2"
+      className="flex-none sticky top-0 z-10 flex items-center gap-2 px-3 py-1.5"
       style={{ background: C.surface, borderBottom: `1.5px solid ${C.border}` }}
     >
-      <label className="flex-1 flex flex-col gap-1.5 min-w-0">
+      <label className="flex-1 flex items-center gap-2 min-w-0">
         <FieldLabel letter="E">Entry</FieldLabel>
         <input
           ref={ref}
@@ -49,12 +51,13 @@ export function ScanBar({
           placeholder="Entry / barcode"
           aria-label="Entry"
           style={{
-            width: "100%",
-            height: 48,
-            borderRadius: 8,
-            padding: "0 14px",
+            flex: 1,
+            minWidth: 0,
+            height: 32,
+            borderRadius: 4,
+            padding: "0 8px",
             fontFamily: "'DM Mono', monospace",
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: 400,
             color: C.text,
             ...idle,
@@ -67,14 +70,16 @@ export function ScanBar({
         type="button"
         title="Prototype: simulates yellow scan trigger (keyboard wedge)"
         onClick={() => ctx?.injectScan(MOCK_SCAN_ID)}
-        className="flex-none h-12 px-3 rounded-lg"
+        className="flex-none px-3 rounded"
         style={{
-          background: C.warning,
+          height: 32,
+          background: LIME,
           color: "#111",
           border: "none",
           cursor: "pointer",
           fontFamily: "'DM Mono', monospace",
           fontSize: 12,
+          fontWeight: 600,
         }}
       >
         SCAN

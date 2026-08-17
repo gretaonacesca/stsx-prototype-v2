@@ -5,12 +5,12 @@ import { FieldKeyBadge } from "./components/FieldKeyBadge";
 
 export type ShopTab = "home" | "log" | "move" | "lookup" | "inventory" | "bundles";
 
-const TILES: { id: ShopTab; letter: string; num: string; label: string; blurb: string; Icon: typeof ClipboardCheck }[] = [
-  { id: "log", letter: "L", num: "1", label: "Log an Action", blurb: "Inspection, labor, saw, transaction", Icon: ClipboardCheck },
-  { id: "move", letter: "M", num: "2", label: "Move a Load", blurb: "Receive, ship, return, final ship", Icon: Truck },
-  { id: "lookup", letter: "P", num: "3", label: "Look Up a Piece", blurb: "Find piecemark and history", Icon: Search },
-  { id: "inventory", letter: "I", num: "4", label: "Inventory", blurb: "ASN receive, audit, move, sweep, TFS", Icon: Package },
-  { id: "bundles", letter: "B", num: "5", label: "Bundles & Cutlists", blurb: "Build, checklist, cut", Icon: Layers },
+const TILES: { id: ShopTab; num: string; label: string; blurb: string; Icon: typeof ClipboardCheck }[] = [
+  { id: "log", num: "1", label: "Log an Action", blurb: "Inspection, labor, saw, transaction", Icon: ClipboardCheck },
+  { id: "move", num: "2", label: "Move a Load", blurb: "Receive, ship, return, final ship", Icon: Truck },
+  { id: "lookup", num: "3", label: "Look Up a Piece", blurb: "Find piecemark and history", Icon: Search },
+  { id: "inventory", num: "4", label: "Inventory", blurb: "ASN receive, audit, move, sweep, TFS", Icon: Package },
+  { id: "bundles", num: "5", label: "Bundles & Cutlists", blurb: "Build, checklist, cut", Icon: Layers },
 ];
 
 export function ShopHome({
@@ -28,14 +28,6 @@ export function ShopHome({
       if (byNum) {
         e.preventDefault();
         onGo(byNum.id);
-        return;
-      }
-      if (e.key.length !== 1) return;
-      const letter = e.key.toUpperCase();
-      const byLetter = TILES.find((t) => t.letter === letter);
-      if (byLetter) {
-        e.preventDefault();
-        onGo(byLetter.id);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -73,10 +65,7 @@ export function ShopHome({
               minHeight: 88,
             }}
           >
-            <span className="flex items-center gap-1">
-              <FieldKeyBadge letter={t.num} />
-              <FieldKeyBadge letter={t.letter} />
-            </span>
+            <FieldKeyBadge letter={t.num} />
             <span
               className="flex-none w-12 h-12 rounded-lg flex items-center justify-center"
               style={{ background: `${C.accent}22`, color: C.accent }}
@@ -106,7 +95,6 @@ export function ShopHome({
       >
         <span className="flex items-center gap-1"><FieldKeyBadge letter="F1" /> Home</span>
         <span className="flex items-center gap-1"><FieldKeyBadge letter="1–5" /> Open</span>
-        <span>L Log · M Move · P Lookup · I Inv · B Bundles</span>
       </div>
     </div>
   );

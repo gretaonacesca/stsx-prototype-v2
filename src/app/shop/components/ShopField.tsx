@@ -1,12 +1,26 @@
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { C } from "../../colorTokens";
 import { FieldLabel } from "./FieldKeyBadge";
 import { useShopKeysOptional } from "../keypad/ShopKeyScope";
 
+const FIELD_H = 32;
+
+const controlBase: CSSProperties = {
+  height: FIELD_H,
+  borderRadius: 4,
+  padding: "0 8px",
+  fontFamily: "'Lato', sans-serif",
+  fontSize: 14,
+  fontWeight: 400,
+  color: C.text,
+  minWidth: 0,
+  flex: 1,
+};
+
 const focusRing = (focused: boolean): CSSProperties => ({
   outline: "none",
-  border: focused ? `3px solid ${C.warning}` : `1.5px solid ${C.border}`,
-  boxShadow: focused ? `0 0 0 2px ${C.accent}` : "none",
+  border: focused ? `2px solid ${C.accent}` : `1.5px solid ${C.border}`,
+  boxShadow: focused ? `0 0 0 1px ${C.accent}` : "none",
   background: focused ? C.surfaceAlt : C.surface,
 });
 
@@ -37,7 +51,7 @@ export function ShopInput({
   }, [ctx, id, letter, onChange]);
 
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className="flex items-center gap-2 min-h-8">
       <FieldLabel letter={letter}>{label}</FieldLabel>
       <input
         ref={ref}
@@ -45,16 +59,7 @@ export function ShopInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        style={{
-          height: 48,
-          borderRadius: 8,
-          padding: "0 14px",
-          fontFamily: "'Lato', sans-serif",
-          fontSize: 16,
-          fontWeight: 400,
-          color: C.text,
-          ...focusRing(false),
-        }}
+        style={{ ...controlBase, ...focusRing(false) }}
         onFocus={(e) => Object.assign(e.currentTarget.style, focusRing(true))}
         onBlur={(e) => Object.assign(e.currentTarget.style, focusRing(false))}
       />
@@ -89,23 +94,14 @@ export function ShopSelect({
   }, [ctx, id, letter]);
 
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className="flex items-center gap-2 min-h-8">
       <FieldLabel letter={letter}>{label}</FieldLabel>
       <select
         ref={ref}
         id={`shop-field-${id}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{
-          height: 48,
-          borderRadius: 8,
-          padding: "0 14px",
-          fontFamily: "'Lato', sans-serif",
-          fontSize: 16,
-          fontWeight: 400,
-          color: C.text,
-          ...focusRing(false),
-        }}
+        style={{ ...controlBase, ...focusRing(false) }}
         onFocus={(e) => Object.assign(e.currentTarget.style, focusRing(true))}
         onBlur={(e) => Object.assign(e.currentTarget.style, focusRing(false))}
       >
@@ -121,8 +117,29 @@ export function ShopSelect({
 
 export function ShopReadonly({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1">
+    <ShopValueRow label={label}>
       <span
+        style={{
+          fontFamily: "'Lato', sans-serif",
+          fontSize: 14,
+          fontWeight: 400,
+          color: C.text,
+        }}
+      >
+        {value === "" ? "—" : value}
+      </span>
+    </ShopValueRow>
+  );
+}
+
+export function ShopValueRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div
+      className="flex items-center gap-2 min-h-8"
+      style={{ borderBottom: `1px solid ${C.border}` }}
+    >
+      <span
+        className="w-[7.5rem] flex-none truncate"
         style={{
           fontFamily: "'DM Mono', monospace",
           fontSize: 12,
@@ -134,17 +151,7 @@ export function ShopReadonly({ label, value }: { label: string; value: string })
       >
         {label}
       </span>
-      <span
-        style={{
-          fontFamily: "'Lato', sans-serif",
-          fontSize: 16,
-          fontWeight: 400,
-          color: C.text,
-          minHeight: 24,
-        }}
-      >
-        {value === "" ? "—" : value}
-      </span>
+      <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
 }

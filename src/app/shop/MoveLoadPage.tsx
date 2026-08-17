@@ -38,7 +38,7 @@ export function MoveLoadPage({ onSaved }: { onSaved?: (summary: string) => void 
       onModeChange={(id) => setMode(id as MoveMode)}
     >
       <ScanBar value={entry} onChange={setEntry} />
-      <div className="px-3 py-3 flex flex-col gap-3">
+      <div className="px-3 py-2 flex flex-col gap-1.5">
         <ShopInput letter="S" label="Status / Station" value={station} onChange={setStation} />
         <ShopInput letter="J" label="Job Number" value={job} onChange={setJob} />
         {mode === "sequence" && (

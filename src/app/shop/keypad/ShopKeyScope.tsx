@@ -286,40 +286,34 @@ function ModeKeyBar({
   value: string;
   onChange: (id: string) => void;
 }) {
-  const current = options.find((o) => o.id === value)?.label ?? value;
   return (
     <div
-      className="flex-none px-3 py-2 flex flex-col gap-1.5"
+      className="flex-none px-2 py-1 flex items-center gap-1 overflow-x-auto"
       style={{ background: C.surface, borderBottom: `1.5px solid ${C.border}` }}
     >
-      <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, color: C.text }}>
-        Mode: {current}
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {options.map((o, i) => {
-          const on = o.id === value;
-          return (
-            <button
-              key={o.id}
-              type="button"
-              onClick={() => onChange(o.id)}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded"
-              style={{
-                background: on ? C.accent : C.surfaceAlt,
-                color: on ? "#fff" : C.text,
-                border: `1.5px solid ${on ? C.accent : C.border}`,
-                cursor: "pointer",
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: 13,
-                minHeight: 36,
-              }}
-            >
-              <FieldKeyBadge letter={String(i + 1)} />
-              {o.label}
-            </button>
-          );
-        })}
-      </div>
+      {options.map((o, i) => {
+        const on = o.id === value;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => onChange(o.id)}
+            className="flex items-center gap-1 px-1.5 rounded flex-none"
+            style={{
+              background: on ? C.accent : C.surfaceAlt,
+              color: on ? "#fff" : C.text,
+              border: `1.5px solid ${on ? C.accent : C.border}`,
+              cursor: "pointer",
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: 12,
+              height: 32,
+            }}
+          >
+            <FieldKeyBadge letter={String(i + 1)} />
+            {o.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

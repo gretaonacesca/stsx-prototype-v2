@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { C } from "../colorTokens";
 import { ScanBar } from "./components/ScanBar";
-import { ShopInput } from "./components/ShopField";
+import { ShopInput, ShopValueRow } from "./components/ShopField";
 import { ResultCard, ResultField } from "./components/ResultCard";
 import { SubmitButton } from "./components/ModeChips";
 import { ShopKeyScope } from "./keypad/ShopKeyScope";
@@ -41,7 +40,7 @@ export function LogActionPage({ onSaved }: { onSaved?: (summary: string) => void
       onModeChange={(id) => setMode(id as LogMode)}
     >
       <ScanBar value={entry} onChange={setEntry} />
-      <div className="px-3 py-3 flex flex-col gap-3">
+      <div className="px-3 py-2 flex flex-col gap-1.5">
         <ShopInput letter="S" label="Status / Station" value={station} onChange={setStation} />
         <ShopInput letter="C" label="Location" value={location} onChange={setLocation} />
         <ShopInput letter="W" label="Workers" value={workers} onChange={setWorkers} />
@@ -68,12 +67,9 @@ export function LogActionPage({ onSaved }: { onSaved?: (summary: string) => void
             <ResultField label="Job #" value={result.jobNumber} />
             <ResultField label="Sequence #" value={result.sequence} />
             <ResultField label="Lot #" value={result.lot} />
-            <div className="flex flex-col gap-1">
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 400, letterSpacing: "0.04em", textTransform: "uppercase", color: C.text }}>
-                Prev Status
-              </span>
+            <ShopValueRow label="Prev Status">
               <StatusPill tone="accent">{result.prevStatus}</StatusPill>
-            </div>
+            </ShopValueRow>
             <ResultField label="Prev Location" value={result.prevLocation} />
             <ResultField label="PcsW/Status" value={result.pcsWStatus} />
             <ResultField label="Item Weight" value={result.itemWeight} />

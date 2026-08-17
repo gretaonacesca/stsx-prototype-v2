@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { C } from "../colorTokens";
 import { ScanBar } from "./components/ScanBar";
-import { ShopInput } from "./components/ShopField";
+import { ShopInput, ShopValueRow } from "./components/ShopField";
 import { ResultCard, ResultField } from "./components/ResultCard";
 import { SubmitButton } from "./components/ModeChips";
 import { EmptyState } from "./components/EmptyState";
@@ -39,7 +39,7 @@ export function LookupPage() {
   return (
     <ShopKeyScope onSubmit={submit} submitLabel="Look up">
       <ScanBar value={entry} onChange={setEntry} />
-      <div className="px-3 py-3 flex flex-col gap-3">
+      <div className="px-3 py-2 flex flex-col gap-1.5">
         <ShopInput letter="J" label="Job Number" value={job} onChange={setJob} />
         <ShopInput letter="P" label="Piecemark" value={mark} onChange={setMark} />
         <SubmitButton label="Look up" busy={busy} busyLabel="Looking…" onClick={submit} />
@@ -55,14 +55,11 @@ export function LookupPage() {
               <ResultField label="Qty" value={result.qty} />
               <ResultField label="Job #" value={result.jobNumber} />
               <ResultField label="Location" value={result.location} />
-              <div className="flex flex-col gap-1">
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 400, letterSpacing: "0.04em", textTransform: "uppercase", color: C.text }}>
-                  Status
-                </span>
+              <ShopValueRow label="Status">
                 <StatusPill tone={result.onHold === "Yes" ? "warn" : "ok"}>
                   {result.onHold === "Yes" ? "On hold" : result.prevStatus}
                 </StatusPill>
-              </div>
+              </ShopValueRow>
               <ResultField label="Load Number" value={result.loadNumber} />
             </ResultCard>
 
@@ -113,7 +110,7 @@ function HistoryToggle({ full, onToggle }: { full: boolean; onToggle: () => void
       ref={ref}
       type="button"
       onClick={onToggle}
-      className="self-start px-3 py-2 rounded-lg flex items-center gap-2"
+      className="self-start px-2 h-8 rounded flex items-center gap-2"
       style={{
         background: C.surface,
         border: `1.5px solid ${C.border}`,

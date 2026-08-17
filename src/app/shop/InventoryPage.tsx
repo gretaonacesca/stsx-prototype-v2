@@ -45,7 +45,7 @@ export function InventoryPage({ onSaved }: { onSaved?: (summary: string) => void
       onModeChange={(id) => setMode(id as InventoryMode)}
     >
       <ScanBar value={entry} onChange={setEntry} />
-      <div className="px-3 py-3 flex flex-col gap-3">
+      <div className="px-3 py-2 flex flex-col gap-1.5">
         {mode === "audit" && (
           <ShopInput letter="I" label="Audit barcode" value={auditBc} onChange={setAuditBc} />
         )}

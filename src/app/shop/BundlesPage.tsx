@@ -54,7 +54,7 @@ export function BundlesPage({ onSaved }: { onSaved?: (summary: string) => void }
       onModeChange={(id) => setMode(id as BundlesMode)}
     >
       <ScanBar value={entry} onChange={setEntry} />
-      <div className="px-3 py-3 flex flex-col gap-3">
+      <div className="px-3 py-2 flex flex-col gap-1.5">
         {mode === "build" && (
           <>
             <ShopInput letter="S" label="Status / Station" value={station} onChange={setStation} />

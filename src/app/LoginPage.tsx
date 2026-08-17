@@ -288,6 +288,7 @@ export function LoginPage({
     padding: "0 14px",
     fontFamily: "'Lato', sans-serif",
     fontSize: 17,
+    fontWeight: 400,
     color: C.text,
     background: C.surface,
     border: `1.5px solid ${C.border}`,

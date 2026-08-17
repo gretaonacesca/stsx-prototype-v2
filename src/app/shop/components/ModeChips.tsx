@@ -17,7 +17,7 @@ export function SubmitButton({
       type="button"
       disabled={busy}
       onClick={onClick}
-      className="w-full h-12 rounded-lg flex items-center justify-center gap-2"
+      className="w-full h-8 rounded flex items-center justify-center gap-2"
       style={{
         background: C.accent,
         color: "#fff",
@@ -25,7 +25,7 @@ export function SubmitButton({
         cursor: busy ? "wait" : "pointer",
         fontFamily: "'Outfit', sans-serif",
         fontWeight: 400,
-        fontSize: 16,
+        fontSize: 14,
         opacity: busy ? 0.7 : 1,
       }}
     >
