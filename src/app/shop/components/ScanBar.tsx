@@ -27,15 +27,15 @@ export function ScanBar({
     outline: "none",
     border: `2px solid ${LIME}`,
     boxShadow: `0 0 0 1px ${C.accent}`,
-    background: "#FFFFFF",
-    color: "#111111",
+    background: `${LIME}44`,
+    color: C.text,
   };
   const idle = {
     outline: "none",
     border: `1.5px solid ${LIME}`,
     boxShadow: "none",
-    background: "#FFFFFF",
-    color: "#111111",
+    background: `${LIME}33`,
+    color: C.text,
   };
 
   return (
@@ -61,7 +61,6 @@ export function ScanBar({
             fontFamily: "'DM Mono', monospace",
             fontSize: 14,
             fontWeight: 400,
-            colorScheme: "light",
             ...idle,
           }}
           onFocus={(e) => Object.assign(e.currentTarget.style, focused)}

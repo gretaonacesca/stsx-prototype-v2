@@ -5,10 +5,8 @@ import { useShopKeysOptional } from "../keypad/ShopKeyScope";
 
 const FIELD_H = 32;
 const FIELD_W = "50vw";
-const ENTRY_BG = "#FFFFFF";
-const ENTRY_FG = "#111111";
 
-const controlBase: CSSProperties = {
+const controlBase = (): CSSProperties => ({
   height: FIELD_H,
   width: FIELD_W,
   maxWidth: FIELD_W,
@@ -18,18 +16,16 @@ const controlBase: CSSProperties = {
   fontFamily: "'Lato', sans-serif",
   fontSize: 14,
   fontWeight: 400,
-  color: ENTRY_FG,
-  background: ENTRY_BG,
-  colorScheme: "light",
+  color: C.text,
   minWidth: 0,
-};
+});
 
 const focusRing = (focused: boolean): CSSProperties => ({
   outline: "none",
   border: focused ? `2px solid ${C.accent}` : `1.5px solid ${C.border}`,
   boxShadow: focused ? `0 0 0 1px ${C.accent}` : "none",
-  background: ENTRY_BG,
-  color: ENTRY_FG,
+  background: focused ? C.surfaceAlt : C.surface,
+  color: C.text,
 });
 
 export function ShopInput({
@@ -67,7 +63,7 @@ export function ShopInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        style={{ ...controlBase, ...focusRing(false) }}
+        style={{ ...controlBase(), ...focusRing(false) }}
         onFocus={(e) => Object.assign(e.currentTarget.style, focusRing(true))}
         onBlur={(e) => Object.assign(e.currentTarget.style, focusRing(false))}
       />
@@ -109,7 +105,7 @@ export function ShopSelect({
         id={`shop-field-${id}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{ ...controlBase, ...focusRing(false) }}
+        style={{ ...controlBase(), ...focusRing(false) }}
         onFocus={(e) => Object.assign(e.currentTarget.style, focusRing(true))}
         onBlur={(e) => Object.assign(e.currentTarget.style, focusRing(false))}
       >
