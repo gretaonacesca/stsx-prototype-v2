@@ -5,6 +5,8 @@ import { useShopKeysOptional } from "../keypad/ShopKeyScope";
 
 const FIELD_H = 32;
 const FIELD_W = "50vw";
+const ENTRY_BG = "#FFFFFF";
+const ENTRY_FG = "#111111";
 
 const controlBase: CSSProperties = {
   height: FIELD_H,
@@ -16,7 +18,9 @@ const controlBase: CSSProperties = {
   fontFamily: "'Lato', sans-serif",
   fontSize: 14,
   fontWeight: 400,
-  color: C.text,
+  color: ENTRY_FG,
+  background: ENTRY_BG,
+  colorScheme: "light",
   minWidth: 0,
 };
 
@@ -24,7 +28,8 @@ const focusRing = (focused: boolean): CSSProperties => ({
   outline: "none",
   border: focused ? `2px solid ${C.accent}` : `1.5px solid ${C.border}`,
   boxShadow: focused ? `0 0 0 1px ${C.accent}` : "none",
-  background: focused ? C.surfaceAlt : C.surface,
+  background: ENTRY_BG,
+  color: ENTRY_FG,
 });
 
 export function ShopInput({

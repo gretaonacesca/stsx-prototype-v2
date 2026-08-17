@@ -78,7 +78,7 @@ export function ShopApp({
       </header>
 
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-        {tab === "home" && <ShopHome lastAction={lastAction} onGo={setTab} />}
+        {tab === "home" && <ShopHome lastAction={lastAction} onGo={setTab} isDark={isDark} />}
         {tab === "log" && <LogActionPage onSaved={setLastAction} />}
         {tab === "move" && <MoveLoadPage onSaved={setLastAction} />}
         {tab === "lookup" && <LookupPage />}

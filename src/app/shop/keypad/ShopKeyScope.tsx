@@ -120,30 +120,6 @@ export function ShopKeyScope({
     }
   }, []);
 
-  const advanceOrSubmit = useCallback(() => {
-    const list = visibleFields();
-    if (list.length === 0) {
-      submitRef.current();
-      return;
-    }
-    const currentId = fieldIdOf(document.activeElement, fieldsRef.current);
-    const idx = currentId ? list.findIndex((f) => f.id === currentId) : -1;
-    if (idx === -1) {
-      focusField(list[0]);
-      return;
-    }
-    const current = list[idx];
-    if (current.el instanceof HTMLButtonElement) {
-      current.el.click();
-      return;
-    }
-    if (idx >= list.length - 1) {
-      submitRef.current();
-      return;
-    }
-    focusField(list[idx + 1]);
-  }, [focusField, visibleFields]);
-
   const injectScan = useCallback(
     (code: string) => {
       const list = visibleFields();
@@ -159,9 +135,8 @@ export function ShopKeyScope({
         target.el.dispatchEvent(new Event("input", { bubbles: true }));
       }
       focusField(target);
-      queueMicrotask(() => advanceOrSubmit());
     },
-    [advanceOrSubmit, focusField, visibleFields]
+    [focusField, visibleFields]
   );
 
   useEffect(() => {
@@ -178,16 +153,25 @@ export function ShopKeyScope({
       }
 
       if (e.key === "Enter") {
-        if (isTypingTarget(e.target) || fieldIdOf(e.target as Element, fieldsRef.current)) {
+        if (isTypingTarget(e.target)) {
           e.preventDefault();
-          advanceOrSubmit();
+          (e.target as HTMLElement).blur();
+          return;
+        }
+        const id = fieldIdOf(e.target as Element, fieldsRef.current);
+        const btn = id ? fieldsRef.current.get(id) : null;
+        if (btn?.el instanceof HTMLButtonElement) {
+          e.preventDefault();
+          btn.el.click();
         }
         return;
       }
 
+      if (isTypingTarget(e.target)) return;
+
       const { modeOptions: opts, onModeChange: setMode } = modeRef.current;
 
-      if (opts && setMode && /^[1-9]$/.test(e.key) && !isTypingTarget(e.target)) {
+      if (opts && setMode && /^[1-9]$/.test(e.key)) {
         const i = Number(e.key) - 1;
         if (opts[i]) {
           e.preventDefault();
@@ -200,12 +184,8 @@ export function ShopKeyScope({
       const letter = e.key.toUpperCase();
       if (!/[A-Z]/.test(letter)) return;
 
-      const list = visibleFields();
-      const match = list.find((f) => f.letter.toUpperCase() === letter);
+      const match = visibleFields().find((f) => f.letter.toUpperCase() === letter);
       if (!match) return;
-
-      const currentId = fieldIdOf(document.activeElement, fieldsRef.current);
-      if (currentId === match.id && isTypingTarget(e.target)) return;
 
       e.preventDefault();
       focusField(match);
@@ -213,7 +193,7 @@ export function ShopKeyScope({
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [advanceOrSubmit, focusField, visibleFields]);
+  }, [focusField, visibleFields]);
 
   useEffect(() => {
     registerAction({ key: "F2", label: submitLabel, run: () => submitRef.current() });

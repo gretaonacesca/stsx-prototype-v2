@@ -16,9 +16,11 @@ const TILES: { id: ShopTab; num: string; label: string; blurb: string; Icon: typ
 export function ShopHome({
   lastAction,
   onGo,
+  isDark,
 }: {
   lastAction: string | null;
   onGo: (tab: ShopTab) => void;
+  isDark: boolean;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -66,7 +68,10 @@ export function ShopHome({
           <FieldKeyBadge letter={t.num} />
           <span
             className="flex-none w-8 h-8 rounded-md flex items-center justify-center"
-            style={{ background: `${C.accent}22`, color: C.accent }}
+            style={{
+              background: isDark ? "#3F52CC66" : `${C.accent}22`,
+              color: isDark ? "#B4C2FF" : C.accent,
+            }}
           >
             <t.Icon size={18} />
           </span>
