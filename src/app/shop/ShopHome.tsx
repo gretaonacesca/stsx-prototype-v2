@@ -35,67 +35,51 @@ export function ShopHome({
   }, [onGo]);
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-4 flex flex-col gap-3">
-        {lastAction && (
-          <p
-            className="px-3 py-2 rounded-lg"
-            style={{
-              background: C.surface,
-              border: `1.5px solid ${C.border}`,
-              fontFamily: "'Lato', sans-serif",
-              fontSize: 14,
-              fontWeight: 400,
-              color: C.text,
-            }}
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-3 py-2 gap-1.5">
+      {lastAction && (
+        <p
+          className="flex-none px-3 py-1.5 rounded-lg"
+          style={{
+            background: C.surface,
+            border: `1.5px solid ${C.border}`,
+            fontFamily: "'Lato', sans-serif",
+            fontSize: 13,
+            fontWeight: 400,
+            color: C.text,
+          }}
+        >
+          Last action: {lastAction}
+        </p>
+      )}
+      {TILES.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          onClick={() => onGo(t.id)}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-left flex-1 min-h-0"
+          style={{
+            background: C.surface,
+            border: `1.5px solid ${C.border}`,
+            cursor: "pointer",
+          }}
+        >
+          <FieldKeyBadge letter={t.num} />
+          <span
+            className="flex-none w-8 h-8 rounded-md flex items-center justify-center"
+            style={{ background: `${C.accent}22`, color: C.accent }}
           >
-            Last action: {lastAction}
-          </p>
-        )}
-        {TILES.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => onGo(t.id)}
-            className="flex items-center gap-4 px-4 py-5 rounded-xl text-left"
-            style={{
-              background: C.surface,
-              border: `1.5px solid ${C.border}`,
-              cursor: "pointer",
-              minHeight: 88,
-            }}
-          >
-            <FieldKeyBadge letter={t.num} />
-            <span
-              className="flex-none w-12 h-12 rounded-lg flex items-center justify-center"
-              style={{ background: `${C.accent}22`, color: C.accent }}
-            >
-              <t.Icon size={24} />
+            <t.Icon size={18} />
+          </span>
+          <span className="flex flex-col min-w-0">
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 16, color: C.text, lineHeight: 1.2 }}>
+              {t.label}
             </span>
-            <span className="flex flex-col gap-0.5">
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.text }}>
-                {t.label}
-              </span>
-              <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: C.text }}>
-                {t.blurb}
-              </span>
+            <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 12, fontWeight: 400, color: C.text, lineHeight: 1.2 }}>
+              {t.blurb}
             </span>
-          </button>
-        ))}
-      </div>
-      <div
-        className="flex-none flex flex-wrap gap-x-3 gap-y-1 px-3 py-1.5"
-        style={{
-          background: C.surfaceAlt,
-          borderTop: `1.5px solid ${C.border}`,
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 11,
-          color: C.text,
-        }}
-      >
-        <span className="flex items-center gap-1"><FieldKeyBadge letter="F1" /> Home</span>
-        <span className="flex items-center gap-1"><FieldKeyBadge letter="1–5" /> Open</span>
-      </div>
+          </span>
+        </button>
+      ))}
     </div>
   );
 }

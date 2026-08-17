@@ -38,11 +38,11 @@ export function ScanBar({
 
   return (
     <div
-      className="flex-none sticky top-0 z-10 flex items-center gap-2 px-3 py-1.5"
+      className="flex-none sticky top-0 z-10 flex items-start gap-2 px-3 py-1.5"
       style={{ background: C.surface, borderBottom: `1.5px solid ${C.border}` }}
     >
-      <label className="flex-1 flex items-center gap-2 min-w-0">
-        <FieldLabel letter="E">Entry</FieldLabel>
+      <FieldLabel letter="E">Entry</FieldLabel>
+      <div className="flex items-center gap-1" style={{ width: "50vw", flex: "0 0 50vw" }}>
         <input
           ref={ref}
           id="shop-field-entry"
@@ -65,25 +65,25 @@ export function ScanBar({
           onFocus={(e) => Object.assign(e.currentTarget.style, focused)}
           onBlur={(e) => Object.assign(e.currentTarget.style, idle)}
         />
-      </label>
-      <button
-        type="button"
-        title="Prototype: simulates yellow scan trigger (keyboard wedge)"
-        onClick={() => ctx?.injectScan(MOCK_SCAN_ID)}
-        className="flex-none px-3 rounded"
-        style={{
-          height: 32,
-          background: LIME,
-          color: "#111",
-          border: "none",
-          cursor: "pointer",
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 12,
-          fontWeight: 600,
-        }}
-      >
-        SCAN
-      </button>
+        <button
+          type="button"
+          title="Prototype: simulates yellow scan trigger (keyboard wedge)"
+          onClick={() => ctx?.injectScan(MOCK_SCAN_ID)}
+          className="flex-none px-2 rounded"
+          style={{
+            height: 32,
+            background: LIME,
+            color: "#111",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 11,
+            fontWeight: 600,
+          }}
+        >
+          SCAN
+        </button>
+      </div>
     </div>
   );
 }

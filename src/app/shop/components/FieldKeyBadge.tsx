@@ -26,7 +26,7 @@ export function FieldKeyBadge({ letter }: { letter: string }) {
 export function FieldLabel({ letter, children }: { letter: string; children: string }) {
   return (
     <span
-      className="flex items-center gap-1.5 min-w-0 w-[7.5rem] flex-none"
+      className="flex items-start gap-1.5 min-w-0 flex-1"
       style={{
         fontFamily: "'DM Mono', monospace",
         fontSize: 12,
@@ -37,7 +37,9 @@ export function FieldLabel({ letter, children }: { letter: string; children: str
       }}
     >
       <FieldKeyBadge letter={letter} />
-      <span className="truncate">{children}</span>
+      <span className="min-w-0 leading-tight" style={{ whiteSpace: "normal" }}>
+        {children}
+      </span>
     </span>
   );
 }

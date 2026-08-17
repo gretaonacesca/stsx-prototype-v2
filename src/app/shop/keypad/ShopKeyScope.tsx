@@ -120,13 +120,6 @@ export function ShopKeyScope({
     }
   }, []);
 
-  const focusEntryOrFirst = useCallback(() => {
-    const list = visibleFields();
-    const entry = list.find((f) => f.id === "entry") ?? list[0];
-    if (entry) focusField(entry);
-    return entry ?? null;
-  }, [focusField, visibleFields]);
-
   const advanceOrSubmit = useCallback(() => {
     const list = visibleFields();
     if (list.length === 0) {
@@ -242,10 +235,6 @@ export function ShopKeyScope({
     return () => unregisterAction("F3");
   }, [modeOptions, modeValue, onModeChange, registerAction, unregisterAction]);
 
-  useEffect(() => {
-    focusEntryOrFirst();
-  }, [focusEntryOrFirst, modeValue]);
-
   const ctx = useMemo<ShopKeyCtx>(
     () => ({
       registerField,
@@ -258,8 +247,6 @@ export function ShopKeyScope({
     [injectScan, registerAction, registerField, unregisterAction, unregisterField]
   );
 
-  const modeLabel = modeOptions?.find((m) => m.id === modeValue)?.label;
-
   return (
     <Ctx.Provider value={ctx}>
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -267,11 +254,6 @@ export function ShopKeyScope({
           <ModeKeyBar options={modeOptions} value={modeValue} onChange={onModeChange} />
         )}
         <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
-        <ActionBar
-          submitLabel={submitLabel}
-          modeLabel={modeLabel}
-          hasModes={!!modeOptions?.length}
-        />
       </div>
     </Ctx.Provider>
   );
@@ -288,7 +270,7 @@ function ModeKeyBar({
 }) {
   return (
     <div
-      className="flex-none px-2 py-1 flex items-center gap-1 overflow-x-auto"
+      className="flex-none px-2 py-1 flex flex-wrap items-center gap-1"
       style={{ background: C.surface, borderBottom: `1.5px solid ${C.border}` }}
     >
       {options.map((o, i) => {
@@ -314,42 +296,6 @@ function ModeKeyBar({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function ActionBar({
-  submitLabel,
-  modeLabel,
-  hasModes,
-}: {
-  submitLabel: string;
-  modeLabel?: string;
-  hasModes: boolean;
-}) {
-  const items = [
-    { key: "F1", label: "Home" },
-    { key: "F2", label: submitLabel },
-    ...(hasModes ? [{ key: "F3", label: modeLabel ? `Mode (${modeLabel})` : "Cycle mode" }] : []),
-    { key: "Enter", label: "Next / save" },
-  ];
-  return (
-    <div
-      className="flex-none flex flex-wrap gap-x-3 gap-y-1 px-3 py-1.5"
-      style={{
-        background: C.surfaceAlt,
-        borderTop: `1.5px solid ${C.border}`,
-        fontFamily: "'DM Mono', monospace",
-        fontSize: 11,
-        color: C.text,
-      }}
-    >
-      {items.map((it) => (
-        <span key={it.key} className="flex items-center gap-1">
-          <FieldKeyBadge letter={it.key.replace("F", "F")} />
-          <span>{it.label}</span>
-        </span>
-      ))}
     </div>
   );
 }

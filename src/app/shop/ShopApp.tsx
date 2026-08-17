@@ -42,7 +42,7 @@ export function ShopApp({
   }, []);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: C.bg }}>
+    <div className="h-dvh flex flex-col overflow-hidden" style={{ background: C.bg }}>
       <header
         className="flex-none flex items-center gap-2 px-3"
         style={{
@@ -77,15 +77,17 @@ export function ShopApp({
         </button>
       </header>
 
-      {tab === "home" && <ShopHome lastAction={lastAction} onGo={setTab} />}
-      {tab === "log" && <LogActionPage onSaved={setLastAction} />}
-      {tab === "move" && <MoveLoadPage onSaved={setLastAction} />}
-      {tab === "lookup" && <LookupPage />}
-      {tab === "inventory" && <InventoryPage onSaved={setLastAction} />}
-      {tab === "bundles" && <BundlesPage onSaved={setLastAction} />}
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        {tab === "home" && <ShopHome lastAction={lastAction} onGo={setTab} />}
+        {tab === "log" && <LogActionPage onSaved={setLastAction} />}
+        {tab === "move" && <MoveLoadPage onSaved={setLastAction} />}
+        {tab === "lookup" && <LookupPage />}
+        {tab === "inventory" && <InventoryPage onSaved={setLastAction} />}
+        {tab === "bundles" && <BundlesPage onSaved={setLastAction} />}
+      </div>
 
       <nav
-        className="flex-none flex items-center justify-center"
+        className="flex-none shrink-0 flex items-center justify-center z-20"
         style={{
           minHeight: 48,
           background: C.surface,

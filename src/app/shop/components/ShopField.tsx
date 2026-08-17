@@ -4,9 +4,13 @@ import { FieldLabel } from "./FieldKeyBadge";
 import { useShopKeysOptional } from "../keypad/ShopKeyScope";
 
 const FIELD_H = 32;
+const FIELD_W = "50vw";
 
 const controlBase: CSSProperties = {
   height: FIELD_H,
+  width: FIELD_W,
+  maxWidth: FIELD_W,
+  flex: "0 0 auto",
   borderRadius: 4,
   padding: "0 8px",
   fontFamily: "'Lato', sans-serif",
@@ -14,7 +18,6 @@ const controlBase: CSSProperties = {
   fontWeight: 400,
   color: C.text,
   minWidth: 0,
-  flex: 1,
 };
 
 const focusRing = (focused: boolean): CSSProperties => ({
@@ -51,7 +54,7 @@ export function ShopInput({
   }, [ctx, id, letter, onChange]);
 
   return (
-    <label className="flex items-center gap-2 min-h-8">
+    <label className="flex items-start gap-2">
       <FieldLabel letter={letter}>{label}</FieldLabel>
       <input
         ref={ref}
@@ -94,7 +97,7 @@ export function ShopSelect({
   }, [ctx, id, letter]);
 
   return (
-    <label className="flex items-center gap-2 min-h-8">
+    <label className="flex items-start gap-2">
       <FieldLabel letter={letter}>{label}</FieldLabel>
       <select
         ref={ref}
@@ -135,11 +138,11 @@ export function ShopReadonly({ label, value }: { label: string; value: string })
 export function ShopValueRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div
-      className="flex items-center gap-2 min-h-8"
+      className="flex items-start gap-2 min-h-8"
       style={{ borderBottom: `1px solid ${C.border}` }}
     >
       <span
-        className="w-[7.5rem] flex-none truncate"
+        className="flex-1 min-w-0 leading-tight"
         style={{
           fontFamily: "'DM Mono', monospace",
           fontSize: 12,
