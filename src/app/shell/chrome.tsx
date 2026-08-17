@@ -48,7 +48,7 @@ export function Sidebar({
                 style={{ background: "transparent", border: "none", cursor: "pointer", color: C.text }}
                 onClick={() => setOpenCats((p) => ({ ...p, [cat.id]: !p[cat.id] }))}
               >
-                <Icon size={16} color={C.accent} />
+                <Icon size={16} color={cat.id === "records" ? C.danger : C.accent} />
                 <span className="flex-1 text-left" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 14 }}>
                   {cat.label}
                 </span>
