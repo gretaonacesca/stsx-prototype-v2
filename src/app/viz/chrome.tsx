@@ -65,19 +65,23 @@ export function PanelHeader({
   accent: string;
   print?: boolean;
 }) {
-  const bg = print ? PRINT.surface : C.surface;
-  const border = print ? PRINT.border : C.border;
   return (
     <div
       className="flex-none flex items-center px-4 py-2.5"
-      style={{ background: bg, borderBottom: `1px solid ${border}`, minHeight: 36 }}
+      style={{
+        background: print ? (PRINT.surface) : accent,
+        borderBottom: print ? `1px solid ${PRINT.border}` : "none",
+        minHeight: 36,
+        borderTopLeftRadius: 8,
+        borderTopRightRadius: 8,
+      }}
     >
       <span
         style={{
           fontFamily: "'DM Mono', monospace",
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: 400,
-          color: accent,
+          color: print ? accent : "#FFFFFF",
           letterSpacing: "0.07em",
           textTransform: "uppercase",
         }}

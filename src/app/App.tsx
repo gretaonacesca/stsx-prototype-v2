@@ -7,7 +7,7 @@ import { OperationModal } from "./ops/OperationModal";
 import { renderOperation } from "./ops/registry";
 import { PdfBuilderPage, type PdfBlockKind } from "./pdf/PdfBuilderPage";
 import { ShopApp } from "./shop/ShopApp";
-import type { OperationId } from "./nav/catalog";
+import { findOperation, type OperationId } from "./nav/catalog";
 import type { VizWidgetId } from "./dashboard/widgetCatalog";
 
 const SHOP_BREAKPOINT = 1024;
@@ -35,6 +35,7 @@ export default function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [mode, setMode] = useState<Mode>("dashboard");
   const [activeOp, setActiveOp] = useState<OperationId | null>(null);
+  const [minimizedOps, setMinimizedOps] = useState<OperationId[]>([]);
   const [pdfSeed, setPdfSeed] = useState<PdfBlockKind | null>(null);
   const [pdfKey, setPdfKey] = useState(0);
 
@@ -50,6 +51,7 @@ export default function App() {
     setIsLoggedIn(false);
     setIsEditing(false);
     setActiveOp(null);
+    setMinimizedOps([]);
     setMode("dashboard");
     setDark(false);
   };
@@ -57,6 +59,7 @@ export default function App() {
   const openPdf = (seed?: PdfBlockKind | null) => {
     setIsEditing(false);
     setActiveOp(null);
+    setMinimizedOps([]);
     setPdfSeed(seed ?? null);
     setPdfKey((k) => k + 1);
     setMode("pdf");
@@ -71,11 +74,26 @@ export default function App() {
   }
 
   const crumbs = crumbsFor(activeOp, mode === "pdf");
+  const windowTabs = minimizedOps.map((id) => ({
+    id,
+    label: findOperation(id)?.leaf.label ?? id,
+    active: activeOp === id,
+  }));
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: C.bg }}>
       <TopBar
         crumbs={crumbs}
+        windowTabs={windowTabs}
+        onOpenTab={(id) => {
+          setMode("dashboard");
+          setIsEditing(false);
+          setActiveOp(id);
+          setMinimizedOps((prev) => prev.filter((op) => op !== id));
+        }}
+        onCloseTab={(id) => {
+          setMinimizedOps((prev) => prev.filter((op) => op !== id));
+        }}
         isEditing={isEditing}
         isDark={isDark}
         pdfMode={mode === "pdf"}
@@ -99,6 +117,7 @@ export default function App() {
             onOpenOp={(id) => {
               setIsEditing(false);
               setActiveOp(id);
+              setMinimizedOps((prev) => prev.filter((op) => op !== id));
             }}
           />
         )}
@@ -123,7 +142,14 @@ export default function App() {
       </div>
 
       {activeOp && mode === "dashboard" && (
-        <OperationModal opId={activeOp} onClose={() => setActiveOp(null)}>
+        <OperationModal
+          opId={activeOp}
+          onClose={() => setActiveOp(null)}
+          onMinimize={() => {
+            setMinimizedOps((prev) => (prev.includes(activeOp) ? prev : [...prev, activeOp]));
+            setActiveOp(null);
+          }}
+        >
           {renderOperation(activeOp)}
         </OperationModal>
       )}

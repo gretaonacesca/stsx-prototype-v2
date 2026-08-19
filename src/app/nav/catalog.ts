@@ -27,6 +27,12 @@ export type NavCategory = {
   children: NavLeaf[];
 };
 
+export type NavTone = {
+  base: string;
+  text: string;
+  border: string;
+};
+
 export const NAV_CATEGORIES: NavCategory[] = [
   {
     id: "import",
@@ -125,10 +131,31 @@ export const NAV_CATEGORIES: NavCategory[] = [
   },
 ];
 
+export const NAV_TONES: Record<string, NavTone> = {
+  import: { base: "#0D8C7E", text: "#FFFFFF", border: "#0A6E63" },     // teal
+  jobs: { base: "#3F52CC", text: "#FFFFFF", border: "#2E3AA0" },       // indigo
+  shipping: { base: "#00B7FF", text: "#FFFFFF", border: "#008FCC" },   // capri
+  reports: { base: "#6D4DD9", text: "#FFFFFF", border: "#5138A8" },    // indigo-purple
+  people: { base: "#4FAE1E", text: "#FFFFFF", border: "#3C8617" },     // darker lime
+  reference: { base: "#5A616C", text: "#FFFFFF", border: "#3E444D" },  // grey
+  inventory: { base: "#14AFC4", text: "#FFFFFF", border: "#0F8495" },  // cyan-teal
+  admin: { base: "#2F343D", text: "#FFFFFF", border: "#1E2228" },      // graphite
+  records: { base: "#9E1F38", text: "#FFFFFF", border: "#6B1528" },    // red
+};
+
+export function toneForCategoryId(categoryId: string): NavTone {
+  return NAV_TONES[categoryId] ?? { base: "#3F52CC", text: "#FFFFFF", border: "#2E3AA0" };
+}
+
 export function findOperation(id: OperationId): { category: NavCategory; leaf: NavLeaf } | null {
   for (const category of NAV_CATEGORIES) {
     const leaf = category.children.find((c) => c.id === id);
     if (leaf) return { category, leaf };
   }
   return null;
+}
+
+export function toneForOperation(id: OperationId): NavTone {
+  const found = findOperation(id);
+  return toneForCategoryId(found?.category.id ?? "jobs");
 }

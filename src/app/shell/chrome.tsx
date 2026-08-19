@@ -3,7 +3,7 @@ import {
   ChevronDown, ChevronRight, LayoutGrid, FileDown, Moon, Sun, LogOut, X,
 } from "lucide-react";
 import { C } from "../colorTokens";
-import { NAV_CATEGORIES, findOperation, type OperationId } from "../nav/catalog";
+import { NAV_CATEGORIES, findOperation, toneForCategoryId, toneForOperation, type OperationId } from "../nav/catalog";
 import { Switch } from "../components/ui/switch";
 
 export function Sidebar({
@@ -40,6 +40,7 @@ export function Sidebar({
         {NAV_CATEGORIES.map((cat) => {
           const open = openCats[cat.id];
           const Icon = cat.Icon;
+          const tone = toneForCategoryId(cat.id);
           return (
             <div key={cat.id} className="mb-1">
               <button
@@ -48,7 +49,7 @@ export function Sidebar({
                 style={{ background: "transparent", border: "none", cursor: "pointer", color: C.text }}
                 onClick={() => setOpenCats((p) => ({ ...p, [cat.id]: !p[cat.id] }))}
               >
-                <Icon size={16} color={cat.id === "records" ? C.danger : C.accent} />
+                <Icon size={16} color={tone.base} />
                 <span className="flex-1 text-left" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 14 }}>
                   {cat.label}
                 </span>
@@ -65,9 +66,9 @@ export function Sidebar({
                         onClick={() => onOpenOp(leaf.id)}
                         className="w-full text-left px-3 py-1.5 pl-9"
                         style={{
-                          background: active ? `${C.accent}18` : "transparent",
+                          background: active ? `${tone.base}18` : "transparent",
                           border: "none",
-                          borderLeft: active ? `3px solid ${C.accent}` : "3px solid transparent",
+                          borderLeft: active ? `3px solid ${tone.base}` : "3px solid transparent",
                           cursor: "pointer",
                           fontFamily: "'Lato', sans-serif",
                           fontWeight: 400,
@@ -91,6 +92,9 @@ export function Sidebar({
 
 export function TopBar({
   crumbs,
+  windowTabs,
+  onOpenTab,
+  onCloseTab,
   isEditing,
   isDark,
   onToggleEdit,
@@ -101,6 +105,9 @@ export function TopBar({
   onExitPdf,
 }: {
   crumbs: string[];
+  windowTabs?: { id: OperationId; label: string; active: boolean }[];
+  onOpenTab?: (id: OperationId) => void;
+  onCloseTab?: (id: OperationId) => void;
   isEditing: boolean;
   isDark: boolean;
   onToggleEdit: () => void;
@@ -120,21 +127,73 @@ export function TopBar({
       }}
     >
       <div className="flex-1 min-w-0 flex items-center gap-2 overflow-x-auto">
-        {crumbs.map((c, i) => (
-          <span key={`${c}-${i}`} className="flex items-center gap-2 shrink-0">
-            {i > 0 && <span style={{ color: C.text, opacity: 0.4 }}>/</span>}
-            <span
+        {!pdfMode && windowTabs && windowTabs.length > 0 ? (
+          windowTabs.map((tab) => {
+            const swatch = toneForOperation(tab.id);
+            return (
+            <div
+              key={tab.id}
+              className="relative shrink-0 flex items-center gap-1 rounded-t-lg px-2.5 py-1.5 -mb-px"
               style={{
-                fontFamily: i === crumbs.length - 1 ? "'Outfit', sans-serif" : "'Lato', sans-serif",
-                fontWeight: 400,
-                fontSize: i === crumbs.length - 1 ? 16 : 14,
-                color: C.text,
+                background: swatch.base,
+                border: `1.5px solid ${tab.active ? swatch.text : `${swatch.text}88`}`,
+                boxShadow: tab.active
+                  ? `0 3px 0 ${swatch.text}33 inset, 0 3px 10px ${swatch.base}88`
+                  : `0 2px 0 ${swatch.text}22 inset`,
+                transform: tab.active ? "translateY(-1px)" : "translateY(0px)",
+                transition: "transform 120ms ease, box-shadow 120ms ease",
+                borderTopLeftRadius: 10,
+                borderTopRightRadius: 10,
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
               }}
             >
-              {c}
+              <button
+                type="button"
+                onClick={() => onOpenTab?.(tab.id)}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  fontFamily: "'Lato', sans-serif",
+                  fontSize: 13,
+                  fontWeight: 400,
+                  color: swatch.text,
+                }}
+                title={`Restore ${tab.label}`}
+              >
+                {tab.label}
+              </button>
+              <button
+                type="button"
+                onClick={() => onCloseTab?.(tab.id)}
+                className="w-5 h-5 rounded flex items-center justify-center"
+                style={{ border: "none", background: "transparent", cursor: "pointer", color: swatch.text }}
+                aria-label={`Close ${tab.label} tab`}
+                title="Close tab"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          );
+        })
+        ) : (
+          crumbs.map((c, i) => (
+            <span key={`${c}-${i}`} className="flex items-center gap-2 shrink-0">
+              {i > 0 && <span style={{ color: C.text, opacity: 0.4 }}>/</span>}
+              <span
+                style={{
+                  fontFamily: i === crumbs.length - 1 ? "'Outfit', sans-serif" : "'Lato', sans-serif",
+                  fontWeight: 400,
+                  fontSize: i === crumbs.length - 1 ? 16 : 14,
+                  color: C.text,
+                }}
+              >
+                {c}
+              </span>
             </span>
-          </span>
-        ))}
+          ))
+        )}
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
