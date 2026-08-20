@@ -379,6 +379,8 @@ export function CompanyHeader({ showEditPencil = false }: { showEditPencil?: boo
   );
 }
 
+const ADMIN_GRAPHITE = "#2F343D";
+
 export function PdfHoverButton({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -390,10 +392,10 @@ export function PdfHoverButton({ onClick }: { onClick: () => void }) {
       }}
       className="absolute top-2 right-2 z-20 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
       style={{
-        background: C.accent,
+        background: ADMIN_GRAPHITE,
         color: "#fff",
         border: `2px solid ${C.surface}`,
-        boxShadow: `0 4px 14px ${C.accent}55`,
+        boxShadow: `0 4px 14px ${ADMIN_GRAPHITE}55`,
         cursor: "pointer",
       }}
     >
@@ -456,7 +458,7 @@ export function VizPanelFrame({
         boxShadow: print ? "none" : `0 1px 0 ${jewel.light}22 inset`,
       }}
     >
-      <PanelHeader title={title} accent={jewel.base} print={print} />
+      <PanelHeader title={title} accent={JEWEL.indigo.base} print={print} />
       <div className="flex-1 min-h-0" style={{ background: print ? PRINT.surface : undefined }}>
         {children}
       </div>

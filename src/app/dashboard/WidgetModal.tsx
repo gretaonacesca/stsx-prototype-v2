@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
-import { C } from "../colorTokens";
-import { PANEL_META, panelJewel, type VizWidgetId } from "./widgetCatalog";
+import { C, JEWEL } from "../colorTokens";
+import { PANEL_META, type VizWidgetId } from "./widgetCatalog";
 import { VizBody, VizPanelFrame } from "../viz/blocks";
 
 export function WidgetModal({
@@ -12,8 +12,8 @@ export function WidgetModal({
 }) {
   const meta = PANEL_META[widgetId];
   const title = meta?.title ?? widgetId;
-  const jewel = panelJewel(widgetId);
   const isStat = widgetId.startsWith("stat") || widgetId === "kpi-hero";
+  const indigo = JEWEL.indigo.base;
 
   return (
     <div
@@ -26,14 +26,14 @@ export function WidgetModal({
         style={{
           background: C.surface,
           borderRadius: 12,
-          border: `1.5px solid ${jewel.base}`,
-          boxShadow: `0 28px 64px ${jewel.base}44`,
+          border: `1.5px solid ${indigo}`,
+          boxShadow: `0 28px 64px ${indigo}44`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div
           className="flex-none flex items-center justify-between px-4 py-3"
-          style={{ background: jewel.base, color: "#fff" }}
+          style={{ background: indigo, color: "#fff" }}
         >
           <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 20 }}>{title}</span>
           <button
