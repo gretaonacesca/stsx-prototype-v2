@@ -37,24 +37,103 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LoadForm() {
-  const load = ACTIVE_LOADS[0];
+function findLoad(query: string) {
+  const q = query.trim().toLowerCase();
+  if (!q) return null;
   return (
-    <div className="p-5 flex flex-col gap-3 max-w-2xl mx-auto w-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Load ID" value={load.id} />
-        <Field label="Destination" value={load.dest} />
-        <Field label="Status" value={load.status} />
-        <Field label="ETA" value={load.eta} />
-        <Field label="Ship from" value={load.shipFrom} />
-        <Field label="Truck" value={load.truck} />
-        <Field label="Driver" value={load.driver} />
-        <Field label="Weight" value={`${load.weightLbs} lbs`} />
-        <div className="sm:col-span-2">
-          <Field label="Notes" value={load.notes} />
+    ACTIVE_LOADS.find((l) => l.id.toLowerCase() === q) ??
+    ACTIVE_LOADS.find((l) => l.id.toLowerCase().includes(q)) ??
+    null
+  );
+}
+
+function LoadForm() {
+  const DEMO_LOAD = "LD-4412";
+  const [loadId, setLoadId] = useState("");
+  const [hit, setHit] = useState<(typeof ACTIVE_LOADS)[number] | null>(null);
+  const [searched, setSearched] = useState(false);
+
+  const run = () => {
+    setSearched(true);
+    setHit(findLoad(loadId));
+  };
+
+  return (
+    <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full">
+      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: C.text, lineHeight: 1.5 }}>
+        Demo search that always hits: load{" "}
+        <span style={{ fontFamily: "'DM Mono', monospace" }}>{DEMO_LOAD}</span>
+        {" "}(includes piecemark B-1042-A).
+      </p>
+      <label className="flex flex-col gap-1">
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text, textTransform: "uppercase" }}>Load Number</span>
+        <input
+          value={loadId}
+          onChange={(e) => setLoadId(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") run();
+          }}
+          placeholder={`e.g. ${DEMO_LOAD}`}
+          style={{
+            height: 36,
+            borderRadius: 6,
+            border: `1.5px solid ${C.border}`,
+            background: C.surfaceAlt,
+            padding: "0 10px",
+            fontFamily: "'Lato', sans-serif",
+            fontSize: 15,
+            fontWeight: 400,
+            color: C.text,
+          }}
+        />
+      </label>
+      <button
+        type="button"
+        onClick={run}
+        className="self-start px-3 py-1.5 rounded-md"
+        style={{ background: C.accent, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
+      >
+        Find
+      </button>
+
+      {searched && hit && (
+        <div className="flex flex-col gap-3 pt-2" style={{ borderTop: `1px solid ${C.border}` }}>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Load ID" value={hit.id} />
+            <Field label="Destination" value={hit.dest} />
+            <Field label="Status" value={hit.status} />
+            <Field label="ETA" value={hit.eta} />
+            <Field label="Ship from" value={hit.shipFrom} />
+            <Field label="Truck" value={hit.truck} />
+            <Field label="Driver" value={hit.driver} />
+            <Field label="Weight" value={`${hit.weightLbs} lbs`} />
+            <Field label="Pieces" value={String(hit.pieces)} />
+            <div className="col-span-2">
+              <Field label="Notes" value={hit.notes} />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text, textTransform: "uppercase" }}>
+              Piecemarks on load
+            </span>
+            {hit.piecemarks.map((p) => (
+              <p
+                key={p.mark}
+                style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: C.text }}
+              >
+                <span style={{ fontFamily: "'DM Mono', monospace" }}>{p.mark}</span>
+                {" · "}qty {p.qty} · {p.desc}
+              </p>
+            ))}
+          </div>
         </div>
-      </div>
-      <FormActions primary={{ label: "Save" }} />
+      )}
+
+      {searched && !hit && (
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>
+          No load found. Try load {DEMO_LOAD}.
+        </p>
+      )}
     </div>
   );
 }
