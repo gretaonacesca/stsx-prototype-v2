@@ -12,6 +12,9 @@ import type { VizWidgetId } from "./dashboard/widgetCatalog";
 
 const SHOP_BREAKPOINT = 1024;
 
+/** Maze / tester shortcut — set to `false` to restore the ASCII login page. */
+const SKIP_LOGIN_FOR_TESTING = true;
+
 function useIsShop() {
   const [shop, setShop] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < SHOP_BREAKPOINT : false
@@ -30,7 +33,7 @@ type Mode = "dashboard" | "pdf";
 
 export default function App() {
   const isShop = useIsShop();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(SKIP_LOGIN_FOR_TESTING);
   const [isDark, setIsDark] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [mode, setMode] = useState<Mode>("dashboard");
@@ -48,7 +51,7 @@ export default function App() {
   };
 
   const logout = () => {
-    setIsLoggedIn(false);
+    if (!SKIP_LOGIN_FOR_TESTING) setIsLoggedIn(false);
     setIsEditing(false);
     setActiveOp(null);
     setMinimizedOps([]);
@@ -65,7 +68,7 @@ export default function App() {
     setMode("pdf");
   };
 
-  if (!isLoggedIn) {
+  if (!SKIP_LOGIN_FOR_TESTING && !isLoggedIn) {
     return <LoginPage C={C} onLogin={() => setIsLoggedIn(true)} />;
   }
 
