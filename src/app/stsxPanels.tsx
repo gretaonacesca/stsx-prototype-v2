@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Check, Upload, ChevronDown } from "lucide-react";
 import { EMPLOYEES, EXISTING_JOBS } from "./data/mock";
 
@@ -276,28 +276,55 @@ function NestedTabs({
   );
 }
 
-function FormActions({
+/** Primary action only — modal chrome already has Close. Shows a fading success cue. */
+export function FormActions({
   primary,
-  onClear,
-  onClose,
-  secondaryLabel = "Clear",
 }: {
-  primary?: { label: string; onClick?: () => void };
-  onClear?: () => void;
-  onClose?: () => void;
-  secondaryLabel?: string;
+  primary: { label: string; onClick?: () => void; successMessage?: string };
 }) {
+  const [toastOn, setToastOn] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+  }, []);
+
+  const flash = () => {
+    primary.onClick?.();
+    setToastOn(true);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setToastOn(false), 1800);
+  };
+
   return (
-    <div className="flex flex-wrap justify-end gap-2 pt-3 mt-auto" style={{ borderTop: `1.5px solid ${T.border}` }}>
-      {primary && (
-        <button type="button" style={btnPrimary} onClick={primary.onClick}>{primary.label}</button>
-      )}
-      {onClear && (
-        <button type="button" style={btnDark} onClick={onClear}>{secondaryLabel}</button>
-      )}
-      {onClose && (
-        <button type="button" style={btnDark} onClick={onClose}>Close</button>
-      )}
+    <div className="relative flex flex-wrap justify-end gap-2 pt-3 mt-auto" style={{ borderTop: `1.5px solid ${T.border}` }}>
+      <div
+        role="status"
+        aria-live="polite"
+        className="absolute left-0 right-0 bottom-full mb-2 flex justify-center pointer-events-none"
+        style={{
+          opacity: toastOn ? 1 : 0,
+          transform: toastOn ? "translateY(0)" : "translateY(4px)",
+          transition: "opacity 0.35s ease, transform 0.35s ease",
+        }}
+      >
+        <span
+          className="px-3 py-1.5 rounded-md"
+          style={{
+            background: T.primary,
+            color: T.primaryFg,
+            fontFamily: "'Lato', sans-serif",
+            fontSize: 14,
+            fontWeight: 400,
+            boxShadow: "0 6px 18px color-mix(in srgb, var(--foreground) 18%, transparent)",
+          }}
+        >
+          {primary.successMessage ?? "Successful save"}
+        </span>
+      </div>
+      <button type="button" style={btnPrimary} onClick={flash}>
+        {primary.label}
+      </button>
     </div>
   );
 }
@@ -319,10 +346,8 @@ const IMPORT_ACCEPT: Record<ImportKind, string> = {
 /** Shared import filter form — KISS / Tekla / SDS / Excel / EJE variants */
 export function ImportFilterForm({
   kind,
-  onClose,
 }: {
   kind: ImportKind;
-  onClose?: () => void;
 }) {
   const accept = IMPORT_ACCEPT[kind];
   const [rounding, setRounding] = useState<"none" | "typical" | "up">("none");
@@ -399,7 +424,7 @@ export function ImportFilterForm({
         <FileUploadField acceptLabel={accept} />
       </div>
 
-      <FormActions onClear={() => {}} onClose={onClose} />
+      <FormActions primary={{ label: "Import", successMessage: "Successful save" }} />
     </div>
   );
 }
@@ -593,7 +618,7 @@ export function CustomerEditorPanel() {
             </>
           )}
         </div>
-        <FormActions secondaryLabel="Edit" onClear={() => {}} onClose={() => {}} />
+        <FormActions primary={{ label: "Save" }} />
       </div>
     </div>
   );
@@ -636,7 +661,7 @@ export function CarrierEditorPanel() {
           <FormRow label="Carrier Phone #3"><TextInput /></FormRow>
           <FormRow label="Carrier Fax"><TextInput /></FormRow>
         </div>
-        <FormActions primary={{ label: "Save" }} onClear={() => {}} onClose={() => {}} secondaryLabel="Cancel" />
+        <FormActions primary={{ label: "Save" }} />
       </div>
     </div>
   );
@@ -687,7 +712,7 @@ export function StatusCodesEditorPanel() {
             ))}
           </div>
         </div>
-        <FormActions secondaryLabel="Edit" onClear={() => {}} onClose={() => {}} />
+        <FormActions primary={{ label: "Save" }} />
       </div>
     </div>
   );
@@ -752,7 +777,7 @@ export function RoutingCodesEditorPanel() {
             </div>
           ))}
         </div>
-        <FormActions secondaryLabel="Edit" onClear={() => {}} onClose={() => {}} />
+        <FormActions primary={{ label: "Save" }} />
       </div>
     </div>
   );
@@ -900,7 +925,7 @@ export function EmployeeInfoEditor({
           </>
         )}
       </div>
-      <FormActions secondaryLabel="Edit" onClear={() => {}} onClose={() => {}} />
+      <FormActions primary={{ label: "Save" }} />
     </div>
   );
 }
@@ -937,7 +962,7 @@ export function EmployeeClassEditorPanel() {
           <FormRow label="Class UOM"><TextInput defaultValue="HR" /></FormRow>
           <FormRow label="Class Value #"><TextInput /></FormRow>
         </div>
-        <FormActions primary={{ label: "Save" }} onClear={() => {}} onClose={() => {}} secondaryLabel="Cancel" />
+        <FormActions primary={{ label: "Save" }} />
       </div>
     </div>
   );
@@ -1019,7 +1044,7 @@ export function PiecemarkEntryWorkbench() {
               </>
             )}
           </div>
-          <FormActions primary={{ label: "Add Piecemark" }} onClose={() => {}} />
+          <FormActions primary={{ label: "Add Piecemark" }} />
         </div>
       </div>
     </div>
@@ -1195,7 +1220,6 @@ export function JobEditorPanel({ mode }: { mode: "add" | "edit" }) {
 
         <FormActions
           primary={{ label: mode === "add" ? "Add Job" : "Save Job" }}
-          onClose={() => {}}
         />
       </div>
     </div>

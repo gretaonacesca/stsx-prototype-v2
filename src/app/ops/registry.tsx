@@ -13,21 +13,16 @@ import {
   EmployeeClassEditorPanel,
   PiecemarkEntryWorkbench,
   JobEditorPanel,
+  FormActions,
   TokenCheckbox,
 } from "../stsxPanels";
 
 function Placeholder({ title, body }: { title: string; body: string }) {
   return (
-    <div className="p-5 flex flex-col gap-3">
+    <div className="p-5 flex flex-col gap-3 min-h-[200px]">
       <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.text }}>{title}</p>
       <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text, lineHeight: 1.6 }}>{body}</p>
-      <button
-        type="button"
-        className="self-start px-3 py-1.5 rounded-md"
-        style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
-      >
-        Continue
-      </button>
+      <FormActions primary={{ label: "Save" }} />
     </div>
   );
 }
@@ -44,18 +39,21 @@ function Field({ label, value }: { label: string; value: string }) {
 function LoadForm() {
   const load = ACTIVE_LOADS[0];
   return (
-    <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <Field label="Load ID" value={load.id} />
-      <Field label="Destination" value={load.dest} />
-      <Field label="Status" value={load.status} />
-      <Field label="ETA" value={load.eta} />
-      <Field label="Ship from" value={load.shipFrom} />
-      <Field label="Truck" value={load.truck} />
-      <Field label="Driver" value={load.driver} />
-      <Field label="Weight" value={`${load.weightLbs} lbs`} />
-      <div className="sm:col-span-2">
-        <Field label="Notes" value={load.notes} />
+    <div className="p-5 flex flex-col gap-3 min-h-[280px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Load ID" value={load.id} />
+        <Field label="Destination" value={load.dest} />
+        <Field label="Status" value={load.status} />
+        <Field label="ETA" value={load.eta} />
+        <Field label="Ship from" value={load.shipFrom} />
+        <Field label="Truck" value={load.truck} />
+        <Field label="Driver" value={load.driver} />
+        <Field label="Weight" value={`${load.weightLbs} lbs`} />
+        <div className="sm:col-span-2">
+          <Field label="Notes" value={load.notes} />
+        </div>
       </div>
+      <FormActions primary={{ label: "Save" }} />
     </div>
   );
 }
@@ -184,20 +182,14 @@ function FindPiecemark() {
 
 function DangerConfirm({ title, body }: { title: string; body: string }) {
   return (
-    <div className="p-5 flex flex-col gap-3" style={{ background: C.dangerBg }}>
+    <div className="p-5 flex flex-col gap-3 min-h-[220px]" style={{ background: C.dangerBg }}>
       <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.danger }}>{title}</p>
       <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text, lineHeight: 1.6 }}>{body}</p>
       <label className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
         <TokenCheckbox />
         I understand this cannot be undone
       </label>
-      <button
-        type="button"
-        className="self-start px-3 py-1.5 rounded-md"
-        style={{ background: C.danger, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
-      >
-        Confirm
-      </button>
+      <FormActions primary={{ label: "Confirm", successMessage: "Successful save" }} />
     </div>
   );
 }
@@ -207,13 +199,11 @@ function InventoryOp({ kind }: { kind: "item" | "reorder" | "capacity" }) {
   const pct = Math.round((item.level / item.capacity) * 100);
   if (kind === "reorder") {
     return (
-      <div className="p-5 flex flex-col gap-3">
+      <div className="p-5 flex flex-col gap-3 min-h-[200px]">
         <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
           Reorder point: {Math.round(item.capacity * 0.25)}. Suggested order: {Math.max(0, Math.round(item.capacity * 0.6) - item.level)} units for {item.sku}.
         </p>
-        <button type="button" className="self-start px-3 py-1.5 rounded-md" style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}>
-          Create PO
-        </button>
+        <FormActions primary={{ label: "Create PO", successMessage: "Successful save" }} />
       </div>
     );
   }
@@ -227,11 +217,14 @@ function InventoryOp({ kind }: { kind: "item" | "reorder" | "capacity" }) {
     );
   }
   return (
-    <div className="p-5 grid grid-cols-2 gap-3">
-      <Field label="SKU" value={item.sku} />
-      <Field label="Name" value={item.name} />
-      <Field label="Level" value={String(item.level)} />
-      <Field label="Capacity" value={String(item.capacity)} />
+    <div className="p-5 flex flex-col gap-3 min-h-[220px]">
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="SKU" value={item.sku} />
+        <Field label="Name" value={item.name} />
+        <Field label="Level" value={String(item.level)} />
+        <Field label="Capacity" value={String(item.capacity)} />
+      </div>
+      <FormActions primary={{ label: "Save" }} />
     </div>
   );
 }
