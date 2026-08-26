@@ -67,9 +67,9 @@ function FindPiecemark() {
   const [single, setSingle] = useState<ReturnType<typeof findPiece>>(null);
   const [searched, setSearched] = useState(false);
 
-  const run = (overrideMark?: string, overrideJob?: string) => {
-    const m = (overrideMark ?? mark).trim();
-    const j = (overrideJob ?? job).trim();
+  const run = () => {
+    const m = mark.trim();
+    const j = job.trim();
     setSearched(true);
     if (j && !m) {
       setHits(piecesForJob(j));
@@ -128,36 +128,14 @@ function FindPiecemark() {
           }}
         />
       </label>
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => run()}
-          className="px-3 py-1.5 rounded-md"
-          style={{ background: C.accent, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
-        >
-          Find
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setMark(DEMO_MARK);
-            setJob("092356");
-            run(DEMO_MARK, "092356");
-          }}
-          className="px-3 py-1.5 rounded-md"
-          style={{
-            background: C.surfaceAlt,
-            color: C.text,
-            border: `1.5px solid ${C.border}`,
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 12,
-            fontWeight: 400,
-            cursor: "pointer",
-          }}
-        >
-          Fill demo {DEMO_MARK}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={run}
+        className="self-start px-3 py-1.5 rounded-md"
+        style={{ background: C.accent, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
+      >
+        Find
+      </button>
 
       {searched && single && (
         <div className="grid grid-cols-2 gap-2 pt-2" style={{ borderTop: `1px solid ${C.border}` }}>
