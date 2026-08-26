@@ -343,11 +343,23 @@ function NestedTabs({
   );
 }
 
-/** Primary action only — modal chrome already has Close. Shows a fading success cue. */
+/** Remount key for uncontrolled fields — bump after a successful save to clear the form. */
+export function useFormEpoch() {
+  const [epoch, setEpoch] = useState(0);
+  return [epoch, () => setEpoch((e) => e + 1)] as const;
+}
+
+/** Primary action only — modal chrome already has Close. Shows a fading success cue, then clears. */
 export function FormActions({
   primary,
 }: {
-  primary: { label: string; onClick?: () => void; successMessage?: string };
+  primary: {
+    label: string;
+    onClick?: () => void;
+    /** Called right after save so the parent can clear / remount fields. */
+    onSaved?: () => void;
+    successMessage?: string;
+  };
 }) {
   const [toastOn, setToastOn] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -358,6 +370,7 @@ export function FormActions({
 
   const flash = () => {
     primary.onClick?.();
+    primary.onSaved?.();
     setToastOn(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
     hideTimer.current = setTimeout(() => setToastOn(false), 1800);
@@ -418,6 +431,7 @@ export function ImportFilterForm({
 }) {
   const accept = IMPORT_ACCEPT[kind];
   const [rounding, setRounding] = useState<"none" | "typical" | "up">("none");
+  const [epoch, bump] = useFormEpoch();
   const isEje = kind === "eje";
   const showLot = !isEje;
   const showExtra = !isEje;
@@ -425,71 +439,82 @@ export function ImportFilterForm({
   return (
     <div className="p-4 overflow-y-auto">
       <div className="flex flex-col gap-2.5 w-full max-w-xl mx-auto">
-        <FormRow label="Job #" required>
-          <SelectInput options={JOB_OPTIONS} defaultValue="092356" />
-        </FormRow>
-        <FormRow label="Sequence #" hint='Use {} for empty sequence'>
-          <TextInput />
-        </FormRow>
-        {showLot && (
-          <FormRow label="Lot #" hint='Use {} for empty lot'>
+        <div key={epoch} className="flex flex-col gap-2.5">
+          <FormRow label="Job #" required>
+            <SelectInput options={JOB_OPTIONS} defaultValue="092356" />
+          </FormRow>
+          <FormRow label="Sequence #" hint='Use {} for empty sequence'>
             <TextInput />
           </FormRow>
-        )}
-        <FormRow label="Sheet #">
-          <TextInput />
-        </FormRow>
-        <FormRow label="Piecemark">
-          <TextInput />
-        </FormRow>
-        {showExtra && (
-          <>
-            <FormRow label="Category #">
+          {showLot && (
+            <FormRow label="Lot #" hint='Use {} for empty lot'>
               <TextInput />
             </FormRow>
-            <FormRow label="Work Package #">
-              <TextInput />
-            </FormRow>
-          </>
-        )}
+          )}
+          <FormRow label="Sheet #">
+            <TextInput />
+          </FormRow>
+          <FormRow label="Piecemark">
+            <TextInput />
+          </FormRow>
+          {showExtra && (
+            <>
+              <FormRow label="Category #">
+                <TextInput />
+              </FormRow>
+              <FormRow label="Work Package #">
+                <TextInput />
+              </FormRow>
+            </>
+          )}
 
-        {kind === "kiss" && (
-          <label className="flex items-center gap-[7px] mt-1" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
-            <TokenCheckbox />
-            Use KISS File Instead of PowerFab
-          </label>
-        )}
+          {kind === "kiss" && (
+            <label className="flex items-center gap-[7px] mt-1" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
+              <TokenCheckbox />
+              Use KISS File Instead of PowerFab
+            </label>
+          )}
 
-        {isEje && (
-          <div
-            className="mt-2 p-3 rounded-md flex flex-col gap-2"
-            style={{ background: T.dangerBg, border: `1.5px solid ${T.danger}` }}
-          >
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 16, color: T.danger }}>
-              Import Options
-            </span>
-            <span style={{ fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 15, color: T.text }}>
-              Item Wt Rounding
-            </span>
-            {([
-              ["none", "No Rounding"],
-              ["typical", "Typical Rounding"],
-              ["up", "Always Round Up"],
-            ] as const).map(([id, label]) => (
-              <label key={id} className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
-                <TokenRadio name="rounding" checked={rounding === id} onChange={() => setRounding(id)} />
-                {label}
-              </label>
-            ))}
-          </div>
-        )}
+          {isEje && (
+            <div
+              className="mt-2 p-3 rounded-md flex flex-col gap-2"
+              style={{ background: T.dangerBg, border: `1.5px solid ${T.danger}` }}
+            >
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 16, color: T.danger }}>
+                Import Options
+              </span>
+              <span style={{ fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 15, color: T.text }}>
+                Item Wt Rounding
+              </span>
+              {([
+                ["none", "No Rounding"],
+                ["typical", "Typical Rounding"],
+                ["up", "Always Round Up"],
+              ] as const).map(([id, label]) => (
+                <label key={id} className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
+                  <TokenRadio name="rounding" checked={rounding === id} onChange={() => setRounding(id)} />
+                  {label}
+                </label>
+              ))}
+            </div>
+          )}
 
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: T.text, marginTop: 4 }}>
-          * Multiple filter items may be separated by commas. i.e. 1,2,3
-        </p>
+          <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: T.text, marginTop: 4 }}>
+            * Multiple filter items may be separated by commas. i.e. 1,2,3
+          </p>
 
-        <FileUploadField acceptLabel={accept} />
-        <FormActions primary={{ label: "Import", successMessage: "Successful save" }} />
+          <FileUploadField acceptLabel={accept} />
+        </div>
+        <FormActions
+          primary={{
+            label: "Import",
+            successMessage: "Successful save",
+            onSaved: () => {
+              setRounding("none");
+              bump();
+            },
+          }}
+        />
       </div>
     </div>
   );
@@ -622,7 +647,10 @@ function ListPane({
 export function CustomerEditorPanel() {
   const [selected, setSelected] = useState(SAMPLE_CUSTOMERS[0].id);
   const [tab, setTab] = useState("customer");
+  const [epoch, bump] = useFormEpoch();
+  const [blank, setBlank] = useState(false);
   const cust = SAMPLE_CUSTOMERS.find((c) => c.id === selected) ?? SAMPLE_CUSTOMERS[0];
+  const v = blank ? { id: "", name: "" } : cust;
   return (
     <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[minmax(220px,0.9fr)_1.2fr]">
       <div className="min-h-0 overflow-hidden" style={{ borderRight: `1.5px solid ${T.border}` }}>
@@ -630,12 +658,17 @@ export function CustomerEditorPanel() {
           addLabel="Add New Customer"
           headers={["Customer #", "Name"]}
           rows={SAMPLE_CUSTOMERS.map((c) => ({ key: c.id, cells: [c.id, c.name] }))}
-          selectedKey={selected}
-          onSelect={setSelected}
+          selectedKey={blank ? null : selected}
+          onSelect={(id) => {
+            setSelected(id);
+            setBlank(false);
+          }}
         />
       </div>
       <div className="min-h-0 flex flex-col overflow-hidden p-3 gap-3">
-        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 19, color: T.text }}>{cust.name}</p>
+        <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 19, color: T.text }}>
+          {blank ? "New customer" : cust.name}
+        </p>
         <NestedTabs
           tabs={[
             { id: "customer", label: "Customer" },
@@ -646,12 +679,12 @@ export function CustomerEditorPanel() {
           active={tab}
           onChange={setTab}
         />
-        <div className="flex-1 overflow-y-auto flex flex-col gap-2.5 pt-2">
+        <div key={epoch} className="flex-1 overflow-y-auto flex flex-col gap-2.5 pt-2">
           {tab === "customer" && (
             <>
-              <FormRow label="Customer #" required><SelectInput options={SAMPLE_CUSTOMERS.map((c) => c.id)} defaultValue={cust.id} /></FormRow>
-              <FormRow label="Corporation Name" required><TextInput defaultValue={cust.name} /></FormRow>
-              <FormRow label="Bar Code Prefix" required><TextInput defaultValue={cust.id} /></FormRow>
+              <FormRow label="Customer #" required><SelectInput options={["", ...SAMPLE_CUSTOMERS.map((c) => c.id)]} defaultValue={v.id} /></FormRow>
+              <FormRow label="Corporation Name" required><TextInput defaultValue={v.name} /></FormRow>
+              <FormRow label="Bar Code Prefix" required><TextInput defaultValue={v.id} /></FormRow>
               <FormRow label="Representative"><TextInput /></FormRow>
               <FormRow label="Email"><TextInput /></FormRow>
               <FormRow label="Fax #"><TextInput /></FormRow>
@@ -664,8 +697,8 @@ export function CustomerEditorPanel() {
           )}
           {tab === "barcode" && (
             <>
-              <FormRow label="Prefix"><TextInput defaultValue={cust.id} /></FormRow>
-              <FormRow label="Structure"><TextInput defaultValue="{JOB}-{PM}-{SEQ}" /></FormRow>
+              <FormRow label="Prefix"><TextInput defaultValue={v.id} /></FormRow>
+              <FormRow label="Structure"><TextInput defaultValue={blank ? "" : "{JOB}-{PM}-{SEQ}"} /></FormRow>
             </>
           )}
           {tab === "accounting" && (
@@ -684,7 +717,15 @@ export function CustomerEditorPanel() {
             </>
           )}
         </div>
-        <FormActions primary={{ label: "Save" }} />
+        <FormActions
+          primary={{
+            label: "Save",
+            onSaved: () => {
+              setBlank(true);
+              bump();
+            },
+          }}
+        />
       </div>
     </div>
   );
@@ -693,6 +734,8 @@ export function CustomerEditorPanel() {
 export function CarrierEditorPanel() {
   const [selected, setSelected] = useState(SAMPLE_CARRIERS[0]?.id ?? null);
   const [showInactive, setShowInactive] = useState(true);
+  const [epoch, bump] = useFormEpoch();
+  const [blank, setBlank] = useState(false);
   const carrier = SAMPLE_CARRIERS.find((c) => c.id === selected);
   return (
     <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[minmax(220px,0.9fr)_1.2fr]">
@@ -701,24 +744,29 @@ export function CarrierEditorPanel() {
           addLabel="Add New Carrier"
           headers={["Carrier Number", "Carrier Name"]}
           rows={SAMPLE_CARRIERS.map((c) => ({ key: c.id, cells: [c.id, c.name] }))}
-          selectedKey={selected}
-          onSelect={setSelected}
+          selectedKey={blank ? null : selected}
+          onSelect={(id) => {
+            setSelected(id);
+            setBlank(false);
+          }}
           showInactive={showInactive}
           onToggleInactive={setShowInactive}
         />
       </div>
       <div className="min-h-0 flex flex-col overflow-hidden p-3 gap-2.5">
-        <div className="flex-1 overflow-y-auto flex flex-col gap-2.5">
-          <FormRow label="Carrier #" required><SelectInput options={SAMPLE_CARRIERS.map((c) => c.id)} defaultValue={carrier?.id} /></FormRow>
-          <FormRow label="Carrier Name"><TextInput defaultValue={carrier?.name} /></FormRow>
+        <div key={epoch} className="flex-1 overflow-y-auto flex flex-col gap-2.5">
+          <FormRow label="Carrier #" required>
+            <SelectInput options={["", ...SAMPLE_CARRIERS.map((c) => c.id)]} defaultValue={blank ? "" : carrier?.id} />
+          </FormRow>
+          <FormRow label="Carrier Name"><TextInput defaultValue={blank ? "" : carrier?.name} /></FormRow>
           <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
-            <TokenCheckbox defaultChecked /> Active
+            <TokenCheckbox defaultChecked={!blank} /> Active
           </label>
           <FormRow label="Line1"><TextInput /></FormRow>
           <FormRow label="Line2"><TextInput /></FormRow>
           <FormRow label="ZIP Code"><TextInput /></FormRow>
-          <FormRow label="City"><SelectInput options={["Houston", "Dallas", "Miami"]} /></FormRow>
-          <FormRow label="State"><TextInput defaultValue="TX" /></FormRow>
+          <FormRow label="City"><SelectInput options={["", "Houston", "Dallas", "Miami"]} defaultValue="" /></FormRow>
+          <FormRow label="State"><TextInput defaultValue={blank ? "" : "TX"} /></FormRow>
           <FormRow label="Carrier Contact"><TextInput /></FormRow>
           <FormRow label="Carrier Email"><TextInput /></FormRow>
           <FormRow label="Carrier Cell Phone"><TextInput /></FormRow>
@@ -727,7 +775,15 @@ export function CarrierEditorPanel() {
           <FormRow label="Carrier Phone #3"><TextInput /></FormRow>
           <FormRow label="Carrier Fax"><TextInput /></FormRow>
         </div>
-        <FormActions primary={{ label: "Save" }} />
+        <FormActions
+          primary={{
+            label: "Save",
+            onSaved: () => {
+              setBlank(true);
+              bump();
+            },
+          }}
+        />
       </div>
     </div>
   );
@@ -736,10 +792,15 @@ export function CarrierEditorPanel() {
 export function StatusCodesEditorPanel() {
   const [selected, setSelected] = useState(SAMPLE_STATUS[0].code);
   const [showInactive, setShowInactive] = useState(false);
+  const [epoch, bump] = useFormEpoch();
+  const [blank, setBlank] = useState(false);
   const row = SAMPLE_STATUS.find((s) => s.code === selected) ?? SAMPLE_STATUS[0];
   const [flags, setFlags] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(STATUS_FLAGS.map((f) => [f, f === "Status Code Active"]))
   );
+  const clearFlags = () =>
+    setFlags(Object.fromEntries(STATUS_FLAGS.map((f) => [f, false])));
+
   return (
     <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[minmax(240px,1fr)_1.15fr]">
       <div className="min-h-0 overflow-hidden" style={{ borderRight: `1.5px solid ${T.border}` }}>
@@ -747,19 +808,29 @@ export function StatusCodesEditorPanel() {
           addLabel="Add Code"
           headers={["Process ID", "Division", "Status Code"]}
           rows={SAMPLE_STATUS.map((s) => ({ key: s.code, cells: [s.process, s.division, s.code] }))}
-          selectedKey={selected}
-          onSelect={setSelected}
+          selectedKey={blank ? null : selected}
+          onSelect={(id) => {
+            setSelected(id);
+            setBlank(false);
+            setFlags(Object.fromEntries(STATUS_FLAGS.map((f) => [f, f === "Status Code Active"])));
+          }}
           showInactive={showInactive}
           onToggleInactive={setShowInactive}
         />
       </div>
       <div className="min-h-0 flex flex-col overflow-hidden p-3 gap-2">
-        <div className="flex-1 overflow-y-auto flex flex-col gap-2.5">
-          <FormRow label="Division" required><SelectInput options={["SHOP", "FIELD", "FAB"]} defaultValue={row.division} /></FormRow>
-          <FormRow label="Status" required><SelectInput options={SAMPLE_STATUS.map((s) => s.code)} defaultValue={row.code} /></FormRow>
-          <FormRow label="STS Process #" required><TextInput defaultValue={row.process} /></FormRow>
-          <FormRow label="Description"><TextInput defaultValue={row.desc} /></FormRow>
-          <FormRow label="Process" required><SelectInput options={["Fab Cut", "Fit", "Paint", "Ship"]} defaultValue="Fab Cut" /></FormRow>
+        <div key={epoch} className="flex-1 overflow-y-auto flex flex-col gap-2.5">
+          <FormRow label="Division" required>
+            <SelectInput options={["", "SHOP", "FIELD", "FAB"]} defaultValue={blank ? "" : row.division} />
+          </FormRow>
+          <FormRow label="Status" required>
+            <SelectInput options={["", ...SAMPLE_STATUS.map((s) => s.code)]} defaultValue={blank ? "" : row.code} />
+          </FormRow>
+          <FormRow label="STS Process #" required><TextInput defaultValue={blank ? "" : row.process} /></FormRow>
+          <FormRow label="Description"><TextInput defaultValue={blank ? "" : row.desc} /></FormRow>
+          <FormRow label="Process" required>
+            <SelectInput options={["", "Fab Cut", "Fit", "Paint", "Ship"]} defaultValue={blank ? "" : "Fab Cut"} />
+          </FormRow>
           <FormRow label="End For Status"><SelectInput options={["<None>", "COMPLETED"]} defaultValue="<None>" /></FormRow>
           <FormRow label="Req Xfer Status"><SelectInput options={["<None>"]} /></FormRow>
           <FormRow label="Req Bundle Status"><SelectInput options={["<None>"]} /></FormRow>
@@ -778,7 +849,16 @@ export function StatusCodesEditorPanel() {
             ))}
           </div>
         </div>
-        <FormActions primary={{ label: "Save" }} />
+        <FormActions
+          primary={{
+            label: "Save",
+            onSaved: () => {
+              setBlank(true);
+              clearFlags();
+              bump();
+            },
+          }}
+        />
       </div>
     </div>
   );
@@ -786,6 +866,8 @@ export function StatusCodesEditorPanel() {
 
 export function RoutingCodesEditorPanel() {
   const [selected, setSelected] = useState(SAMPLE_ROUTES[0]);
+  const [epoch, bump] = useFormEpoch();
+  const [blank, setBlank] = useState(false);
   const available = [
     "SHOP, ANGLELINE", "SHOP, BANDSAW", "SHOP, BEAMLINE", "SHOP, BNDL",
     "SHOP, COMPLETED", "SHOP, CUT", "SHOP, ERECT", "SHOP, FIT",
@@ -798,19 +880,23 @@ export function RoutingCodesEditorPanel() {
           addLabel="Add Route"
           headers={["Route Code"]}
           rows={SAMPLE_ROUTES.map((r) => ({ key: r, cells: [r] }))}
-          selectedKey={selected}
-          onSelect={setSelected}
+          selectedKey={blank ? null : selected}
+          onSelect={(id) => {
+            setSelected(id);
+            setBlank(false);
+            setSelectedCodes([]);
+          }}
         />
       </div>
-      <div className="min-h-0 flex flex-col overflow-hidden p-3 gap-3">
+      <div key={epoch} className="min-h-0 flex flex-col overflow-hidden p-3 gap-3">
         <FormRow label="Route code" required>
-          <SelectInput options={SAMPLE_ROUTES} defaultValue={selected} />
+          <SelectInput options={["", ...SAMPLE_ROUTES]} defaultValue={blank ? "" : selected} />
         </FormRow>
         <FormRow label="Description">
-          <TextInput defaultValue="Imported Route Code." />
+          <TextInput defaultValue={blank ? "" : "Imported Route Code."} />
         </FormRow>
         <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
-          <TokenCheckbox defaultChecked /> Allow Additional Status Codes
+          <TokenCheckbox defaultChecked={!blank} /> Allow Additional Status Codes
         </label>
         <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: T.text }}>
           Select a code and then double-click to move to Select or deSelect.
@@ -821,7 +907,7 @@ export function RoutingCodesEditorPanel() {
             { title: "Selected Status Codes", items: selectedCodes, target: "avail" as const },
           ].map((box) => (
             <div key={box.title} className="flex flex-col min-h-0 rounded-md overflow-hidden" style={{ border: `1.5px solid ${T.border}` }}>
-              <div className="px-2 py-1.5" style={{ background: T.surfaceAlt, fontFamily: "'DM Mono', monospace", fontSize: 11, color: T.textMuted, textTransform: "uppercase" }}>
+              <div className="px-2 py-1.5" style={{ background: T.surfaceAlt, fontFamily: "'DM Mono', monospace", fontSize: 11, color: T.text, textTransform: "uppercase" }}>
                 {box.title}
               </div>
               <div className="flex-1 overflow-y-auto">
@@ -843,7 +929,16 @@ export function RoutingCodesEditorPanel() {
             </div>
           ))}
         </div>
-        <FormActions primary={{ label: "Save" }} />
+        <FormActions
+          primary={{
+            label: "Save",
+            onSaved: () => {
+              setBlank(true);
+              setSelectedCodes([]);
+              bump();
+            },
+          }}
+        />
       </div>
     </div>
   );
@@ -923,10 +1018,20 @@ export function EmployeeInfoEditor({
   emp: { first: string; last: string; number: string; division: string; role: string };
 }) {
   const [tab, setTab] = useState("employee");
+  const [epoch, bump] = useFormEpoch();
+  const [blank, setBlank] = useState(false);
+  const v = blank
+    ? { first: "", last: "", number: "", division: "", role: "<None>" }
+    : emp;
+
+  useEffect(() => {
+    setBlank(false);
+  }, [emp.number]);
+
   return (
     <div className="flex flex-col h-full min-h-0 p-3 gap-3">
       <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 19, color: T.text }}>
-        {emp.first} {emp.last}
+        {blank ? "New employee" : `${emp.first} ${emp.last}`}
       </p>
       <NestedTabs
         tabs={[
@@ -938,27 +1043,27 @@ export function EmployeeInfoEditor({
         active={tab}
         onChange={setTab}
       />
-      <div className="flex-1 overflow-y-auto flex flex-col gap-2.5 pt-1">
+      <div key={epoch} className="flex-1 overflow-y-auto flex flex-col gap-2.5 pt-1">
         {tab === "employee" && (
           <>
             <FormRow label="Employee #" required>
-              <SelectInput options={[emp.number, "E-104", "E-201", "E-088"]} defaultValue={emp.number} />
+              <SelectInput options={["", v.number, "E-104", "E-201", "E-088"].filter(Boolean)} defaultValue={v.number} />
             </FormRow>
-            <FormRow label="First" required><TextInput defaultValue={emp.first} /></FormRow>
+            <FormRow label="First" required><TextInput defaultValue={v.first} /></FormRow>
             <FormRow label="Middle"><TextInput /></FormRow>
-            <FormRow label="Last" required><TextInput defaultValue={emp.last} /></FormRow>
+            <FormRow label="Last" required><TextInput defaultValue={v.last} /></FormRow>
             <FormRow label="Division" required>
-              <SelectInput options={["SHOP", "FIELD", "FAB", "YARD"]} defaultValue={emp.division} />
+              <SelectInput options={["", "SHOP", "FIELD", "FAB", "YARD"]} defaultValue={v.division} />
             </FormRow>
             <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: T.text }}>Login Name: Not associated</p>
             <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
               <TokenCheckbox /> Activity Logging
             </label>
             <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
-              <TokenCheckbox defaultChecked /> Employee Active
+              <TokenCheckbox defaultChecked={!blank} /> Employee Active
             </label>
             <FormRow label="Employee Class ID">
-              <SelectInput options={["<None>", "Fabricator", "Welder", "QC", "Fitter", "Painter", "Saw", "Crane", "Layout", "Material Handler"]} defaultValue={emp.role} />
+              <SelectInput options={["<None>", "Fabricator", "Welder", "QC", "Fitter", "Painter", "Saw", "Crane", "Layout", "Material Handler"]} defaultValue={v.role} />
             </FormRow>
             <FormRow label="3rd Party Login"><TextInput /></FormRow>
             <FormRow label="3rd Party Password"><TextInput /></FormRow>
@@ -991,7 +1096,15 @@ export function EmployeeInfoEditor({
           </>
         )}
       </div>
-      <FormActions primary={{ label: "Save" }} />
+      <FormActions
+        primary={{
+          label: "Save",
+          onSaved: () => {
+            setBlank(true);
+            bump();
+          },
+        }}
+      />
     </div>
   );
 }
@@ -1008,6 +1121,8 @@ export function EmployeeClassEditorPanel() {
     { code: "LAYOUT", desc: "Layout / Detail" },
   ];
   const [selected, setSelected] = useState(classes[0].code);
+  const [epoch, bump] = useFormEpoch();
+  const [blank, setBlank] = useState(false);
   const row = classes.find((c) => c.code === selected) ?? classes[0];
   return (
     <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[minmax(200px,0.85fr)_1.2fr]">
@@ -1016,19 +1131,32 @@ export function EmployeeClassEditorPanel() {
           addLabel="Add Class"
           headers={["Class Code", "Description"]}
           rows={classes.map((c) => ({ key: c.code, cells: [c.code, c.desc] }))}
-          selectedKey={selected}
-          onSelect={setSelected}
+          selectedKey={blank ? null : selected}
+          onSelect={(id) => {
+            setSelected(id);
+            setBlank(false);
+          }}
         />
       </div>
       <div className="min-h-0 flex flex-col overflow-hidden p-3 gap-2.5">
-        <div className="flex-1 overflow-y-auto flex flex-col gap-2.5">
-          <FormRow label="Class Code" required><SelectInput options={classes.map((c) => c.code)} defaultValue={row.code} /></FormRow>
-          <FormRow label="Class Description"><TextInput defaultValue={row.desc} /></FormRow>
-          <FormRow label="Class Order #"><SelectInput options={["1", "2", "3", "4"]} /></FormRow>
-          <FormRow label="Class UOM"><TextInput defaultValue="HR" /></FormRow>
+        <div key={epoch} className="flex-1 overflow-y-auto flex flex-col gap-2.5">
+          <FormRow label="Class Code" required>
+            <SelectInput options={["", ...classes.map((c) => c.code)]} defaultValue={blank ? "" : row.code} />
+          </FormRow>
+          <FormRow label="Class Description"><TextInput defaultValue={blank ? "" : row.desc} /></FormRow>
+          <FormRow label="Class Order #"><SelectInput options={["", "1", "2", "3", "4"]} defaultValue={blank ? "" : "1"} /></FormRow>
+          <FormRow label="Class UOM"><TextInput defaultValue={blank ? "" : "HR"} /></FormRow>
           <FormRow label="Class Value #"><TextInput /></FormRow>
         </div>
-        <FormActions primary={{ label: "Save" }} />
+        <FormActions
+          primary={{
+            label: "Save",
+            onSaved: () => {
+              setBlank(true);
+              bump();
+            },
+          }}
+        />
       </div>
     </div>
   );
@@ -1054,8 +1182,14 @@ const SAMPLE_PIECEMARKS = [
 
 export function PiecemarkEntryWorkbench() {
   const [tab, setTab] = useState("entry");
-  const [selectedId, setSelectedId] = useState(SAMPLE_PIECEMARKS[0].id);
-  const selected = SAMPLE_PIECEMARKS.find((r) => r.id === selectedId) ?? SAMPLE_PIECEMARKS[0];
+  const [selectedId, setSelectedId] = useState<string | null>(SAMPLE_PIECEMARKS[0].id);
+  const [epoch, bump] = useFormEpoch();
+  const selected = SAMPLE_PIECEMARKS.find((r) => r.id === selectedId);
+  const empty = {
+    id: "", sheet: "", parent: "", piecemark: "", material: "W12x58", qty: "1",
+    seq: "<None>", lot: "", grade: "A36", weight: "", finish: "None", desc: "", route: "STD",
+  };
+  const v = selected ?? empty;
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
@@ -1104,51 +1238,59 @@ export function PiecemarkEntryWorkbench() {
         </div>
         <div className="min-h-0 flex flex-col overflow-hidden p-3 gap-2">
           <NestedTabs tabs={PM_TABS} active={tab} onChange={setTab} />
-          <div className="flex-1 overflow-y-auto flex flex-col gap-2 pt-1" key={selected.id}>
+          <div className="flex-1 overflow-y-auto flex flex-col gap-2 pt-1" key={`${selectedId ?? "new"}-${epoch}`}>
             {tab === "entry" && (
               <>
                 <FormRow label="Load Number"><SelectInput options={["<None>", "LD-4412", "LD-4418"]} /></FormRow>
-                <FormRow label="Shop Order #"><SelectInput options={["<None>", "SO-100", "SO-220"]} defaultValue="SO-100" /></FormRow>
-                <FormRow label="ID number"><TextInput defaultValue={selected.id} /></FormRow>
-                <FormRow label="Sheet #" required><TextInput defaultValue={selected.sheet} /></FormRow>
-                <FormRow label="Qty" required><TextInput defaultValue={selected.qty} /></FormRow>
+                <FormRow label="Shop Order #"><SelectInput options={["<None>", "SO-100", "SO-220"]} defaultValue={selected ? "SO-100" : "<None>"} /></FormRow>
+                <FormRow label="ID number"><TextInput defaultValue={v.id} /></FormRow>
+                <FormRow label="Sheet #" required><TextInput defaultValue={v.sheet} /></FormRow>
+                <FormRow label="Qty" required><TextInput defaultValue={v.qty} /></FormRow>
                 <FormRow label="# of Labels" required><TextInput defaultValue="1" /></FormRow>
-                <FormRow label="Parent Piecemark" required><TextInput defaultValue={selected.parent} /></FormRow>
-                <FormRow label="Piecemark" required><TextInput defaultValue={selected.piecemark} /></FormRow>
-                <FormRow label="Material" required><SelectInput options={["W12x58", "PL 1/2", "L4x4x3/8", "PL 3/4", "PL 1", "W16x67", "Z200"]} defaultValue={selected.material} /></FormRow>
-                <FormRow label="Sequence #"><SelectInput options={["<None>", "1", "2", "3", "4", "6", "8", "12"]} defaultValue={selected.seq} /></FormRow>
-                <FormRow label="Lot #"><TextInput defaultValue={selected.lot} /></FormRow>
-                <FormRow label="Finish"><SelectInput options={["None", "Prime", "Paint"]} defaultValue={selected.finish} /></FormRow>
-                <FormRow label="Grade"><SelectInput options={["A36", "A572", "A992", "A653"]} defaultValue={selected.grade} /></FormRow>
-                <FormRow label="Weight each"><TextInput defaultValue={selected.weight} /></FormRow>
+                <FormRow label="Parent Piecemark" required><TextInput defaultValue={v.parent} /></FormRow>
+                <FormRow label="Piecemark" required><TextInput defaultValue={v.piecemark} /></FormRow>
+                <FormRow label="Material" required><SelectInput options={["W12x58", "PL 1/2", "L4x4x3/8", "PL 3/4", "PL 1", "W16x67", "Z200"]} defaultValue={v.material} /></FormRow>
+                <FormRow label="Sequence #"><SelectInput options={["<None>", "1", "2", "3", "4", "6", "8", "12"]} defaultValue={v.seq} /></FormRow>
+                <FormRow label="Lot #"><TextInput defaultValue={v.lot} /></FormRow>
+                <FormRow label="Finish"><SelectInput options={["None", "Prime", "Paint"]} defaultValue={v.finish} /></FormRow>
+                <FormRow label="Grade"><SelectInput options={["A36", "A572", "A992", "A653"]} defaultValue={v.grade} /></FormRow>
+                <FormRow label="Weight each"><TextInput defaultValue={v.weight} /></FormRow>
                 <FormRow label="Width"><TextInput placeholder={`(x)" (x)/(x)`} /></FormRow>
                 <FormRow label="Item Length"><TextInput placeholder={`(x)'(x)" (x)/(x)`} /></FormRow>
-                <FormRow label="Description"><TextInput defaultValue={selected.desc} /></FormRow>
-                <FormRow label="Routing code"><SelectInput options={["STD", "FABRICATION", "PAINTED"]} defaultValue={selected.route} /></FormRow>
+                <FormRow label="Description"><TextInput defaultValue={v.desc} /></FormRow>
+                <FormRow label="Routing code"><SelectInput options={["STD", "FABRICATION", "PAINTED"]} defaultValue={v.route} /></FormRow>
               </>
             )}
             {tab === "job" && (
               <>
-                <FormRow label="Job Title"><TextInput defaultValue="Bal Harbour Shops - Expansion" /></FormRow>
+                <FormRow label="Job Title"><TextInput defaultValue={selected ? "Bal Harbour Shops - Expansion" : ""} /></FormRow>
                 <FormRow label="Division"><SelectInput options={["SHOP", "FIELD"]} /></FormRow>
                 <FormRow label="Status"><SelectInput options={["Open", "Closed"]} /></FormRow>
               </>
             )}
             {tab === "pm" && (
               <>
-                <FormRow label="Piecemark"><TextInput defaultValue={selected.piecemark} /></FormRow>
-                <FormRow label="Qty"><TextInput defaultValue={selected.qty} /></FormRow>
-                <FormRow label="Description"><TextInput defaultValue={selected.desc} /></FormRow>
+                <FormRow label="Piecemark"><TextInput defaultValue={v.piecemark} /></FormRow>
+                <FormRow label="Qty"><TextInput defaultValue={v.qty} /></FormRow>
+                <FormRow label="Description"><TextInput defaultValue={v.desc} /></FormRow>
               </>
             )}
             {tab === "id" && (
               <>
-                <FormRow label="ID serial #"><TextInput defaultValue={selected.id} /></FormRow>
-                <FormRow label="Barcode"><TextInput defaultValue={`*${selected.id}*`} /></FormRow>
+                <FormRow label="ID serial #"><TextInput defaultValue={v.id} /></FormRow>
+                <FormRow label="Barcode"><TextInput defaultValue={v.id ? `*${v.id}*` : ""} /></FormRow>
               </>
             )}
           </div>
-          <FormActions primary={{ label: "Add Piecemark" }} />
+          <FormActions
+            primary={{
+              label: "Add Piecemark",
+              onSaved: () => {
+                setSelectedId(null);
+                bump();
+              },
+            }}
+          />
         </div>
       </div>
     </div>
@@ -1235,6 +1377,17 @@ export function JobEditorPanel({ mode }: { mode: "add" | "edit" }) {
   }, [mode, selectedJob]);
 
   const set = (key: keyof JobFormState, value: string) => setForm((f) => ({ ...f, [key]: value }));
+
+  const clearForm = () => {
+    setMetricJob(false);
+    setChecks({ keepMinors: false, validateHeats: false, validatePipes: false, validateFittings: false });
+    if (mode === "add") {
+      setForm({ ...INIT_JOB_FORM, jobNumber: "", customer: "", useBarCodeForm: "", jobTitle: "" });
+    } else {
+      const job = EXISTING_JOBS.find((j) => j.number === selectedJob);
+      setForm(formFromJob(job));
+    }
+  };
 
   return (
     <div className="p-4 overflow-y-auto">
@@ -1323,7 +1476,10 @@ export function JobEditorPanel({ mode }: { mode: "add" | "edit" }) {
         </div>
 
         <FormActions
-          primary={{ label: mode === "add" ? "Add Job" : "Save Job" }}
+          primary={{
+            label: mode === "add" ? "Add Job" : "Save Job",
+            onSaved: clearForm,
+          }}
         />
       </div>
     </div>

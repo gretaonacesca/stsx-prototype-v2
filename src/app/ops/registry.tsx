@@ -14,6 +14,7 @@ import {
   PiecemarkEntryWorkbench,
   JobEditorPanel,
   FormActions,
+  useFormEpoch,
   TokenCheckbox,
 } from "../stsxPanels";
 
@@ -181,15 +182,16 @@ function FindPiecemark() {
 }
 
 function DangerConfirm({ title, body }: { title: string; body: string }) {
+  const [epoch, bump] = useFormEpoch();
   return (
     <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full" style={{ background: C.dangerBg }}>
       <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.danger }}>{title}</p>
       <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text, lineHeight: 1.6 }}>{body}</p>
-      <label className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
+      <label key={epoch} className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
         <TokenCheckbox />
         I understand this cannot be undone
       </label>
-      <FormActions primary={{ label: "Confirm", successMessage: "Successful save" }} />
+      <FormActions primary={{ label: "Confirm", successMessage: "Successful save", onSaved: bump }} />
     </div>
   );
 }
