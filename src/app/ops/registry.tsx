@@ -18,12 +18,41 @@ import {
   TokenCheckbox,
 } from "../stsxPanels";
 
-function Placeholder({ title, body }: { title: string; body: string }) {
+function Placeholder({
+  title,
+  body,
+  bullets,
+  primaryLabel = "Run",
+}: {
+  title: string;
+  body: string;
+  bullets?: string[];
+  primaryLabel?: string;
+}) {
   return (
     <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full">
+      <p
+        style={{
+          fontFamily: "'DM Mono', monospace",
+          fontSize: 11,
+          fontWeight: 400,
+          color: C.text,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+        }}
+      >
+        Prototype stub
+      </p>
       <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.text }}>{title}</p>
       <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text, lineHeight: 1.6 }}>{body}</p>
-      <FormActions primary={{ label: "Save" }} />
+      {bullets && bullets.length > 0 && (
+        <ul className="flex flex-col gap-1.5 m-0 pl-5" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: C.text, lineHeight: 1.5 }}>
+          {bullets.map((b) => (
+            <li key={b}>{b}</li>
+          ))}
+        </ul>
+      )}
+      <FormActions primary={{ label: primaryLabel }} />
     </div>
   );
 }
@@ -174,6 +203,9 @@ function FindPiecemark() {
         <input
           value={job}
           onChange={(e) => setJob(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") run();
+          }}
           placeholder="e.g. 092356 (optional)"
           style={{
             height: 36,
@@ -193,6 +225,9 @@ function FindPiecemark() {
         <input
           value={mark}
           onChange={(e) => setMark(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") run();
+          }}
           placeholder={`e.g. ${DEMO_MARK}`}
           style={{
             height: 36,
@@ -366,25 +401,171 @@ export function renderOperation(opId: OperationId): ReactNode {
     case "routing-codes":
       return <div className={SPLIT_H}><RoutingCodesEditorPanel /></div>;
     case "records-delete":
-      return <DangerConfirm title="Active Record Delete" body="Marks selected records as deleted. They can still be recalled until purged." />;
+      return (
+        <DangerConfirm
+          title="Active Record Delete"
+          body="Marks selected active records (jobs, piecemarks, loads, etc.) as deleted. They remain recoverable until purged — same soft-delete path as classic STS."
+        />
+      );
     case "records-recall":
-      return <DangerConfirm title="Recall Deleted Records" body="Restores previously deleted records back into the active set." />;
+      return (
+        <DangerConfirm
+          title="Recall Deleted Records"
+          body="Restores previously soft-deleted records back into the active set. Prototype lists sample deleted entries; full product filters by type, date, and user."
+        />
+      );
     case "records-purge":
-      return <DangerConfirm title="Purge Deleted Records" body="Irreversibly removes deleted records from the database." />;
+      return (
+        <DangerConfirm
+          title="Purge Deleted Records"
+          body="Permanently removes soft-deleted records from the database. Irreversible — mirrors the classic STS purge step after review."
+        />
+      );
     case "foxfire":
+      return (
+        <Placeholder
+          title="Foxfire Reports"
+          body="Legacy Foxfire report runner from classic STS. Pick a canned report, set job/date filters, and preview or print."
+          bullets={[
+            "Sample reports: Job Status Summary, Piece Location, Shipping Schedule",
+            "Output: screen preview, printer, or PDF export in the full product",
+          ]}
+          primaryLabel="Generate report"
+        />
+      );
     case "status-report":
+      return (
+        <Placeholder
+          title="Status Report"
+          body="Shop-floor status rollup by job, routing step, or date range — who worked what, and where pieces sit now."
+          bullets={[
+            "Filters: job 092356 / 2401, status code, employee, date",
+            "Columns: piecemark, qty, status, location, last scan",
+          ]}
+          primaryLabel="Generate report"
+        />
+      );
     case "barcode-labels":
+      return (
+        <Placeholder
+          title="Barcode ID Labels"
+          body="Print piece / entry ID barcodes for shop scanning. Select job or piecemark range, label stock, and printer."
+          bullets={[
+            "Demo marks: B-1042-A, TR-210, SC-2847",
+            "Uses Barcode Printer Preferences for device and darkness defaults",
+          ]}
+          primaryLabel="Print labels"
+        />
+      );
     case "raw-labels":
+      return (
+        <Placeholder
+          title="Raw Material Labels"
+          body="Labels for inbound plate, beam, and heat lots before they become piecemarks — heat number, size, and mill certs."
+          bullets={[
+            "Typical fields: heat, grade, size, length, PO / ASN",
+            "Pairs with inventory receiving in the full product",
+          ]}
+          primaryLabel="Print labels"
+        />
+      );
     case "label-fields":
-      return <Placeholder title="Report / label run" body="Prototype stub — configure filters and generate output in the full product." />;
+      return (
+        <Placeholder
+          title="Label Field Report"
+          body="Diagnostic listing of which data fields map onto each label layout (Barcode ID vs Raw Material). Used when customizing label templates."
+          bullets={[
+            "Shows field name → label placeholder mapping",
+            "Read-only reference in this prototype",
+          ]}
+          primaryLabel="Run report"
+        />
+      );
     case "prefs":
+      return (
+        <Placeholder
+          title="Preferences"
+          body="Office / shop defaults: company name on reports, default job, units, date format, and UI behavior carried over from classic STS Options."
+          bullets={[
+            "Default job for new piecemarks",
+            "Auto-refresh intervals and confirm-on-save prompts",
+          ]}
+          primaryLabel="Save preferences"
+        />
+      );
     case "printer-prefs":
+      return (
+        <Placeholder
+          title="Barcode Printer Preferences"
+          body="Defaults for barcode printers used by Barcode ID and Raw Material label runs — device, stock size, darkness, and copies."
+          bullets={[
+            "Device: Zebra ZT410 (demo)",
+            "Stock: 4×2 thermal, darkness 18, 1 copy",
+            "Applies shop-wide until overridden at print time",
+          ]}
+          primaryLabel="Save printer prefs"
+        />
+      );
     case "division":
+      return (
+        <Placeholder
+          title="Division & License Management"
+          body="Manage shop divisions (FAB, PAINT, SHIP, etc.) and which licensed modules each division may use."
+          bullets={[
+            "Demo divisions: SHOP, YARD, OFFICE",
+            "License seats shown as read-only counts in the prototype",
+          ]}
+          primaryLabel="Save"
+        />
+      );
     case "logon":
+      return (
+        <Placeholder
+          title="Logon & Access Management"
+          body="Create and disable user accounts, reset passwords, and assign employees to logon IDs — the classic STS user admin screen."
+          bullets={[
+            "Demo users: shop.floor, office.admin, qc.lead",
+            "Links to Application Permissions for role grants",
+          ]}
+          primaryLabel="Save users"
+        />
+      );
     case "permissions":
+      return (
+        <Placeholder
+          title="Application Permissions"
+          body="Grant or revoke which menu operations each role may open (import, jobs, shipping, reports, admin, records)."
+          bullets={[
+            "Roles: Shop Operator, Office Clerk, Supervisor, Admin",
+            "Mirrors the sidebar catalog visibility in production",
+          ]}
+          primaryLabel="Save permissions"
+        />
+      );
     case "view-log":
+      return (
+        <Placeholder
+          title="View Log"
+          body="Audit trail of imports, status changes, deletes, and admin edits. Filter by date, user, and operation type."
+          bullets={[
+            "Sample: KISS import job 092356 · M. Ortiz · today 09:14",
+            "Sample: Status update B-1042-A → STAGED · J. Brooks",
+          ]}
+          primaryLabel="Refresh log"
+        />
+      );
     case "license-info":
-      return <Placeholder title="Admin setting" body="Prototype stub for office-employee system preferences and access controls." />;
+      return (
+        <Placeholder
+          title="View Logon License Info"
+          body="Shows concurrent license seats in use, who is logged on, and which workstation holds each seat — useful when users cannot log in."
+          bullets={[
+            "Demo: 4 of 8 seats in use",
+            "Sessions: office.admin (PC-12), shop.floor (TABLET-3)",
+          ]}
+          primaryLabel="Refresh"
+        />
+      );
     default:
       return null;
   }
