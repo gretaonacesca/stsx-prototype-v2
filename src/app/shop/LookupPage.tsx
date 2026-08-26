@@ -8,7 +8,7 @@ import { SubmitButton } from "./components/ModeChips";
 import { EmptyState } from "./components/EmptyState";
 import { FieldKeyBadge } from "./components/FieldKeyBadge";
 import { ShopKeyScope, useShopKeysOptional } from "./keypad/ShopKeyScope";
-import { findPiece, type PieceRecord } from "./mock";
+import { findPiece, DEMO_LOOKUP_HINTS, type PieceRecord } from "./mock";
 import { StatusPill } from "../viz/chrome";
 
 export function LookupPage() {
@@ -45,7 +45,7 @@ export function LookupPage() {
         <SubmitButton label="Look up" busy={busy} busyLabel="Looking…" onClick={submit} />
 
         {searched && !result && (
-          <EmptyState title="No piece found" body="Try SC-2847, job 092356, or piecemark B-1042-A." />
+          <EmptyState title="No piece found" body={DEMO_LOOKUP_HINTS} />
         )}
 
         {result && (

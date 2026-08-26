@@ -1,5 +1,6 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { Check, Upload, ChevronDown } from "lucide-react";
+import { EMPLOYEES, EXISTING_JOBS } from "./data/mock";
 
 /** Theme CSS variables — stays in sync with light/dark via theme.css */
 const T = {
@@ -149,11 +150,13 @@ function FormRow({
   label,
   required,
   hint,
+  trailing,
   children,
 }: {
   label: string;
   required?: boolean;
   hint?: string;
+  trailing?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -164,19 +167,50 @@ function FormRow({
       </span>
       {children}
       {hint && <span style={hintStyle}>{hint}</span>}
+      {trailing}
     </div>
   );
 }
 
-function TextInput({ defaultValue = "", placeholder }: { defaultValue?: string; placeholder?: string }) {
-  return <input style={inputStyle} defaultValue={defaultValue} placeholder={placeholder} />;
+function TextInput({
+  defaultValue = "",
+  placeholder,
+  value,
+  onChange,
+}: {
+  defaultValue?: string;
+  placeholder?: string;
+  value?: string;
+  onChange?: (v: string) => void;
+}) {
+  return (
+    <input
+      style={inputStyle}
+      placeholder={placeholder}
+      {...(onChange
+        ? { value: value ?? "", onChange: (e) => onChange(e.target.value) }
+        : { defaultValue })}
+    />
+  );
 }
 
-function SelectInput({ options, defaultValue }: { options: string[]; defaultValue?: string }) {
+function SelectInput({
+  options,
+  defaultValue,
+  value,
+  onChange,
+}: {
+  options: string[];
+  defaultValue?: string;
+  value?: string;
+  onChange?: (v: string) => void;
+}) {
   return (
     <div className="relative flex-1 min-w-0">
       <select
-        defaultValue={defaultValue ?? options[0]}
+        {...(onChange
+          ? { value: value ?? options[0], onChange: (e) => onChange(e.target.value) }
+          : { defaultValue: defaultValue ?? options[0] })}
         style={{ ...inputStyle, width: "100%", appearance: "none", paddingRight: 28, cursor: "pointer" }}
       >
         {options.map((o) => (
@@ -268,7 +302,9 @@ function FormActions({
   );
 }
 
-const JOB_OPTIONS = ["092356", "1234A", "1234B", "2247", "2310", "TEST"];
+const JOB_OPTIONS = [
+  "092356", "1234A", "1234B", "2247", "2310", "2401", "2418", "2502", "2511", "2520", "2533", "2540",
+];
 
 type ImportKind = "kiss" | "tekla" | "eje" | "sds" | "excel";
 
@@ -369,28 +405,47 @@ export function ImportFilterForm({
 }
 
 const SAMPLE_CUSTOMERS = [
-  { id: "44", name: "44 Iron" },
+  { id: "44IRON", name: "44 Iron" },
   { id: "BCTEST", name: "Barcode Testing" },
   { id: "P2PROG", name: "P2 Programs" },
   { id: "TESTLGTH", name: "Test Length Corp" },
-  { id: "TEST22", name: "test 22" },
+  { id: "RIVRSD", name: "Riverside Development" },
+  { id: "MIDTWN", name: "Midtown Parking LLC" },
+  { id: "HARBR", name: "Harbor Crane Co" },
+  { id: "NPLANT", name: "North Plant Ops" },
+  { id: "WFIELD", name: "Westfield Arena" },
+  { id: "APEX", name: "Apex Steel Supply" },
 ];
 
 const SAMPLE_CARRIERS = [
   { id: "TRK-04", name: "Brooks Freight" },
   { id: "TRK-18", name: "Ortiz Hauling" },
+  { id: "TRK-07", name: "Patel Logistics" },
+  { id: "TRK-11", name: "Chen Transport" },
+  { id: "TRK-22", name: "Nguyen Heavy Haul" },
+  { id: "EXT-903", name: "Apex Inbound" },
+  { id: "EXT-441", name: "Nucor Mill Haul" },
 ];
 
 const SAMPLE_STATUS = [
+  { process: "100", division: "SHOP", code: "RECV", desc: "Receive / ASN" },
   { process: "200", division: "SHOP", code: "ANGLELINE", desc: "TX - AngleLine" },
   { process: "210", division: "SHOP", code: "BANDSAW", desc: "Bandsaw" },
+  { process: "220", division: "SHOP", code: "CUT", desc: "Cut / nest" },
+  { process: "300", division: "SHOP", code: "FIT", desc: "Fit-up" },
+  { process: "310", division: "SHOP", code: "WELD", desc: "Weld" },
+  { process: "400", division: "SHOP", code: "QC", desc: "Quality inspect" },
+  { process: "500", division: "SHOP", code: "PAINT", desc: "Paint / finish" },
+  { process: "550", division: "SHOP", code: "HOLD", desc: "On hold" },
+  { process: "600", division: "SHOP", code: "SHIP", desc: "Ship / load" },
+  { process: "650", division: "FIELD", code: "ERECT", desc: "Erect" },
   { process: "700", division: "SHOP", code: "COMPLETED", desc: "Completed" },
-  { process: "300", division: "SHOP", code: "ERECT", desc: "Erect" },
 ];
 
 const SAMPLE_ROUTES = [
   "1- TFS", "10", "2", "2- PARTS-NO FAB-BLACK", "3- PARTS-NO FAB-PRIME",
   "5- PARTS-FAB-PRIME", "FABRICATION", "PAINTED", "PNT", "R0001", "STD", "UNPAINTED",
+  "GALV", "PRIME-ONLY", "FIELD-BOLT",
 ];
 
 const STATUS_FLAGS = [
@@ -413,15 +468,17 @@ function ListPane({
   onSelect,
   showInactive,
   onToggleInactive,
+  inactiveLabel = "Show InActive",
 }: {
   title?: string;
   addLabel: string;
   headers: string[];
-  rows: { key: string; cells: string[] }[];
+  rows: { key: string; cells: (string | ReactNode)[] }[];
   selectedKey: string | null;
   onSelect: (key: string) => void;
   showInactive?: boolean;
   onToggleInactive?: (v: boolean) => void;
+  inactiveLabel?: string;
 }) {
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
@@ -430,7 +487,7 @@ function ListPane({
         {onToggleInactive && (
           <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 15, color: T.text, cursor: "pointer" }}>
             <TokenCheckbox checked={!!showInactive} onChange={onToggleInactive} />
-            Show InActive
+            {inactiveLabel}
           </label>
         )}
         {title && (
@@ -701,18 +758,85 @@ export function RoutingCodesEditorPanel() {
   );
 }
 
+type EmpRow = {
+  key: string;
+  first: string;
+  last: string;
+  number: string;
+  division: string;
+  bsc: boolean;
+  role: string;
+  station: string;
+  shift: string;
+};
+
+function buildEmployeeRows(): EmpRow[] {
+  return EMPLOYEES.map((e, i) => {
+    const parts = e.name.split(" ");
+    const first = parts[0] ?? e.name;
+    const last = parts.slice(1).join(" ") || "—";
+    return {
+      key: `E-${100 + i}`,
+      first,
+      last,
+      number: `E-${100 + i}`,
+      division: e.station === "Yard" || e.station === "Receiving" ? "YARD" : "SHOP",
+      bsc: i === 2,
+      role: e.role,
+      station: e.station,
+      shift: e.shift,
+    };
+  });
+}
+
+export function EmployeeEditorPanel() {
+  const rows = buildEmployeeRows();
+  const [selected, setSelected] = useState(rows[0]?.key ?? null);
+  const [showInactive, setShowInactive] = useState(false);
+  const emp = rows.find((r) => r.key === selected) ?? rows[0];
+  return (
+    <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[minmax(260px,1fr)_1.15fr]">
+      <div className="min-h-0 overflow-hidden" style={{ borderRight: `1.5px solid ${T.border}` }}>
+        <ListPane
+          addLabel="Add New Employee"
+          inactiveLabel="Show InActive Employees"
+          headers={["First Name", "Last Name", "Employee Number", "Employee Division", "BSC Logon"]}
+          rows={rows.map((r) => ({
+            key: r.key,
+            cells: [
+              r.first,
+              r.last,
+              r.number,
+              r.division,
+              <span key="bsc" className="inline-flex items-center">
+                <TokenCheckbox checked={r.bsc} disabled />
+              </span>,
+            ],
+          }))}
+          selectedKey={selected}
+          onSelect={setSelected}
+          showInactive={showInactive}
+          onToggleInactive={setShowInactive}
+        />
+      </div>
+      <div className="min-h-0 overflow-hidden">
+        {emp && <EmployeeInfoEditor key={emp.key} emp={emp} />}
+      </div>
+    </div>
+  );
+}
+
 export function EmployeeInfoEditor({
   emp,
 }: {
-  emp: { name: string; role: string; station: string; shift: string };
+  emp: { first: string; last: string; number: string; division: string; role: string };
 }) {
   const [tab, setTab] = useState("employee");
-  const [first, last] = emp.name.includes(" ")
-    ? [emp.name.split(" ")[0], emp.name.split(" ").slice(1).join(" ")]
-    : [emp.name, ""];
   return (
     <div className="flex flex-col h-full min-h-0 p-3 gap-3">
-      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 19, color: T.text }}>{emp.name}</p>
+      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 19, color: T.text }}>
+        {emp.first} {emp.last}
+      </p>
       <NestedTabs
         tabs={[
           { id: "employee", label: "Employee" },
@@ -726,22 +850,32 @@ export function EmployeeInfoEditor({
       <div className="flex-1 overflow-y-auto flex flex-col gap-2.5 pt-1">
         {tab === "employee" && (
           <>
-            <FormRow label="Employee #" required><SelectInput options={["E-104", "E-201", "E-088"]} defaultValue="E-104" /></FormRow>
-            <FormRow label="First" required><TextInput defaultValue={first} /></FormRow>
+            <FormRow label="Employee #" required>
+              <SelectInput options={[emp.number, "E-104", "E-201", "E-088"]} defaultValue={emp.number} />
+            </FormRow>
+            <FormRow label="First" required><TextInput defaultValue={emp.first} /></FormRow>
             <FormRow label="Middle"><TextInput /></FormRow>
-            <FormRow label="Last" required><TextInput defaultValue={last} /></FormRow>
-            <FormRow label="Division" required><SelectInput options={["SHOP", "FIELD", "FAB"]} defaultValue="SHOP" /></FormRow>
-            <FormRow label="Employee Class ID"><SelectInput options={["Fabricator", "Welder", "QC"]} defaultValue={emp.role} /></FormRow>
-            <FormRow label="3rd Party Login"><TextInput /></FormRow>
-            <FormRow label="Email"><TextInput /></FormRow>
-            <FormRow label="Phone"><TextInput /></FormRow>
+            <FormRow label="Last" required><TextInput defaultValue={emp.last} /></FormRow>
+            <FormRow label="Division" required>
+              <SelectInput options={["SHOP", "FIELD", "FAB", "YARD"]} defaultValue={emp.division} />
+            </FormRow>
+            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.textMuted }}>Login Name: Not associated</p>
             <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
               <TokenCheckbox /> Activity Logging
             </label>
             <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
               <TokenCheckbox defaultChecked /> Employee Active
             </label>
-            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.textMuted }}>Login Name: Not associated</p>
+            <FormRow label="Employee Class ID">
+              <SelectInput options={["<None>", "Fabricator", "Welder", "QC", "Fitter", "Painter", "Saw", "Crane", "Layout", "Material Handler"]} defaultValue={emp.role} />
+            </FormRow>
+            <FormRow label="3rd Party Login"><TextInput /></FormRow>
+            <FormRow label="3rd Party Password"><TextInput /></FormRow>
+            <FormRow label="Email"><TextInput /></FormRow>
+            <FormRow label="Work Phone"><TextInput /></FormRow>
+            <FormRow label="Mobile Phone"><TextInput /></FormRow>
+            <FormRow label="Phone #1"><TextInput /></FormRow>
+            <FormRow label="Phone #2"><TextInput /></FormRow>
           </>
         )}
         {tab === "personal" && (
@@ -776,6 +910,11 @@ export function EmployeeClassEditorPanel() {
     { code: "FAB", desc: "Fabricator" },
     { code: "WELD", desc: "Welder" },
     { code: "QC", desc: "Quality Control" },
+    { code: "SAW", desc: "Saw / Cut" },
+    { code: "CRANE", desc: "Crane Operator" },
+    { code: "PAINT", desc: "Painter" },
+    { code: "MH", desc: "Material Handler" },
+    { code: "LAYOUT", desc: "Layout / Detail" },
   ];
   const [selected, setSelected] = useState(classes[0].code);
   const row = classes.find((c) => c.code === selected) ?? classes[0];
@@ -804,10 +943,18 @@ export function EmployeeClassEditorPanel() {
   );
 }
 
+const PM_TABS = [
+  { id: "entry", label: "Piecemark Entry" },
+  { id: "job", label: "Job Info" },
+  { id: "pm", label: "Piecemark Info" },
+  { id: "id", label: "ID Info" },
+];
+
 export function PiecemarkEntryWorkbench() {
+  const [tab, setTab] = useState("entry");
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden p-4 gap-3">
-      <div className="flex-none flex flex-col gap-2.5 max-w-2xl">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
+      <div className="flex-none flex flex-col gap-2 p-3" style={{ borderBottom: `1.5px solid ${T.border}`, background: T.surfaceAlt }}>
         <FormRow label="Job Number" required><SelectInput options={JOB_OPTIONS} /></FormRow>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <FormRow label="Job Weight"><TextInput /></FormRow>
@@ -815,31 +962,241 @@ export function PiecemarkEntryWorkbench() {
           <FormRow label="Customer Name"><TextInput defaultValue="P2 Programs" /></FormRow>
         </div>
       </div>
-
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5 max-w-2xl">
-        <FormRow label="Load Number"><SelectInput options={["<None>", "LD-4412", "LD-4418"]} /></FormRow>
-        <FormRow label="ID number"><TextInput /></FormRow>
-        <FormRow label="Shop Order #"><SelectInput options={["<None>", "SO-100", "SO-220"]} /></FormRow>
-        <FormRow label="Sheet #" required><TextInput /></FormRow>
-        <FormRow label="Qty" required><TextInput defaultValue="1" /></FormRow>
-        <FormRow label="# of Labels" required><TextInput defaultValue="1" /></FormRow>
-        <FormRow label="Parent Piecemark" required><TextInput /></FormRow>
-        <FormRow label="Piecemark" required><TextInput /></FormRow>
-        <FormRow label="Material" required><SelectInput options={["W12x58", "PL 1/2", "L4x4x3/8"]} /></FormRow>
-        <FormRow label="Sequence #"><SelectInput options={["<None>", "1", "2"]} /></FormRow>
-        <FormRow label="Lot #"><SelectInput options={["<None>", "A", "B"]} /></FormRow>
-        <FormRow label="Weight each"><TextInput /></FormRow>
-        <FormRow label="Width"><TextInput placeholder={`(x)" (x)/(x)`} /></FormRow>
-        <FormRow label="Item Length"><TextInput placeholder={`(x)'(x)" (x)/(x)`} /></FormRow>
-        <FormRow label="Finish"><SelectInput options={["None", "Prime", "Paint"]} /></FormRow>
-        <FormRow label="Grade"><SelectInput options={["A36", "A572", "A992"]} /></FormRow>
-        <FormRow label="Description"><TextInput /></FormRow>
-        <FormRow label="Routing code"><SelectInput options={["STD", "FABRICATION", "PAINTED"]} /></FormRow>
-        <FormRow label="Barcode"><TextInput /></FormRow>
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[minmax(200px,0.9fr)_1.2fr]">
+        <div className="min-h-0 overflow-hidden flex flex-col" style={{ borderRight: `1.5px solid ${T.border}` }}>
+          <div className="flex-none flex px-3 py-1.5" style={{ background: T.surfaceAlt, borderBottom: `1.5px solid ${T.border}` }}>
+            {["ID serial #", "Sheet #", "Parent", "Piecemark"].map((h) => (
+              <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: T.textMuted, textTransform: "uppercase" }}>{h}</div>
+            ))}
+          </div>
+          <div className="flex-1 overflow-y-auto px-3 py-4">
+            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.textMuted }}>No results found.</p>
+          </div>
+        </div>
+        <div className="min-h-0 flex flex-col overflow-hidden p-3 gap-2">
+          <NestedTabs tabs={PM_TABS} active={tab} onChange={setTab} />
+          <div className="flex-1 overflow-y-auto flex flex-col gap-2 pt-1">
+            {tab === "entry" && (
+              <>
+                <FormRow label="Load Number"><SelectInput options={["<None>", "LD-4412", "LD-4418"]} /></FormRow>
+                <FormRow label="Shop Order #"><SelectInput options={["<None>", "SO-100", "SO-220"]} /></FormRow>
+                <FormRow label="ID number"><TextInput /></FormRow>
+                <FormRow label="Sheet #" required><TextInput /></FormRow>
+                <FormRow label="Qty" required><TextInput defaultValue="1" /></FormRow>
+                <FormRow label="# of Labels" required><TextInput defaultValue="1" /></FormRow>
+                <FormRow label="Parent Piecemark" required><TextInput /></FormRow>
+                <FormRow label="Piecemark" required><TextInput /></FormRow>
+                <FormRow label="Material" required><SelectInput options={["W12x58", "PL 1/2", "L4x4x3/8"]} /></FormRow>
+                <FormRow label="Sequence #"><SelectInput options={["<None>", "1", "2"]} /></FormRow>
+                <FormRow label="Lot #"><TextInput /></FormRow>
+                <FormRow label="Finish"><SelectInput options={["None", "Prime", "Paint"]} /></FormRow>
+                <FormRow label="Grade"><SelectInput options={["A36", "A572", "A992"]} /></FormRow>
+                <FormRow label="Weight each"><TextInput /></FormRow>
+                <FormRow label="Width"><TextInput placeholder={`(x)" (x)/(x)`} /></FormRow>
+                <FormRow label="Item Length"><TextInput placeholder={`(x)'(x)" (x)/(x)`} /></FormRow>
+                <FormRow label="Description"><TextInput /></FormRow>
+                <FormRow label="Routing code"><SelectInput options={["STD", "FABRICATION", "PAINTED"]} /></FormRow>
+              </>
+            )}
+            {tab === "job" && (
+              <>
+                <FormRow label="Job Title"><TextInput defaultValue="Bal Harbour Shops - Expansion" /></FormRow>
+                <FormRow label="Division"><SelectInput options={["SHOP", "FIELD"]} /></FormRow>
+                <FormRow label="Status"><SelectInput options={["Open", "Closed"]} /></FormRow>
+              </>
+            )}
+            {tab === "pm" && (
+              <>
+                <FormRow label="Piecemark"><TextInput /></FormRow>
+                <FormRow label="Qty"><TextInput /></FormRow>
+                <FormRow label="Description"><TextInput /></FormRow>
+              </>
+            )}
+            {tab === "id" && (
+              <>
+                <FormRow label="ID serial #"><TextInput /></FormRow>
+                <FormRow label="Barcode"><TextInput /></FormRow>
+              </>
+            )}
+          </div>
+          <FormActions primary={{ label: "Add Piecemark" }} onClose={() => {}} />
+        </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="flex-none max-w-2xl">
-        <FormActions primary={{ label: "Add Piecemark" }} onClose={() => {}} />
+type JobFormState = {
+  jobNumber: string;
+  customer: string;
+  useBarCodeForm: string;
+  jobWeight: string;
+  externalJob: string;
+  division: string;
+  jobStatus: string;
+  shipTo: string;
+  billTo: string;
+  jobTitle: string;
+  projectYear: string;
+  jobStructure: string;
+  jobHours: string;
+  jobLocation: string;
+  jobEfficiency: string;
+  jobCareOf: string;
+  rfInterface: string;
+  jobPo: string;
+  jobRelease: string;
+  defaultAdhesiveBarCodeLabelFormat: string;
+  defaultLabelLaseFormat: string;
+};
+
+const INIT_JOB_FORM: JobFormState = {
+  jobNumber: "092356",
+  customer: "P2 Programs#P2PROG",
+  useBarCodeForm: "P2 Programs#P2PROG",
+  jobWeight: "",
+  externalJob: "",
+  division: "SHOP",
+  jobStatus: "Open",
+  shipTo: "",
+  billTo: "",
+  jobTitle: "Bal Harbour Shops - Expansion",
+  projectYear: "",
+  jobStructure: "",
+  jobHours: "",
+  jobLocation: "",
+  jobEfficiency: "",
+  jobCareOf: "",
+  rfInterface: "PowerFab",
+  jobPo: "",
+  jobRelease: "",
+  defaultAdhesiveBarCodeLabelFormat: "<None>",
+  defaultLabelLaseFormat: "<None>",
+};
+
+function formFromJob(job: (typeof EXISTING_JOBS)[number] | undefined): JobFormState {
+  if (!job) return { ...INIT_JOB_FORM };
+  return {
+    ...INIT_JOB_FORM,
+    jobNumber: job.number,
+    customer: `${job.name.split(" — ")[0] ?? job.name}#${job.customer}`,
+    useBarCodeForm: `${job.name.split(" — ")[0] ?? job.name}#${job.customer}`,
+    jobTitle: job.name,
+  };
+}
+
+/** Restored v1 Add New Job / Edit Job Information field set */
+export function JobEditorPanel({ mode }: { mode: "add" | "edit" }) {
+  const [selectedJob, setSelectedJob] = useState(EXISTING_JOBS[0]?.number ?? "");
+  const [form, setForm] = useState<JobFormState>(() =>
+    mode === "edit" ? formFromJob(EXISTING_JOBS[0]) : { ...INIT_JOB_FORM, jobNumber: "", customer: "", useBarCodeForm: "", jobTitle: "" }
+  );
+  const [metricJob, setMetricJob] = useState(false);
+  const [checks, setChecks] = useState({
+    keepMinors: false,
+    validateHeats: false,
+    validatePipes: false,
+    validateFittings: false,
+  });
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+    const job = EXISTING_JOBS.find((j) => j.number === selectedJob);
+    setForm(formFromJob(job));
+  }, [mode, selectedJob]);
+
+  const set = (key: keyof JobFormState, value: string) => setForm((f) => ({ ...f, [key]: value }));
+
+  return (
+    <div className="flex flex-col h-full min-h-0 p-4 gap-3 overflow-y-auto">
+      <div className="flex flex-col gap-2.5 max-w-3xl">
+        {mode === "edit" && (
+          <FormRow label="Select Job">
+            <SelectInput
+              options={EXISTING_JOBS.map((j) => j.number)}
+              value={selectedJob}
+              onChange={setSelectedJob}
+            />
+          </FormRow>
+        )}
+        <FormRow label="Job Number"><TextInput value={form.jobNumber} onChange={(v) => set("jobNumber", v)} /></FormRow>
+        <FormRow label="Customer #"><TextInput value={form.customer} onChange={(v) => set("customer", v)} /></FormRow>
+        <FormRow label="Use Bar Code Form"><TextInput value={form.useBarCodeForm} onChange={(v) => set("useBarCodeForm", v)} /></FormRow>
+        <FormRow
+          label="Job Weight"
+          trailing={
+            <div className="flex items-center gap-2 shrink-0">
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: T.textMuted }}>lbs</span>
+              <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.text, cursor: "pointer" }}>
+                <TokenCheckbox checked={metricJob} onChange={setMetricJob} />
+                Metric Job
+              </label>
+            </div>
+          }
+        >
+          <TextInput value={form.jobWeight} onChange={(v) => set("jobWeight", v)} />
+        </FormRow>
+        <FormRow label="External Job #"><TextInput value={form.externalJob} onChange={(v) => set("externalJob", v)} /></FormRow>
+        <FormRow label="Division">
+          <SelectInput options={["SHOP", "FIELD", "FAB"]} value={form.division} onChange={(v) => set("division", v)} />
+        </FormRow>
+        <FormRow label="Job Status">
+          <SelectInput options={["Open", "Closed", "Hold"]} value={form.jobStatus} onChange={(v) => set("jobStatus", v)} />
+        </FormRow>
+        <FormRow label="Ship To">
+          <SelectInput options={["", "Main Yard", "Site A", "Site B"]} value={form.shipTo} onChange={(v) => set("shipTo", v)} />
+        </FormRow>
+        <FormRow label="Bill To">
+          <SelectInput options={["", "Main Yard", "Site A", "Site B"]} value={form.billTo} onChange={(v) => set("billTo", v)} />
+        </FormRow>
+        <FormRow label="Job Title"><TextInput value={form.jobTitle} onChange={(v) => set("jobTitle", v)} /></FormRow>
+        <FormRow label="Project Year"><TextInput value={form.projectYear} onChange={(v) => set("projectYear", v)} /></FormRow>
+        <FormRow label="Job Structure"><TextInput value={form.jobStructure} onChange={(v) => set("jobStructure", v)} /></FormRow>
+        <FormRow label="Job Hours"><TextInput value={form.jobHours} onChange={(v) => set("jobHours", v)} /></FormRow>
+        <FormRow label="Job Location"><TextInput value={form.jobLocation} onChange={(v) => set("jobLocation", v)} /></FormRow>
+        <FormRow label="Job Efficiency"><TextInput value={form.jobEfficiency} onChange={(v) => set("jobEfficiency", v)} /></FormRow>
+        <FormRow label="Job Care Of"><TextInput value={form.jobCareOf} onChange={(v) => set("jobCareOf", v)} /></FormRow>
+        <FormRow label="RF Interface">
+          <SelectInput options={["PowerFab", "FieldOps"]} value={form.rfInterface} onChange={(v) => set("rfInterface", v)} />
+        </FormRow>
+        <FormRow label="Job PO #"><TextInput value={form.jobPo} onChange={(v) => set("jobPo", v)} /></FormRow>
+        <FormRow label="Job Release #"><TextInput value={form.jobRelease} onChange={(v) => set("jobRelease", v)} /></FormRow>
+        <FormRow label="Default Adhesive Bar Code Label Format #">
+          <SelectInput
+            options={["<None>", "STD-01", "STD-02"]}
+            value={form.defaultAdhesiveBarCodeLabelFormat}
+            onChange={(v) => set("defaultAdhesiveBarCodeLabelFormat", v)}
+          />
+        </FormRow>
+        <FormRow label="Default LabelLase Label Format #">
+          <SelectInput
+            options={["<None>", "LASER-A", "LASER-B"]}
+            value={form.defaultLabelLaseFormat}
+            onChange={(v) => set("defaultLabelLaseFormat", v)}
+          />
+        </FormRow>
+
+        <div className="mt-2 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2" style={{ borderTop: `1.5px solid ${T.border}` }}>
+          {([
+            ["keepMinors", "Keep Minors on Import (Prefix=No)"],
+            ["validateHeats", "Validate Heats"],
+            ["validatePipes", "Validate Pipes"],
+            ["validateFittings", "Validate Fittings"],
+          ] as const).map(([key, label]) => (
+            <label key={key} className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.text, cursor: "pointer" }}>
+              <TokenCheckbox
+                checked={checks[key]}
+                onChange={(v) => setChecks((c) => ({ ...c, [key]: v }))}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+
+        <FormActions
+          primary={{ label: mode === "add" ? "Add Job" : "Save Job" }}
+          onClose={() => {}}
+        />
       </div>
     </div>
   );

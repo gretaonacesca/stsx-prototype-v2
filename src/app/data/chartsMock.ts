@@ -118,12 +118,15 @@ export type YardBay = {
 };
 
 export const YARD_BAYS: YardBay[] = [
-  { id: "dock-a", label: "Dock A", x: 4, y: 8, w: 28, h: 22, loads: 3, kind: "dock" },
-  { id: "dock-b", label: "Dock B", x: 4, y: 36, w: 28, h: 22, loads: 1, kind: "dock" },
-  { id: "bay-1", label: "Bay 1", x: 38, y: 8, w: 26, h: 28, loads: 5, kind: "bay" },
-  { id: "bay-2", label: "Bay 2", x: 68, y: 8, w: 26, h: 28, loads: 2, kind: "bay" },
-  { id: "stage", label: "Staging", x: 38, y: 42, w: 34, h: 24, loads: 4, kind: "staging" },
-  { id: "gate", label: "Ship gate", x: 76, y: 42, w: 18, h: 24, loads: 2, kind: "ship" },
+  { id: "dock-a", label: "Dock A", x: 4, y: 8, w: 28, h: 22, loads: 4, kind: "dock" },
+  { id: "dock-b", label: "Dock B", x: 4, y: 36, w: 28, h: 22, loads: 2, kind: "dock" },
+  { id: "dock-c", label: "Dock C", x: 4, y: 62, w: 28, h: 16, loads: 1, kind: "dock" },
+  { id: "bay-1", label: "Bay 1", x: 38, y: 8, w: 26, h: 24, loads: 5, kind: "bay" },
+  { id: "bay-2", label: "Bay 2", x: 68, y: 8, w: 26, h: 24, loads: 3, kind: "bay" },
+  { id: "bay-3", label: "Bay 3", x: 38, y: 36, w: 26, h: 20, loads: 2, kind: "bay" },
+  { id: "stage", label: "Staging", x: 68, y: 36, w: 26, h: 20, loads: 4, kind: "staging" },
+  { id: "hold", label: "Hold", x: 38, y: 60, w: 26, h: 18, loads: 2, kind: "staging" },
+  { id: "gate", label: "Ship gate", x: 68, y: 60, w: 26, h: 18, loads: 3, kind: "ship" },
 ];
 
 /** Age-of-stock helper — unused in yard map after print tones refactor; keep export for consumers. */

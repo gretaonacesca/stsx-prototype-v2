@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { C } from "../colorTokens";
-import { ACTIVE_LOADS, EMPLOYEES, EXISTING_JOBS, INVENTORY_STOCK } from "../data/mock";
+import { ACTIVE_LOADS, INVENTORY_STOCK } from "../data/mock";
+import { findPiece, piecesForJob } from "../shop/mock";
 import type { OperationId } from "../nav/catalog";
 import {
   ImportFilterForm,
@@ -8,9 +9,10 @@ import {
   CarrierEditorPanel,
   StatusCodesEditorPanel,
   RoutingCodesEditorPanel,
-  EmployeeInfoEditor,
+  EmployeeEditorPanel,
   EmployeeClassEditorPanel,
   PiecemarkEntryWorkbench,
+  JobEditorPanel,
   TokenCheckbox,
 } from "../stsxPanels";
 
@@ -58,58 +60,51 @@ function LoadForm() {
   );
 }
 
-function JobForm({ mode }: { mode: "add" | "edit" }) {
-  const job = EXISTING_JOBS[0];
-  return (
-    <div className="p-5 flex flex-col gap-3">
-      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: C.text }}>
-        {mode === "add" ? "Create a new job (prototype form)." : `Editing job ${job.number} — ${job.name}.`}
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {[
-          ["Job Number", mode === "add" ? "" : job.number],
-          ["Customer", job.customer],
-          ["Job Title", job.name],
-          ["Division", "SHOP"],
-          ["Status", "Open"],
-          ["Location", ""],
-        ].map(([label, value]) => (
-          <label key={label} className="flex flex-col gap-1">
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text, textTransform: "uppercase" }}>{label}</span>
-            <input
-              defaultValue={value}
-              style={{
-                height: 36,
-                borderRadius: 6,
-                border: `1.5px solid ${C.border}`,
-                background: C.surfaceAlt,
-                padding: "0 10px",
-                fontFamily: "'Lato', sans-serif",
-                fontSize: 15,
-                fontWeight: 400,
-                color: C.text,
-              }}
-            />
-          </label>
-        ))}
-      </div>
-      <button
-        type="button"
-        className="self-start px-3 py-1.5 rounded-md mt-2"
-        style={{ background: C.primary, color: C.primaryFg, border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
-      >
-        {mode === "add" ? "Create Job" : "Save Changes"}
-      </button>
-    </div>
-  );
-}
-
 function FindPiecemark() {
+  const [mark, setMark] = useState("");
+  const [job, setJob] = useState("");
+  const [hits, setHits] = useState<ReturnType<typeof piecesForJob> | null>(null);
+  const [single, setSingle] = useState<ReturnType<typeof findPiece>>(null);
+  const [searched, setSearched] = useState(false);
+
+  const run = () => {
+    setSearched(true);
+    if (job.trim() && !mark.trim()) {
+      setHits(piecesForJob(job));
+      setSingle(null);
+      return;
+    }
+    const rec = findPiece({ piecemark: mark, jobNumber: job || undefined });
+    setSingle(rec);
+    setHits(null);
+  };
+
   return (
     <div className="p-5 flex flex-col gap-3">
       <label className="flex flex-col gap-1">
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text, textTransform: "uppercase" }}>Job Number</span>
+        <input
+          value={job}
+          onChange={(e) => setJob(e.target.value)}
+          placeholder="e.g. 092356 or 2401"
+          style={{
+            height: 36,
+            borderRadius: 6,
+            border: `1.5px solid ${C.border}`,
+            background: C.surfaceAlt,
+            padding: "0 10px",
+            fontFamily: "'Lato', sans-serif",
+            fontSize: 15,
+            fontWeight: 400,
+            color: C.text,
+          }}
+        />
+      </label>
+      <label className="flex flex-col gap-1">
         <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text, textTransform: "uppercase" }}>Piecemark</span>
         <input
+          value={mark}
+          onChange={(e) => setMark(e.target.value)}
           placeholder="e.g. B-1042-A"
           style={{
             height: 36,
@@ -126,11 +121,63 @@ function FindPiecemark() {
       </label>
       <button
         type="button"
+        onClick={run}
         className="self-start px-3 py-1.5 rounded-md"
         style={{ background: C.accent, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
       >
         Find
       </button>
+
+      {searched && single && (
+        <div className="grid grid-cols-2 gap-2 pt-2" style={{ borderTop: `1px solid ${C.border}` }}>
+          <Field label="Entry" value={single.entry} />
+          <Field label="Piecemark" value={single.piecemark} />
+          <Field label="Job #" value={single.jobNumber} />
+          <Field label="Status" value={single.prevStatus} />
+          <Field label="Location" value={single.location} />
+          <Field label="Load" value={single.loadNumber} />
+          <Field label="Material" value={single.material} />
+          <Field label="Qty" value={single.qty} />
+        </div>
+      )}
+
+      {searched && hits && (
+        <div className="flex flex-col gap-1 pt-2" style={{ borderTop: `1px solid ${C.border}` }}>
+          <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>
+            {hits.length} piecemark{hits.length === 1 ? "" : "s"} on job {job.trim() || "—"}
+          </p>
+          {hits.length === 0 ? (
+            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>No pieces found.</p>
+          ) : (
+            hits.map((p) => (
+              <button
+                key={p.entry}
+                type="button"
+                onClick={() => {
+                  setMark(p.piecemark);
+                  setSingle(p);
+                  setHits(null);
+                }}
+                className="text-left px-2 py-1.5 rounded"
+                style={{
+                  background: C.surfaceAlt,
+                  border: `1px solid ${C.border}`,
+                  cursor: "pointer",
+                  fontFamily: "'Lato', sans-serif",
+                  fontSize: 13,
+                  color: C.text,
+                }}
+              >
+                {p.piecemark} · {p.prevStatus} · {p.location} · {p.entry}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
+      {searched && !single && !hits && (
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>No piece found.</p>
+      )}
     </div>
   );
 }
@@ -192,23 +239,19 @@ function InventoryOp({ kind }: { kind: "item" | "reorder" | "capacity" }) {
 export function renderOperation(opId: OperationId): ReactNode {
   switch (opId) {
     case "add-job":
-      return <JobForm mode="add" />;
+      return <div className="h-[560px]"><JobEditorPanel mode="add" /></div>;
     case "edit-job":
-      return <JobForm mode="edit" />;
+      return <div className="h-[560px]"><JobEditorPanel mode="edit" /></div>;
     case "enter-piecemark":
-      return <div className="h-[520px]"><PiecemarkEntryWorkbench /></div>;
+      return <div className="h-[640px]"><PiecemarkEntryWorkbench /></div>;
     case "find-piecemark":
       return <FindPiecemark />;
     case "view-load":
       return <LoadForm />;
     case "edit-employee":
-      return (
-        <div className="p-4">
-          <EmployeeInfoEditor emp={EMPLOYEES[0]} />
-        </div>
-      );
+      return <div className="h-[640px]"><EmployeeEditorPanel /></div>;
     case "edit-employee-class":
-      return <div className="p-4"><EmployeeClassEditorPanel /></div>;
+      return <div className="h-[520px]"><EmployeeClassEditorPanel /></div>;
     case "inventory-item":
       return <InventoryOp kind="item" />;
     case "inventory-reorder":
