@@ -151,7 +151,7 @@ export function DashboardPage({
                 onMouseLeave={() => setHoveredId(null)}
                 onMouseDown={(e) => isEditing && startMove(e, panel.id)}
                 onClick={() => {
-                  if (!isEditing) setExpandedId(panel.id);
+                  if (!isEditing && isStat) setExpandedId(panel.id);
                 }}
               >
                 {!isEditing && <PdfHoverButton onClick={() => onAddToPdf(panel.id)} />}
@@ -188,8 +188,21 @@ export function DashboardPage({
                     }}
                   />
                 ))}
-                <div className="h-full w-full pointer-events-none">
-                  <VizPanelFrame id={panel.id} isStat={isStat}>
+                <div
+                  className="h-full w-full min-h-0"
+                  onClick={(e) => {
+                    if (!isStat) e.stopPropagation();
+                  }}
+                >
+                  <VizPanelFrame
+                    id={panel.id}
+                    isStat={isStat}
+                    onHeaderClick={
+                      isEditing
+                        ? undefined
+                        : () => setExpandedId(panel.id)
+                    }
+                  >
                     <VizBody id={panel.id} isEditing={isEditing} />
                   </VizPanelFrame>
                 </div>

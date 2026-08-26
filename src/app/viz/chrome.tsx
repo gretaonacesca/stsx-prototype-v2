@@ -60,13 +60,16 @@ export function PanelHeader({
   title,
   accent,
   print,
+  onClick,
 }: {
   title: string;
   accent: string;
   print?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <div
+      data-panel-header
       className="flex-none flex items-center px-4 py-2.5"
       style={{
         background: print ? (PRINT.surface) : accent,
@@ -74,7 +77,9 @@ export function PanelHeader({
         minHeight: 36,
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8,
+        cursor: onClick ? "pointer" : undefined,
       }}
+      onClick={onClick}
     >
       <span
         style={{

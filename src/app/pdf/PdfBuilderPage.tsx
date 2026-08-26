@@ -262,10 +262,19 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
 
   const handleExport = useCallback(async () => {
     setExporting(true);
+    setSelectedId(null);
     try {
-      const els = pageRefs.current.filter(Boolean) as HTMLElement[];
+      // Two frames so off-screen full-size pages (and charts) finish layout
+      await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+      const els = pages
+        .map((_, i) => pageRefs.current[i])
+        .filter((el): el is HTMLDivElement => !!el);
+      if (els.length === 0) return;
       const orients = pages.map(() => orientation);
       await exportPagesToPdf(els, orients);
+    } catch (err) {
+      console.error("PDF export failed", err);
+      window.alert(err instanceof Error ? err.message : "PDF export failed.");
     } finally {
       setExporting(false);
     }
@@ -519,14 +528,25 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
             gridRef={(el) => {
               gridRefs.current[activePage] = el;
             }}
-            showGrid
+            showGrid={!exporting}
           >
-            {page && renderBlocks(page, true)}
+            {page && renderBlocks(page, !exporting)}
           </A4Page>
 
+          {/* Full-size off-screen copies — never sr-only (that collapses to 1×1 and breaks rasterize) */}
           {pages.map((pg, i) =>
             i === activePage ? null : (
-              <div key={pg.id} className="sr-only" aria-hidden>
+              <div
+                key={pg.id}
+                aria-hidden
+                style={{
+                  position: "fixed",
+                  left: -12000,
+                  top: 0,
+                  pointerEvents: "none",
+                  zIndex: -1,
+                }}
+              >
                 <A4Page
                   ref={(el) => {
                     pageRefs.current[i] = el;
@@ -540,6 +560,7 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
                   gridRef={(el) => {
                     gridRefs.current[i] = el;
                   }}
+                  showGrid={false}
                 >
                   {renderBlocks(pg, false)}
                 </A4Page>
@@ -666,7 +687,12 @@ const A4Page = forwardRef<
         }}
       >
         {showGrid && (
-          <div className="absolute inset-0 pointer-events-none" style={gridStyle} aria-hidden>
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={gridStyle}
+            aria-hidden
+            data-pdf-export-hide
+          >
             {Array.from({ length: gridCols * gridRows }).map((_, i) => (
               <div
                 key={i}

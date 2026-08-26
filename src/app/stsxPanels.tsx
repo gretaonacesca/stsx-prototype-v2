@@ -41,7 +41,8 @@ const inputStyle: CSSProperties = {
 const hintStyle: CSSProperties = {
   fontFamily: "'Lato', sans-serif",
   fontSize: 14,
-  color: T.textMuted,
+  fontWeight: 400,
+  color: T.text,
   flexShrink: 0,
 };
 
@@ -223,16 +224,82 @@ function SelectInput({
 }
 
 function FileUploadField({ acceptLabel }: { acceptLabel: string }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+
+  const takeFile = (file: File | undefined | null) => {
+    if (!file) return;
+    setFileName(file.name);
+  };
+
   return (
     <div
       className="flex flex-col items-center justify-center gap-2 py-6 px-4 rounded-md w-full"
-      style={{ border: `2px dashed ${T.border}`, background: T.surfaceAlt }}
+      style={{
+        border: `2px dashed ${dragging ? T.primary : T.border}`,
+        background: dragging ? `color-mix(in srgb, ${T.primary} 10%, ${T.surfaceAlt})` : T.surfaceAlt,
+        transition: "border-color 120ms ease, background 120ms ease",
+      }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragging(true);
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragging(true);
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragging(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragging(false);
+        takeFile(e.dataTransfer.files?.[0]);
+      }}
     >
-      <Upload size={20} color={T.textMuted} />
-      <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 16, color: T.textMuted }}>
-        Drop file or browse · {acceptLabel}
+      <Upload size={20} color={T.text} />
+      <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 16, fontWeight: 400, color: T.text, textAlign: "center" }}>
+        {fileName ? `Selected: ${fileName}` : `Drop file or browse · ${acceptLabel}`}
       </span>
-      <button type="button" style={btnPrimary}>Choose File</button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={acceptLabel}
+        className="hidden"
+        onChange={(e) => {
+          takeFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+      <button
+        type="button"
+        style={btnPrimary}
+        onClick={() => inputRef.current?.click()}
+      >
+        {fileName ? "Choose Another" : "Choose File"}
+      </button>
+      {fileName && (
+        <button
+          type="button"
+          onClick={() => setFileName(null)}
+          style={{
+            ...btnDark,
+            height: 30,
+            fontSize: 14,
+            background: "transparent",
+            color: T.text,
+            border: `1.5px solid ${T.border}`,
+          }}
+        >
+          Clear file
+        </button>
+      )}
     </div>
   );
 }
@@ -297,7 +364,7 @@ export function FormActions({
   };
 
   return (
-    <div className="relative flex flex-wrap justify-end gap-2 pt-3 mt-auto" style={{ borderTop: `1.5px solid ${T.border}` }}>
+    <div className="relative flex flex-wrap justify-end gap-2 pt-3" style={{ borderTop: `1.5px solid ${T.border}` }}>
       <div
         role="status"
         aria-live="polite"
@@ -356,8 +423,8 @@ export function ImportFilterForm({
   const showExtra = !isEje;
 
   return (
-    <div className="flex flex-col gap-3 h-full min-h-0 p-4 overflow-y-auto">
-      <div className="flex flex-col gap-2.5 max-w-2xl">
+    <div className="p-4 overflow-y-auto">
+      <div className="flex flex-col gap-2.5 w-full max-w-xl mx-auto">
         <FormRow label="Job #" required>
           <SelectInput options={JOB_OPTIONS} defaultValue="092356" />
         </FormRow>
@@ -417,14 +484,13 @@ export function ImportFilterForm({
           </div>
         )}
 
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: T.textMuted, marginTop: 4 }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: T.text, marginTop: 4 }}>
           * Multiple filter items may be separated by commas. i.e. 1,2,3
         </p>
 
         <FileUploadField acceptLabel={accept} />
+        <FormActions primary={{ label: "Import", successMessage: "Successful save" }} />
       </div>
-
-      <FormActions primary={{ label: "Import", successMessage: "Successful save" }} />
     </div>
   );
 }
@@ -526,7 +592,7 @@ function ListPane({
       </div>
       <div className="flex-1 overflow-y-auto">
         {rows.length === 0 ? (
-          <p className="px-3 py-4" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.textMuted }}>No results found.</p>
+          <p className="px-3 py-4" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: T.text }}>No results found.</p>
         ) : (
           rows.map((r) => {
             const on = selectedKey === r.key;
@@ -746,7 +812,7 @@ export function RoutingCodesEditorPanel() {
         <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
           <TokenCheckbox defaultChecked /> Allow Additional Status Codes
         </label>
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: T.textMuted }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: T.text }}>
           Select a code and then double-click to move to Select or deSelect.
         </p>
         <div className="flex-1 min-h-0 grid grid-cols-2 gap-3">
@@ -884,7 +950,7 @@ export function EmployeeInfoEditor({
             <FormRow label="Division" required>
               <SelectInput options={["SHOP", "FIELD", "FAB", "YARD"]} defaultValue={emp.division} />
             </FormRow>
-            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.textMuted }}>Login Name: Not associated</p>
+            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: T.text }}>Login Name: Not associated</p>
             <label className="flex items-center gap-[7px]" style={{  fontFamily: "'Lato', sans-serif", fontWeight: 400, fontSize: 16, color: T.text, cursor: "pointer" }}>
               <TokenCheckbox /> Activity Logging
             </label>
@@ -975,52 +1041,90 @@ const PM_TABS = [
   { id: "id", label: "ID Info" },
 ];
 
+const SAMPLE_PIECEMARKS = [
+  { id: "1042001", sheet: "S-12", parent: "B-1042", piecemark: "B-1042-A", material: "W12x58", qty: "24", seq: "12", lot: "A", grade: "A992", weight: "76.8", finish: "Prime", desc: "W12×58 Beam Flange", route: "FABRICATION" },
+  { id: "1042002", sheet: "S-12", parent: "B-1042", piecemark: "B-1042-B", material: "W12x58", qty: "24", seq: "12", lot: "A", grade: "A992", weight: "76.8", finish: "Prime", desc: "Beam Flange Cut", route: "FABRICATION" },
+  { id: "0837001", sheet: "S-08", parent: "W-0837", piecemark: "W-0837-B", material: "PL 1/2", qty: "12", seq: "8", lot: "B", grade: "A36", weight: "42.0", finish: "None", desc: "Web Plate 12 mm", route: "STD" },
+  { id: "2201001", sheet: "S-22", parent: "A-2201", piecemark: "A-2201", material: "L4x4x3/8", qty: "8", seq: "3", lot: "", grade: "A36", weight: "11.2", finish: "None", desc: "Angle Brace L75", route: "STD" },
+  { id: "0442001", sheet: "S-04", parent: "EP-0442", piecemark: "EP-0442", material: "PL 3/4", qty: "16", seq: "4", lot: "C", grade: "A572", weight: "28.5", finish: "Paint", desc: "End Plate 20 mm", route: "PAINTED" },
+  { id: "1199001", sheet: "S-11", parent: "C-1199", piecemark: "C-1199", material: "PL 1", qty: "4", seq: "1", lot: "A", grade: "A36", weight: "95.0", finish: "Prime", desc: "Column Cap Plate", route: "FABRICATION" },
+  { id: "2100001", sheet: "S-21", parent: "TR-210", piecemark: "TR-210", material: "W16x67", qty: "8", seq: "6", lot: "D", grade: "A992", weight: "184.0", finish: "None", desc: "Truss Chord", route: "FABRICATION" },
+  { id: "3301001", sheet: "S-33", parent: "PT-3301", piecemark: "PT-3301", material: "Z200", qty: "48", seq: "2", lot: "B", grade: "A653", weight: "6.4", finish: "None", desc: "Purlin Z200", route: "STD" },
+];
+
 export function PiecemarkEntryWorkbench() {
   const [tab, setTab] = useState("entry");
+  const [selectedId, setSelectedId] = useState(SAMPLE_PIECEMARKS[0].id);
+  const selected = SAMPLE_PIECEMARKS.find((r) => r.id === selectedId) ?? SAMPLE_PIECEMARKS[0];
+
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <div className="flex-none flex flex-col gap-2 p-3" style={{ borderBottom: `1.5px solid ${T.border}`, background: T.surfaceAlt }}>
-        <FormRow label="Job Number" required><SelectInput options={JOB_OPTIONS} /></FormRow>
+        <FormRow label="Job Number" required><SelectInput options={JOB_OPTIONS} defaultValue="092356" /></FormRow>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <FormRow label="Job Weight"><TextInput /></FormRow>
+          <FormRow label="Job Weight"><TextInput defaultValue="12,480" /></FormRow>
           <FormRow label="Customer #"><TextInput defaultValue="P2PROG" /></FormRow>
           <FormRow label="Customer Name"><TextInput defaultValue="P2 Programs" /></FormRow>
         </div>
       </div>
-      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[minmax(200px,0.9fr)_1.2fr]">
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[minmax(220px,0.95fr)_1.2fr]">
         <div className="min-h-0 overflow-hidden flex flex-col" style={{ borderRight: `1.5px solid ${T.border}` }}>
           <div className="flex-none flex px-3 py-1.5" style={{ background: T.surfaceAlt, borderBottom: `1.5px solid ${T.border}` }}>
             {["ID serial #", "Sheet #", "Parent", "Piecemark"].map((h) => (
-              <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: T.textMuted, textTransform: "uppercase" }}>{h}</div>
+              <div key={h} className="flex-1 min-w-0 truncate" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 400, color: T.text, textTransform: "uppercase" }}>{h}</div>
             ))}
           </div>
-          <div className="flex-1 overflow-y-auto px-3 py-4">
-            <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.textMuted }}>No results found.</p>
+          <div className="flex-1 overflow-y-auto">
+            {SAMPLE_PIECEMARKS.map((r) => {
+              const on = selectedId === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedId(r.id);
+                    setTab("entry");
+                  }}
+                  className="w-full flex px-3 py-2 text-left"
+                  style={{
+                    border: "none",
+                    borderBottom: `1.5px solid ${T.border}`,
+                    background: on ? `color-mix(in srgb, ${T.primary} 14%, transparent)` : "transparent",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div className="flex-1 min-w-0 truncate" style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 400, color: T.primary }}>{r.id}</div>
+                  <div className="flex-1 min-w-0 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: T.text }}>{r.sheet}</div>
+                  <div className="flex-1 min-w-0 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: T.text }}>{r.parent}</div>
+                  <div className="flex-1 min-w-0 truncate" style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: T.text }}>{r.piecemark}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
         <div className="min-h-0 flex flex-col overflow-hidden p-3 gap-2">
           <NestedTabs tabs={PM_TABS} active={tab} onChange={setTab} />
-          <div className="flex-1 overflow-y-auto flex flex-col gap-2 pt-1">
+          <div className="flex-1 overflow-y-auto flex flex-col gap-2 pt-1" key={selected.id}>
             {tab === "entry" && (
               <>
                 <FormRow label="Load Number"><SelectInput options={["<None>", "LD-4412", "LD-4418"]} /></FormRow>
-                <FormRow label="Shop Order #"><SelectInput options={["<None>", "SO-100", "SO-220"]} /></FormRow>
-                <FormRow label="ID number"><TextInput /></FormRow>
-                <FormRow label="Sheet #" required><TextInput /></FormRow>
-                <FormRow label="Qty" required><TextInput defaultValue="1" /></FormRow>
+                <FormRow label="Shop Order #"><SelectInput options={["<None>", "SO-100", "SO-220"]} defaultValue="SO-100" /></FormRow>
+                <FormRow label="ID number"><TextInput defaultValue={selected.id} /></FormRow>
+                <FormRow label="Sheet #" required><TextInput defaultValue={selected.sheet} /></FormRow>
+                <FormRow label="Qty" required><TextInput defaultValue={selected.qty} /></FormRow>
                 <FormRow label="# of Labels" required><TextInput defaultValue="1" /></FormRow>
-                <FormRow label="Parent Piecemark" required><TextInput /></FormRow>
-                <FormRow label="Piecemark" required><TextInput /></FormRow>
-                <FormRow label="Material" required><SelectInput options={["W12x58", "PL 1/2", "L4x4x3/8"]} /></FormRow>
-                <FormRow label="Sequence #"><SelectInput options={["<None>", "1", "2"]} /></FormRow>
-                <FormRow label="Lot #"><TextInput /></FormRow>
-                <FormRow label="Finish"><SelectInput options={["None", "Prime", "Paint"]} /></FormRow>
-                <FormRow label="Grade"><SelectInput options={["A36", "A572", "A992"]} /></FormRow>
-                <FormRow label="Weight each"><TextInput /></FormRow>
+                <FormRow label="Parent Piecemark" required><TextInput defaultValue={selected.parent} /></FormRow>
+                <FormRow label="Piecemark" required><TextInput defaultValue={selected.piecemark} /></FormRow>
+                <FormRow label="Material" required><SelectInput options={["W12x58", "PL 1/2", "L4x4x3/8", "PL 3/4", "PL 1", "W16x67", "Z200"]} defaultValue={selected.material} /></FormRow>
+                <FormRow label="Sequence #"><SelectInput options={["<None>", "1", "2", "3", "4", "6", "8", "12"]} defaultValue={selected.seq} /></FormRow>
+                <FormRow label="Lot #"><TextInput defaultValue={selected.lot} /></FormRow>
+                <FormRow label="Finish"><SelectInput options={["None", "Prime", "Paint"]} defaultValue={selected.finish} /></FormRow>
+                <FormRow label="Grade"><SelectInput options={["A36", "A572", "A992", "A653"]} defaultValue={selected.grade} /></FormRow>
+                <FormRow label="Weight each"><TextInput defaultValue={selected.weight} /></FormRow>
                 <FormRow label="Width"><TextInput placeholder={`(x)" (x)/(x)`} /></FormRow>
                 <FormRow label="Item Length"><TextInput placeholder={`(x)'(x)" (x)/(x)`} /></FormRow>
-                <FormRow label="Description"><TextInput /></FormRow>
-                <FormRow label="Routing code"><SelectInput options={["STD", "FABRICATION", "PAINTED"]} /></FormRow>
+                <FormRow label="Description"><TextInput defaultValue={selected.desc} /></FormRow>
+                <FormRow label="Routing code"><SelectInput options={["STD", "FABRICATION", "PAINTED"]} defaultValue={selected.route} /></FormRow>
               </>
             )}
             {tab === "job" && (
@@ -1032,15 +1136,15 @@ export function PiecemarkEntryWorkbench() {
             )}
             {tab === "pm" && (
               <>
-                <FormRow label="Piecemark"><TextInput /></FormRow>
-                <FormRow label="Qty"><TextInput /></FormRow>
-                <FormRow label="Description"><TextInput /></FormRow>
+                <FormRow label="Piecemark"><TextInput defaultValue={selected.piecemark} /></FormRow>
+                <FormRow label="Qty"><TextInput defaultValue={selected.qty} /></FormRow>
+                <FormRow label="Description"><TextInput defaultValue={selected.desc} /></FormRow>
               </>
             )}
             {tab === "id" && (
               <>
-                <FormRow label="ID serial #"><TextInput /></FormRow>
-                <FormRow label="Barcode"><TextInput /></FormRow>
+                <FormRow label="ID serial #"><TextInput defaultValue={selected.id} /></FormRow>
+                <FormRow label="Barcode"><TextInput defaultValue={`*${selected.id}*`} /></FormRow>
               </>
             )}
           </div>
@@ -1133,8 +1237,8 @@ export function JobEditorPanel({ mode }: { mode: "add" | "edit" }) {
   const set = (key: keyof JobFormState, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   return (
-    <div className="flex flex-col h-full min-h-0 p-4 gap-3 overflow-y-auto">
-      <div className="flex flex-col gap-2.5 max-w-3xl">
+    <div className="p-4 overflow-y-auto">
+      <div className="flex flex-col gap-2.5 w-full max-w-xl mx-auto">
         {mode === "edit" && (
           <FormRow label="Select Job">
             <SelectInput
@@ -1151,7 +1255,7 @@ export function JobEditorPanel({ mode }: { mode: "add" | "edit" }) {
           label="Job Weight"
           trailing={
             <div className="flex items-center gap-2 shrink-0">
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: T.textMuted }}>lbs</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: T.text }}>lbs</span>
               <label className="flex items-center gap-[7px]" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, color: T.text, cursor: "pointer" }}>
                 <TokenCheckbox checked={metricJob} onChange={setMetricJob} />
                 Metric Job

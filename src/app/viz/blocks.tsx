@@ -228,7 +228,7 @@ export function RecentScansTable({
           </div>
         ))}
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" data-widget-scroll>
         {rows.map((s) => (
           <div key={s.id} className="flex items-center py-1.5" style={{ borderBottom: `1px solid ${C.border}` }}>
             <div className="w-[72px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, color: C.primary }}>{s.id}</div>
@@ -252,7 +252,7 @@ export function ActiveLoadsTable({ timeRange = "all" }: { timeRange?: TimeRange 
   const rows = useMemo(() => filterByTimeRange(ACTIVE_LOADS, timeRange), [timeRange]);
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1.5">
+      <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1.5" data-widget-scroll>
         {rows.map((l) => (
           <div
             key={l.id}
@@ -278,7 +278,7 @@ export function EmployeesTable() {
           <div key={h} className="flex-1" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text, textTransform: "uppercase" }}>{h}</div>
         ))}
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" data-widget-scroll>
         {EMPLOYEES.map((e) => (
           <div key={e.name} className="flex px-3 py-2" style={{ borderBottom: `1px solid ${C.border}` }}>
             <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>{e.name}</div>
@@ -295,7 +295,7 @@ export function EmployeesTable() {
 export function ImportQueueTable({ timeRange = "all" }: { timeRange?: TimeRange }) {
   const rows = useMemo(() => filterByTimeRange(IMPORT_EXPORT_QUEUE, timeRange), [timeRange]);
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-y-auto p-2 gap-1.5">
+    <div className="flex flex-col h-full min-h-0 overflow-y-auto p-2 gap-1.5" data-widget-scroll>
       {rows.map((q) => (
         <div key={q.id} className="flex items-center gap-2 px-2 py-2 rounded-md" style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}` }}>
           <ArrowLeftRightIcon />
@@ -315,7 +315,7 @@ function ArrowLeftRightIcon() {
 
 export function InventoryPanel() {
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-y-auto p-3 gap-3">
+    <div className="flex flex-col h-full min-h-0 overflow-y-auto p-3 gap-3" data-widget-scroll>
       {INVENTORY_STOCK.map((s) => {
         const pct = Math.round((s.level / s.capacity) * 100);
         const tone = pct < 25 ? C.danger : pct < 50 ? C.warning : C.primary;
@@ -437,11 +437,13 @@ export function VizPanelFrame({
   children,
   isStat,
   print,
+  onHeaderClick,
 }: {
   id: VizWidgetId;
   children: ReactNode;
   isStat?: boolean;
   print?: boolean;
+  onHeaderClick?: () => void;
 }) {
   const jewel = panelJewel(id);
   const title = PANEL_META[id]?.title ?? id;
@@ -458,8 +460,8 @@ export function VizPanelFrame({
         boxShadow: print ? "none" : `0 1px 0 ${jewel.light}22 inset`,
       }}
     >
-      <PanelHeader title={title} accent={JEWEL.indigo.base} print={print} />
-      <div className="flex-1 min-h-0" style={{ background: print ? PRINT.surface : undefined }}>
+      <PanelHeader title={title} accent={JEWEL.indigo.base} print={print} onClick={onHeaderClick} />
+      <div className="flex-1 min-h-0 overflow-hidden" style={{ background: print ? PRINT.surface : undefined }}>
         {children}
       </div>
     </div>

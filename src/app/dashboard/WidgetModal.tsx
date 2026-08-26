@@ -45,10 +45,12 @@ export function WidgetModal({
             <X size={16} />
           </button>
         </div>
-        <div className="flex-1 min-h-0 p-4">
-          <VizPanelFrame id={widgetId} isStat={isStat}>
-            <VizBody id={widgetId} />
-          </VizPanelFrame>
+        <div className="flex-1 min-h-0 overflow-hidden p-4">
+          <div className="h-full min-h-0">
+            <VizPanelFrame id={widgetId} isStat={isStat}>
+              <VizBody id={widgetId} />
+            </VizPanelFrame>
+          </div>
         </div>
       </div>
     </div>

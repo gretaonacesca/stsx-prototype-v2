@@ -67,7 +67,8 @@ export function OperationModal({
             </button>
           </div>
         </div>
-        <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
+        {/* No flex-1 — modal height follows content up to max-h */}
+        <div className="min-h-0 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

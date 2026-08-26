@@ -19,7 +19,7 @@ import {
 
 function Placeholder({ title, body }: { title: string; body: string }) {
   return (
-    <div className="p-5 flex flex-col gap-3 min-h-[200px]">
+    <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full">
       <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.text }}>{title}</p>
       <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text, lineHeight: 1.6 }}>{body}</p>
       <FormActions primary={{ label: "Save" }} />
@@ -39,7 +39,7 @@ function Field({ label, value }: { label: string; value: string }) {
 function LoadForm() {
   const load = ACTIVE_LOADS[0];
   return (
-    <div className="p-5 flex flex-col gap-3 min-h-[280px]">
+    <div className="p-5 flex flex-col gap-3 max-w-2xl mx-auto w-full">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Load ID" value={load.id} />
         <Field label="Destination" value={load.dest} />
@@ -78,7 +78,7 @@ function FindPiecemark() {
   };
 
   return (
-    <div className="p-5 flex flex-col gap-3">
+    <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full">
       <label className="flex flex-col gap-1">
         <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text, textTransform: "uppercase" }}>Job Number</span>
         <input
@@ -182,7 +182,7 @@ function FindPiecemark() {
 
 function DangerConfirm({ title, body }: { title: string; body: string }) {
   return (
-    <div className="p-5 flex flex-col gap-3 min-h-[220px]" style={{ background: C.dangerBg }}>
+    <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full" style={{ background: C.dangerBg }}>
       <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.danger }}>{title}</p>
       <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text, lineHeight: 1.6 }}>{body}</p>
       <label className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
@@ -199,7 +199,7 @@ function InventoryOp({ kind }: { kind: "item" | "reorder" | "capacity" }) {
   const pct = Math.round((item.level / item.capacity) * 100);
   if (kind === "reorder") {
     return (
-      <div className="p-5 flex flex-col gap-3 min-h-[200px]">
+      <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full">
         <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
           Reorder point: {Math.round(item.capacity * 0.25)}. Suggested order: {Math.max(0, Math.round(item.capacity * 0.6) - item.level)} units for {item.sku}.
         </p>
@@ -209,7 +209,7 @@ function InventoryOp({ kind }: { kind: "item" | "reorder" | "capacity" }) {
   }
   if (kind === "capacity") {
     return (
-      <div className="p-5">
+      <div className="p-5 max-w-xl mx-auto w-full">
         <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
           Bin capacity utilization for {item.name} is {pct}%.
         </p>
@@ -217,7 +217,7 @@ function InventoryOp({ kind }: { kind: "item" | "reorder" | "capacity" }) {
     );
   }
   return (
-    <div className="p-5 flex flex-col gap-3 min-h-[220px]">
+    <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full">
       <div className="grid grid-cols-2 gap-3">
         <Field label="SKU" value={item.sku} />
         <Field label="Name" value={item.name} />
@@ -229,22 +229,25 @@ function InventoryOp({ kind }: { kind: "item" | "reorder" | "capacity" }) {
   );
 }
 
+/** Master–detail ops need a working height; compact forms size to content. */
+const SPLIT_H = "h-[min(72vh,620px)]";
+
 export function renderOperation(opId: OperationId): ReactNode {
   switch (opId) {
     case "add-job":
-      return <div className="h-[560px]"><JobEditorPanel mode="add" /></div>;
+      return <JobEditorPanel mode="add" />;
     case "edit-job":
-      return <div className="h-[560px]"><JobEditorPanel mode="edit" /></div>;
+      return <JobEditorPanel mode="edit" />;
     case "enter-piecemark":
-      return <div className="h-[640px]"><PiecemarkEntryWorkbench /></div>;
+      return <div className={SPLIT_H}><PiecemarkEntryWorkbench /></div>;
     case "find-piecemark":
       return <FindPiecemark />;
     case "view-load":
       return <LoadForm />;
     case "edit-employee":
-      return <div className="h-[640px]"><EmployeeEditorPanel /></div>;
+      return <div className={SPLIT_H}><EmployeeEditorPanel /></div>;
     case "edit-employee-class":
-      return <div className="h-[520px]"><EmployeeClassEditorPanel /></div>;
+      return <div className={SPLIT_H}><EmployeeClassEditorPanel /></div>;
     case "inventory-item":
       return <InventoryOp kind="item" />;
     case "inventory-reorder":
@@ -262,13 +265,13 @@ export function renderOperation(opId: OperationId): ReactNode {
     case "excel":
       return <ImportFilterForm kind="excel" />;
     case "customers":
-      return <CustomerEditorPanel />;
+      return <div className={SPLIT_H}><CustomerEditorPanel /></div>;
     case "carriers":
-      return <CarrierEditorPanel />;
+      return <div className={SPLIT_H}><CarrierEditorPanel /></div>;
     case "status-codes":
-      return <StatusCodesEditorPanel />;
+      return <div className={SPLIT_H}><StatusCodesEditorPanel /></div>;
     case "routing-codes":
-      return <RoutingCodesEditorPanel />;
+      return <div className={SPLIT_H}><RoutingCodesEditorPanel /></div>;
     case "records-delete":
       return <DangerConfirm title="Active Record Delete" body="Marks selected records as deleted. They can still be recalled until purged." />;
     case "records-recall":
