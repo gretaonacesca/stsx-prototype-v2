@@ -60,32 +60,42 @@ function LoadForm() {
 }
 
 function FindPiecemark() {
+  const DEMO_MARK = "B-1042-A";
   const [mark, setMark] = useState("");
   const [job, setJob] = useState("");
   const [hits, setHits] = useState<ReturnType<typeof piecesForJob> | null>(null);
   const [single, setSingle] = useState<ReturnType<typeof findPiece>>(null);
   const [searched, setSearched] = useState(false);
 
-  const run = () => {
+  const run = (overrideMark?: string, overrideJob?: string) => {
+    const m = (overrideMark ?? mark).trim();
+    const j = (overrideJob ?? job).trim();
     setSearched(true);
-    if (job.trim() && !mark.trim()) {
-      setHits(piecesForJob(job));
+    if (j && !m) {
+      setHits(piecesForJob(j));
       setSingle(null);
       return;
     }
-    const rec = findPiece({ piecemark: mark, jobNumber: job || undefined });
+    // Prefer job+mark; if that misses, fall back to piecemark alone so demos always work
+    let rec = findPiece({ piecemark: m, jobNumber: j || undefined });
+    if (!rec && m) rec = findPiece({ piecemark: m });
+    if (!rec && m) rec = findPiece({ entry: m });
     setSingle(rec);
     setHits(null);
   };
 
   return (
     <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full">
+      <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, fontWeight: 400, color: C.text, lineHeight: 1.5 }}>
+        Demo search that always hits: piecemark <span style={{ fontFamily: "'DM Mono', monospace" }}>{DEMO_MARK}</span>
+        {" "}(job 092356 optional).
+      </p>
       <label className="flex flex-col gap-1">
         <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.text, textTransform: "uppercase" }}>Job Number</span>
         <input
           value={job}
           onChange={(e) => setJob(e.target.value)}
-          placeholder="e.g. 092356 or 2401"
+          placeholder="e.g. 092356 (optional)"
           style={{
             height: 36,
             borderRadius: 6,
@@ -104,7 +114,7 @@ function FindPiecemark() {
         <input
           value={mark}
           onChange={(e) => setMark(e.target.value)}
-          placeholder="e.g. B-1042-A"
+          placeholder={`e.g. ${DEMO_MARK}`}
           style={{
             height: 36,
             borderRadius: 6,
@@ -118,14 +128,36 @@ function FindPiecemark() {
           }}
         />
       </label>
-      <button
-        type="button"
-        onClick={run}
-        className="self-start px-3 py-1.5 rounded-md"
-        style={{ background: C.accent, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
-      >
-        Find
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => run()}
+          className="px-3 py-1.5 rounded-md"
+          style={{ background: C.accent, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
+        >
+          Find
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setMark(DEMO_MARK);
+            setJob("092356");
+            run(DEMO_MARK, "092356");
+          }}
+          className="px-3 py-1.5 rounded-md"
+          style={{
+            background: C.surfaceAlt,
+            color: C.text,
+            border: `1.5px solid ${C.border}`,
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 12,
+            fontWeight: 400,
+            cursor: "pointer",
+          }}
+        >
+          Fill demo {DEMO_MARK}
+        </button>
+      </div>
 
       {searched && single && (
         <div className="grid grid-cols-2 gap-2 pt-2" style={{ borderTop: `1px solid ${C.border}` }}>
@@ -175,7 +207,9 @@ function FindPiecemark() {
       )}
 
       {searched && !single && !hits && (
-        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>No piece found.</p>
+        <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 14, color: C.text }}>
+          No piece found. Try piecemark {DEMO_MARK}.
+        </p>
       )}
     </div>
   );

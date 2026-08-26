@@ -16,7 +16,9 @@ export function Sidebar({
   collapsed?: boolean;
 }) {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(NAV_CATEGORIES.map((c) => [c.id, c.id === "import"]))
+    Object.fromEntries(
+      NAV_CATEGORIES.map((c) => [c.id, c.id !== "admin" && c.id !== "records"])
+    )
   );
 
   if (collapsed) return null;
