@@ -48,14 +48,19 @@ export function Sidebar({
               <button
                 type="button"
                 className="w-full flex items-center gap-2 px-3 py-2"
-                style={{ background: "transparent", border: "none", cursor: "pointer", color: C.text }}
+                style={{
+                  background: tone.base,
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#FFFFFF",
+                }}
                 onClick={() => setOpenCats((p) => ({ ...p, [cat.id]: !p[cat.id] }))}
               >
-                <Icon size={16} color={tone.base} />
-                <span className="flex-1 text-left" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 14 }}>
+                <Icon size={16} color="#FFFFFF" />
+                <span className="flex-1 text-left" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 14, color: "#FFFFFF" }}>
                   {cat.label}
                 </span>
-                {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                {open ? <ChevronDown size={14} color="#FFFFFF" /> : <ChevronRight size={14} color="#FFFFFF" />}
               </button>
               {open && (
                 <div className="pb-1">
