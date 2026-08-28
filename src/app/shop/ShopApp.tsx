@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { LogOut, Moon, Sun } from "lucide-react";
-import { Toaster } from "sonner";
 import { C } from "../colorTokens";
+import { StatusBanner } from "../feedback";
 import { ShopHome, type ShopTab } from "./ShopHome";
 import { FieldKeyBadge } from "./components/FieldKeyBadge";
 import { LogActionPage } from "./LogActionPage";
@@ -23,10 +23,12 @@ export function ShopApp({
   isDark,
   onToggleDark,
   onLogout,
+  online = true,
 }: {
   isDark: boolean;
   onToggleDark: (next: boolean) => void;
   onLogout: () => void;
+  online?: boolean;
 }) {
   const [tab, setTab] = useState<ShopTab>("home");
   const [lastAction, setLastAction] = useState<string | null>("Inspection · B-1042-A");
@@ -43,6 +45,12 @@ export function ShopApp({
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden" style={{ background: C.bg }}>
+      {!online && (
+        <StatusBanner
+          variant="warning"
+          message="You appear to be offline. Saves and lookups are disabled until connection is restored."
+        />
+      )}
       <header
         className="flex-none flex items-center gap-2 px-3"
         style={{
@@ -79,11 +87,11 @@ export function ShopApp({
 
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {tab === "home" && <ShopHome lastAction={lastAction} onGo={setTab} isDark={isDark} />}
-        {tab === "log" && <LogActionPage onSaved={setLastAction} />}
-        {tab === "move" && <MoveLoadPage onSaved={setLastAction} />}
-        {tab === "lookup" && <LookupPage />}
-        {tab === "inventory" && <InventoryPage onSaved={setLastAction} />}
-        {tab === "bundles" && <BundlesPage onSaved={setLastAction} />}
+        {tab === "log" && <LogActionPage onSaved={setLastAction} online={online} />}
+        {tab === "move" && <MoveLoadPage onSaved={setLastAction} online={online} />}
+        {tab === "lookup" && <LookupPage online={online} />}
+        {tab === "inventory" && <InventoryPage onSaved={setLastAction} online={online} />}
+        {tab === "bundles" && <BundlesPage onSaved={setLastAction} online={online} />}
       </div>
 
       <nav
@@ -114,7 +122,6 @@ export function ShopApp({
           Home
         </button>
       </nav>
-      <Toaster position="top-center" richColors />
     </div>
   );
 }

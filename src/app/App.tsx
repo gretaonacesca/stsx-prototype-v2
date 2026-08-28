@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { LoginPage } from "./LoginPage";
+import { LoginPage, type LoginCredentials } from "./LoginPage";
 import { C, applyColorTokens } from "./colorTokens";
+import { delay } from "./feedback";
 import { Sidebar, TopBar, crumbsFor } from "./shell/chrome";
 import { DashboardPage } from "./dashboard/DashboardPage";
 import { OperationModal } from "./ops/OperationModal";
@@ -9,6 +10,7 @@ import { PdfBuilderPage, type PdfBlockKind } from "./pdf/PdfBuilderPage";
 import { ShopApp } from "./shop/ShopApp";
 import { findOperation, type OperationId } from "./nav/catalog";
 import type { VizWidgetId } from "./dashboard/widgetCatalog";
+import { AppToaster, StatusBanner, useOnlineStatus } from "./feedback";
 
 const SHOP_BREAKPOINT = 1024;
 
@@ -33,6 +35,8 @@ type Mode = "dashboard" | "pdf";
 
 export default function App() {
   const isShop = useIsShop();
+  const online = useOnlineStatus();
+  const [offlineDismissed, setOfflineDismissed] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(SKIP_LOGIN_FOR_TESTING);
   const [isDark, setIsDark] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -68,12 +72,35 @@ export default function App() {
     setMode("pdf");
   };
 
+  const handleLogin = async (creds: LoginCredentials) => {
+    await delay(600);
+    if (creds.username.toLowerCase() === "license") {
+      const err = new Error("All license seats are in use.");
+      (err as Error & { code?: string }).code = "LICENSE_EXHAUSTED";
+      throw err;
+    }
+    if (creds.username.toLowerCase() === "bad" || !creds.password.trim()) {
+      throw new Error("Invalid username or password");
+    }
+    setIsLoggedIn(true);
+  };
+
   if (!SKIP_LOGIN_FOR_TESTING && !isLoggedIn) {
-    return <LoginPage C={C} onLogin={() => setIsLoggedIn(true)} />;
+    return (
+      <>
+        <LoginPage C={C} onLogin={handleLogin} />
+        <AppToaster isDark={false} />
+      </>
+    );
   }
 
   if (isShop) {
-    return <ShopApp isDark={isDark} onToggleDark={setDark} onLogout={logout} />;
+    return (
+      <>
+        <ShopApp isDark={isDark} onToggleDark={setDark} onLogout={logout} online={online} />
+        <AppToaster isDark={isDark} />
+      </>
+    );
   }
 
   const crumbs = crumbsFor(activeOp, mode === "pdf");
@@ -84,8 +111,16 @@ export default function App() {
   }));
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: C.bg }}>
-      <TopBar
+    <>
+      <div className="h-screen flex flex-col overflow-hidden" style={{ background: C.bg }}>
+        {!online && !offlineDismissed && (
+          <StatusBanner
+            variant="warning"
+            message="You appear to be offline. Some actions are disabled until connection is restored."
+            onDismiss={() => setOfflineDismissed(true)}
+          />
+        )}
+        <TopBar
         crumbs={crumbs}
         windowTabs={windowTabs}
         onOpenTab={(id) => {
@@ -156,6 +191,8 @@ export default function App() {
           {renderOperation(activeOp)}
         </OperationModal>
       )}
-    </div>
+      </div>
+      <AppToaster isDark={isDark} />
+    </>
   );
 }

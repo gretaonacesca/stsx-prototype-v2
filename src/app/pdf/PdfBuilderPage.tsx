@@ -10,6 +10,9 @@ import {
 } from "../viz/blocks";
 import type { TimeRange } from "../data/mock";
 import { exportPagesToPdf, type PageOrientation } from "./exportPdf";
+import { toast } from "sonner";
+import { EmptyState, RetryBlock } from "../feedback";
+import { Progress } from "../components/ui/progress";
 
 /** PDF page content grid — portrait 6×12, landscape 12×6. */
 export function gridDims(orientation: PageOrientation) {
@@ -113,6 +116,8 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [showPageNumbers, setShowPageNumbers] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const gridRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -261,7 +266,13 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
   };
 
   const handleExport = useCallback(async () => {
+    if (pages.length === 0) {
+      toast.error("Add at least one page before exporting.");
+      return;
+    }
     setExporting(true);
+    setExportError(null);
+    setExportProgress(null);
     setSelectedId(null);
     try {
       // Two frames so off-screen full-size pages (and charts) finish layout
@@ -269,14 +280,22 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
       const els = pages
         .map((_, i) => pageRefs.current[i])
         .filter((el): el is HTMLDivElement => !!el);
-      if (els.length === 0) return;
+      if (els.length === 0) {
+        throw new Error("No pages are ready to export.");
+      }
       const orients = pages.map(() => orientation);
-      await exportPagesToPdf(els, orients);
+      await exportPagesToPdf(els, orients, "stsx-report.pdf", (current, total) => {
+        setExportProgress({ current, total });
+      });
+      toast.success("PDF downloaded");
     } catch (err) {
       console.error("PDF export failed", err);
-      window.alert(err instanceof Error ? err.message : "PDF export failed.");
+      const msg = err instanceof Error ? err.message : "PDF export failed.";
+      setExportError(msg);
+      toast.error(msg);
     } finally {
       setExporting(false);
+      setExportProgress(null);
     }
   }, [pages, orientation]);
 
@@ -394,21 +413,35 @@ export function PdfBuilderPage({ seedKind }: { seedKind?: PdfBlockKind | null })
           <button
             type="button"
             onClick={handleExport}
-            disabled={exporting}
+            disabled={exporting || pages.length === 0}
             className="flex items-center justify-center gap-2 px-3 py-2 rounded-md"
             style={{
               background: JEWEL.indigo.base,
               color: "#fff",
               border: "none",
-              cursor: exporting ? "wait" : "pointer",
+              cursor: exporting ? "wait" : pages.length === 0 ? "not-allowed" : "pointer",
               fontFamily: "'DM Mono', monospace",
               fontSize: 13,
               fontWeight: 400,
+              opacity: pages.length === 0 ? 0.5 : 1,
             }}
           >
             <Download size={14} />
-            {exporting ? "Exporting…" : "Download PDF"}
+            {exporting
+              ? exportProgress
+                ? `Exporting ${exportProgress.current}/${exportProgress.total}…`
+                : "Exporting…"
+              : "Download PDF"}
           </button>
+          {exportProgress && (
+            <Progress value={(exportProgress.current / exportProgress.total) * 100} className="h-1.5" />
+          )}
+          {exportError && (
+            <RetryBlock message={exportError} onRetry={() => void handleExport()} />
+          )}
+          {pages.length === 0 && (
+            <EmptyState title="No pages yet" body="Add a page and place widgets before exporting to PDF." />
+          )}
         </div>
       </aside>
 

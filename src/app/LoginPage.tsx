@@ -9,6 +9,11 @@ import {
 import type { AsciiFrame, AsciiOptions, AsciiCell } from "asciify-engine";
 import logoUrl from "../assets/stsx-logo.png";
 import type { ColorTokens } from "./colorTokens";
+import { InlineAlert } from "./feedback/InlineAlert";
+import { delay } from "./feedback/normalizeError";
+
+export type LoginCredentials = { username: string; password: string };
+export type LoginErrorKind = "invalid" | "license";
 
 /** Reveal in → hold → dissolve out → pause, looping. */
 const PHASE = {
@@ -145,7 +150,15 @@ function drawScanBar(
   ctx.fillRect(0, y - 10, w, 20);
 }
 
-function AsciiLogoField({ bg, scanColor }: { bg: string; scanColor: string }) {
+function AsciiLogoField({
+  bg,
+  scanColor,
+  onLogoError,
+}: {
+  bg: string;
+  scanColor: string;
+  onLogoError?: () => void;
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceRef = useRef<AsciiFrame | null>(null);
@@ -247,6 +260,7 @@ function AsciiLogoField({ bg, scanColor }: { bg: string; scanColor: string }) {
       })
       .catch((err) => {
         console.error("[AsciiLogoField]", err);
+        onLogoError?.();
       });
 
     return () => {
@@ -273,13 +287,32 @@ export function LoginPage({
   onLogin,
 }: {
   C: ColorTokens;
-  onLogin: () => void;
+  onLogin: (creds: LoginCredentials) => Promise<void>;
 }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<LoginErrorKind | null>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
 
-  const submit = (e?: FormEvent) => {
+  const submit = async (e?: FormEvent) => {
     e?.preventDefault();
-    onLogin();
+    setError(null);
+    if (!username.trim()) {
+      setError("invalid");
+      return;
+    }
+    setBusy(true);
+    try {
+      await onLogin({ username: username.trim(), password });
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      if (code === "LICENSE_EXHAUSTED") setError("license");
+      else setError("invalid");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const inputStyle: CSSProperties = {
@@ -296,6 +329,39 @@ export function LoginPage({
     outline: "none",
     boxSizing: "border-box",
   };
+
+  if (error === "license") {
+    return (
+      <div
+        className="h-screen w-full flex items-center justify-center px-6"
+        style={{ background: C.bg }}
+      >
+        <div className="w-full max-w-md flex flex-col gap-4 text-center">
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 24, color: C.text }}>
+            All license seats in use
+          </p>
+          <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.textMuted, lineHeight: 1.6 }}>
+            8 of 8 concurrent seats are logged on. Ask an administrator to free a seat, or try again later.
+          </p>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="self-center px-4 py-2 rounded-md"
+            style={{
+              background: C.accent,
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 13,
+            }}
+          >
+            Back to login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -315,7 +381,7 @@ export function LoginPage({
           className="hidden lg:block absolute inset-y-0 right-0 w-px pointer-events-none z-10"
           style={{ background: C.border }}
         />
-        <AsciiLogoField bg={C.bg} scanColor={C.primary} />
+        <AsciiLogoField bg={C.bg} scanColor={C.primary} onLogoError={() => setLogoFailed(true)} />
       </div>
 
       <div className="flex-1 min-h-0 flex items-center justify-center px-6 py-10">
@@ -343,6 +409,9 @@ export function LoginPage({
               name="username"
               placeholder="User Name"
               autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={busy}
               style={inputStyle}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = C.primary;
@@ -357,6 +426,9 @@ export function LoginPage({
                 name="password"
                 placeholder="Password"
                 autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={busy}
                 style={{ ...inputStyle, paddingRight: 44 }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = C.primary;
@@ -384,14 +456,27 @@ export function LoginPage({
             </div>
           </div>
 
+          {logoFailed && (
+            <InlineAlert variant="warning" title="Logo animation unavailable">
+              Using static branding. Sign-in still works normally.
+            </InlineAlert>
+          )}
+
+          {error === "invalid" && (
+            <InlineAlert variant="error" title="Sign-in failed">
+              Invalid username or password. Try again or contact your administrator.
+            </InlineAlert>
+          )}
+
           <button
             type="submit"
+            disabled={busy}
             className="w-full login-submit"
             style={{
               height: 46,
               borderRadius: 8,
               border: "none",
-              cursor: "pointer",
+              cursor: busy ? "wait" : "pointer",
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 400,
               fontSize: 18,
@@ -400,9 +485,10 @@ export function LoginPage({
               background: C.accent,
               boxShadow: `0 4px 14px ${C.accent}28`,
               transition: "box-shadow 180ms ease, transform 180ms ease",
+              opacity: busy ? 0.7 : 1,
             }}
           >
-            Login
+            {busy ? "Signing in…" : "Login"}
           </button>
           <style>{`
             .login-submit:hover {

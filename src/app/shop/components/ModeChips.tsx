@@ -6,27 +6,30 @@ export function SubmitButton({
   busy,
   busyLabel = "Saving…",
   onClick,
+  disabled,
 }: {
   label: string;
   busy?: boolean;
   busyLabel?: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
+  const off = disabled || busy;
   return (
     <button
       type="button"
-      disabled={busy}
+      disabled={off}
       onClick={onClick}
       className="w-full h-8 rounded flex items-center justify-center gap-2"
       style={{
         background: C.accent,
         color: "#fff",
         border: "none",
-        cursor: busy ? "wait" : "pointer",
+        cursor: off ? "not-allowed" : "pointer",
         fontFamily: "'Outfit', sans-serif",
         fontWeight: 400,
         fontSize: 14,
-        opacity: busy ? 0.7 : 1,
+        opacity: off ? 0.5 : 1,
       }}
     >
       <FieldKeyBadge letter="F2" />

@@ -5,6 +5,7 @@ import { ResultCard, ResultField } from "./components/ResultCard";
 import { SubmitButton } from "./components/ModeChips";
 import { ShopKeyScope } from "./keypad/ShopKeyScope";
 import { useShopSave } from "./useShopSave";
+import { EmptyState } from "./components/EmptyState";
 
 export type MoveMode = "receive" | "ship" | "return" | "sequence" | "final";
 
@@ -16,7 +17,7 @@ const MODES: { id: MoveMode; label: string }[] = [
   { id: "final", label: "Final Ship" },
 ];
 
-export function MoveLoadPage({ onSaved }: { onSaved?: (summary: string) => void }) {
+export function MoveLoadPage({ onSaved, online = true }: { onSaved?: (summary: string) => void; online?: boolean }) {
   const [mode, setMode] = useState<MoveMode>("ship");
   const [entry, setEntry] = useState("");
   const [station, setStation] = useState("");
@@ -25,7 +26,7 @@ export function MoveLoadPage({ onSaved }: { onSaved?: (summary: string) => void 
   const [location, setLocation] = useState("");
   const [prevId, setPrevId] = useState("");
   const [sequence, setSequence] = useState("");
-  const { busy, result, save } = useShopSave(onSaved);
+  const { busy, result, notFound, save } = useShopSave(onSaved);
 
   const submit = () => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.loadNumber}`);
 
@@ -49,7 +50,10 @@ export function MoveLoadPage({ onSaved }: { onSaved?: (summary: string) => void 
         {mode !== "final" && (
           <ShopInput letter="D" label="Previous ID" value={prevId} onChange={setPrevId} />
         )}
-        <SubmitButton label="Save load" busy={busy} onClick={submit} />
+        <SubmitButton label="Save load" busy={busy} disabled={!online} onClick={submit} />
+        {notFound && (
+          <EmptyState title="Entry not found" body="No piece matches that scan. Try SC-2847 or B-1042-A." />
+        )}
         {result && (
           <ResultCard title="Load">
             <ResultField label="Ct" value={result.ct} />

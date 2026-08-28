@@ -490,9 +490,10 @@ export function findPiece(q: {
   );
 }
 
-export function lookupByEntry(entry: string): PieceRecord {
+export function lookupByEntry(entry: string): PieceRecord | null {
   const id = entry.trim();
-  return PIECES.find((p) => p.entry === id || p.piecemark === id) ?? PIECES[0];
+  if (!id) return null;
+  return PIECES.find((p) => p.entry === id || p.piecemark === id) ?? null;
 }
 
 /** List piecemarks for a job (desktop Find Piecemark / demos). */

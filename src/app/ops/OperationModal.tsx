@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Minus, X } from "lucide-react";
 import { C } from "../colorTokens";
 import { findOperation, toneForOperation, type OperationId } from "../nav/catalog";
@@ -17,6 +17,17 @@ export function OperationModal({
   const found = findOperation(opId);
   const title = found?.leaf.label ?? opId;
   const tone = toneForOperation(opId);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   return (
     <div
@@ -67,7 +78,6 @@ export function OperationModal({
             </button>
           </div>
         </div>
-        {/* No flex-1 — modal height follows content up to max-h */}
         <div className="min-h-0 overflow-y-auto">{children}</div>
       </div>
     </div>

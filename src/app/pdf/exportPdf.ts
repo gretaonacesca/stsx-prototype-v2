@@ -43,7 +43,8 @@ async function rasterizePage(el: HTMLElement): Promise<string> {
 export async function exportPagesToPdf(
   pageEls: HTMLElement[],
   orientations: PageOrientation[],
-  filename = "stsx-report.pdf"
+  filename = "stsx-report.pdf",
+  onProgress?: (current: number, total: number) => void,
 ) {
   if (pageEls.length === 0) return;
 
@@ -54,6 +55,7 @@ export async function exportPagesToPdf(
   const pdf = new jsPDF({ orientation: firstOrient, unit: "mm", format: "a4" });
 
   for (let i = 0; i < pageEls.length; i++) {
+    onProgress?.(i + 1, pageEls.length);
     const el = pageEls[i];
     const orient = orientations[i] ?? "portrait";
 

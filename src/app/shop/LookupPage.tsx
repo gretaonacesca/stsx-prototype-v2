@@ -11,7 +11,7 @@ import { ShopKeyScope, useShopKeysOptional } from "./keypad/ShopKeyScope";
 import { findPiece, DEMO_LOOKUP_HINTS, type PieceRecord } from "./mock";
 import { StatusPill } from "../viz/chrome";
 
-export function LookupPage() {
+export function LookupPage({ online = true }: { online?: boolean }) {
   const [entry, setEntry] = useState("");
   const [job, setJob] = useState("");
   const [mark, setMark] = useState("");
@@ -42,7 +42,7 @@ export function LookupPage() {
       <div className="px-3 py-2 flex flex-col gap-1.5">
         <ShopInput letter="J" label="Job Number" value={job} onChange={setJob} />
         <ShopInput letter="P" label="Piecemark" value={mark} onChange={setMark} />
-        <SubmitButton label="Look up" busy={busy} busyLabel="Looking…" onClick={submit} />
+        <SubmitButton label="Look up" busy={busy} busyLabel="Looking…" disabled={!online} onClick={submit} />
 
         {searched && !result && (
           <EmptyState title="No piece found" body={DEMO_LOOKUP_HINTS} />

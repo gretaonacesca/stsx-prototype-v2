@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Check, Upload, ChevronDown } from "lucide-react";
+import { InlineAlert } from "./feedback/InlineAlert";
+import { delay } from "./feedback/normalizeError";
 import { EMPLOYEES, EXISTING_JOBS } from "./data/mock";
 
 /** Theme CSS variables — stays in sync with light/dark via theme.css */
@@ -223,14 +225,28 @@ function SelectInput({
   );
 }
 
-function FileUploadField({ acceptLabel }: { acceptLabel: string }) {
+function FileUploadField({
+  acceptLabel,
+  fileName,
+  onFileNameChange,
+}: {
+  acceptLabel: string;
+  fileName?: string | null;
+  onFileNameChange?: (name: string | null) => void;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [internalName, setInternalName] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const displayName = fileName !== undefined ? fileName : internalName;
+
+  const setName = (name: string | null) => {
+    if (onFileNameChange) onFileNameChange(name);
+    else setInternalName(name);
+  };
 
   const takeFile = (file: File | undefined | null) => {
     if (!file) return;
-    setFileName(file.name);
+    setName(file.name);
   };
 
   return (
@@ -265,7 +281,7 @@ function FileUploadField({ acceptLabel }: { acceptLabel: string }) {
     >
       <Upload size={20} color={T.text} />
       <span style={{ fontFamily: "'Lato', sans-serif", fontSize: 16, fontWeight: 400, color: T.text, textAlign: "center" }}>
-        {fileName ? `Selected: ${fileName}` : `Drop file or browse · ${acceptLabel}`}
+        {displayName ? `Selected: ${displayName}` : `Drop file or browse · ${acceptLabel}`}
       </span>
       <input
         ref={inputRef}
@@ -282,12 +298,12 @@ function FileUploadField({ acceptLabel }: { acceptLabel: string }) {
         style={btnPrimary}
         onClick={() => inputRef.current?.click()}
       >
-        {fileName ? "Choose Another" : "Choose File"}
+        {displayName ? "Choose Another" : "Choose File"}
       </button>
-      {fileName && (
+      {displayName && (
         <button
           type="button"
-          onClick={() => setFileName(null)}
+          onClick={() => setName(null)}
           style={{
             ...btnDark,
             height: 30,
@@ -349,32 +365,53 @@ export function useFormEpoch() {
   return [epoch, () => setEpoch((e) => e + 1)] as const;
 }
 
-/** Primary action only — modal chrome already has Close. Shows a fading success cue, then clears. */
+/** Primary action only — modal chrome already has Close. Shows a fading success or error cue. */
 export function FormActions({
   primary,
 }: {
   primary: {
     label: string;
-    onClick?: () => void;
-    /** Called right after save so the parent can clear / remount fields. */
+    onClick?: () => void | Promise<void>;
+    /** Called after successful save so the parent can clear / remount fields. */
     onSaved?: () => void;
     successMessage?: string;
+    errorMessage?: string;
+    busyLabel?: string;
   };
 }) {
-  const [toastOn, setToastOn] = useState(false);
+  const [flash, setFlash] = useState<"success" | "error" | null>(null);
+  const [busy, setBusy] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
     if (hideTimer.current) clearTimeout(hideTimer.current);
   }, []);
 
-  const flash = () => {
-    primary.onClick?.();
-    primary.onSaved?.();
-    setToastOn(true);
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setToastOn(false), 1800);
+  const run = async () => {
+    if (busy) return;
+    setBusy(true);
+    setFlash(null);
+    try {
+      await primary.onClick?.();
+      primary.onSaved?.();
+      setFlash("success");
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+      hideTimer.current = setTimeout(() => setFlash(null), 1800);
+    } catch {
+      setFlash("error");
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+      hideTimer.current = setTimeout(() => setFlash(null), 2800);
+    } finally {
+      setBusy(false);
+    }
   };
+
+  const flashBg = flash === "error" ? T.danger : T.primary;
+  const flashFg = flash === "error" ? "#FFFFFF" : T.primaryFg;
+  const flashText =
+    flash === "error"
+      ? (primary.errorMessage ?? "Save failed — please try again")
+      : (primary.successMessage ?? "Successful save");
 
   return (
     <div className="relative flex flex-wrap justify-end gap-2 pt-3" style={{ borderTop: `1.5px solid ${T.border}` }}>
@@ -383,27 +420,32 @@ export function FormActions({
         aria-live="polite"
         className="absolute left-0 right-0 bottom-full mb-2 flex justify-center pointer-events-none"
         style={{
-          opacity: toastOn ? 1 : 0,
-          transform: toastOn ? "translateY(0)" : "translateY(4px)",
+          opacity: flash ? 1 : 0,
+          transform: flash ? "translateY(0)" : "translateY(4px)",
           transition: "opacity 0.35s ease, transform 0.35s ease",
         }}
       >
         <span
           className="px-3 py-1.5 rounded-md"
           style={{
-            background: T.primary,
-            color: T.primaryFg,
+            background: flashBg,
+            color: flashFg,
             fontFamily: "'Lato', sans-serif",
             fontSize: 14,
             fontWeight: 400,
             boxShadow: "0 6px 18px color-mix(in srgb, var(--foreground) 18%, transparent)",
           }}
         >
-          {primary.successMessage ?? "Successful save"}
+          {flashText}
         </span>
       </div>
-      <button type="button" style={btnPrimary} onClick={flash}>
-        {primary.label}
+      <button
+        type="button"
+        style={{ ...btnPrimary, opacity: busy ? 0.7 : 1, cursor: busy ? "wait" : "pointer" }}
+        onClick={() => void run()}
+        disabled={busy}
+      >
+        {busy ? (primary.busyLabel ?? "Saving…") : primary.label}
       </button>
     </div>
   );
@@ -432,6 +474,8 @@ export function ImportFilterForm({
   const accept = IMPORT_ACCEPT[kind];
   const [rounding, setRounding] = useState<"none" | "typical" | "up">("none");
   const [epoch, bump] = useFormEpoch();
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
   const isEje = kind === "eje";
   const showLot = !isEje;
   const showExtra = !isEje;
@@ -503,14 +547,31 @@ export function ImportFilterForm({
             * Multiple filter items may be separated by commas. i.e. 1,2,3
           </p>
 
-          <FileUploadField acceptLabel={accept} />
+          <FileUploadField acceptLabel={accept} fileName={fileName} onFileNameChange={setFileName} />
         </div>
+        {importError && (
+          <InlineAlert variant="error" title="Import failed">
+            {importError}
+          </InlineAlert>
+        )}
         <FormActions
           primary={{
             label: "Import",
+            busyLabel: "Importing…",
             successMessage: "Successful save",
+            errorMessage: "Import failed — check the file and try again",
+            onClick: async () => {
+              setImportError(null);
+              if (!fileName) {
+                setImportError("Select a file before importing.");
+                throw new Error("No file");
+              }
+              await delay(600);
+            },
             onSaved: () => {
               setRounding("none");
+              setFileName(null);
+              setImportError(null);
               bump();
             },
           }}
@@ -617,7 +678,9 @@ function ListPane({
       </div>
       <div className="flex-1 overflow-y-auto">
         {rows.length === 0 ? (
-          <p className="px-3 py-4" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: T.text }}>No results found.</p>
+          <p className="px-3 py-4" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: T.textMuted }}>
+            No results found. Try a different search.
+          </p>
         ) : (
           rows.map((r) => {
             const on = selectedKey === r.key;

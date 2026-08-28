@@ -5,6 +5,7 @@ import { ResultCard, ResultField } from "./components/ResultCard";
 import { SubmitButton } from "./components/ModeChips";
 import { ShopKeyScope } from "./keypad/ShopKeyScope";
 import { useShopSave } from "./useShopSave";
+import { EmptyState } from "./components/EmptyState";
 
 export type InventoryMode = "receive" | "audit" | "move" | "status" | "sweep" | "tfs";
 
@@ -17,7 +18,7 @@ const MODES: { id: InventoryMode; label: string }[] = [
   { id: "tfs", label: "TFS" },
 ];
 
-export function InventoryPage({ onSaved }: { onSaved?: (summary: string) => void }) {
+export function InventoryPage({ onSaved, online = true }: { onSaved?: (summary: string) => void; online?: boolean }) {
   const [mode, setMode] = useState<InventoryMode>("receive");
   const [entry, setEntry] = useState("");
   const [location, setLocation] = useState("");
@@ -31,7 +32,7 @@ export function InventoryPage({ onSaved }: { onSaved?: (summary: string) => void
   const [rtsJob, setRtsJob] = useState("");
   const [width, setWidth] = useState("");
   const [length, setLength] = useState("");
-  const { busy, result, save } = useShopSave(onSaved);
+  const { busy, result, notFound, save } = useShopSave(onSaved);
 
   const showLocation = mode === "receive" || mode === "move" || mode === "tfs";
   const submit = () => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.material}`);
@@ -72,7 +73,10 @@ export function InventoryPage({ onSaved }: { onSaved?: (summary: string) => void
         {showLocation && (
           <ShopInput letter="C" label="Location" value={location} onChange={setLocation} />
         )}
-        <SubmitButton label="Save inventory" busy={busy} onClick={submit} />
+        <SubmitButton label="Save inventory" busy={busy} disabled={!online} onClick={submit} />
+        {notFound && (
+          <EmptyState title="Entry not found" body="No piece matches that scan. Try SC-2847 or B-1042-A." />
+        )}
         {result && (
           <ResultCard title="Inventory">
             <ResultField label="Material" value={result.material} />

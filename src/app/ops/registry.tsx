@@ -3,6 +3,7 @@ import { C } from "../colorTokens";
 import { ACTIVE_LOADS, INVENTORY_STOCK } from "../data/mock";
 import { findPiece, piecesForJob } from "../shop/mock";
 import type { OperationId } from "../nav/catalog";
+import { delay, useAsyncAction, EmptyState } from "../feedback";
 import {
   ImportFilterForm,
   CustomerEditorPanel,
@@ -66,26 +67,27 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-function findLoad(query: string) {
-  const q = query.trim().toLowerCase();
-  if (!q) return null;
-  return (
-    ACTIVE_LOADS.find((l) => l.id.toLowerCase() === q) ??
-    ACTIVE_LOADS.find((l) => l.id.toLowerCase().includes(q)) ??
-    null
-  );
-}
-
 function LoadForm() {
   const DEMO_LOAD = "LD-4412";
   const [loadId, setLoadId] = useState("");
   const [hit, setHit] = useState<(typeof ACTIVE_LOADS)[number] | null>(null);
   const [searched, setSearched] = useState(false);
 
-  const run = () => {
-    setSearched(true);
-    setHit(findLoad(loadId));
-  };
+  const { run, busy } = useAsyncAction(
+    async () => {
+      await delay(200);
+      const q = loadId.trim();
+      if (!q) throw new Error("Enter a load number");
+      const found =
+        ACTIVE_LOADS.find((l) => l.id.toLowerCase() === q.toLowerCase()) ??
+        ACTIVE_LOADS.find((l) => l.id.toLowerCase().includes(q.toLowerCase())) ??
+        null;
+      setSearched(true);
+      setHit(found);
+      return found;
+    },
+    { toastError: false },
+  );
 
   return (
     <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full">
@@ -100,8 +102,9 @@ function LoadForm() {
           value={loadId}
           onChange={(e) => setLoadId(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") run();
+            if (e.key === "Enter" && !busy) void run();
           }}
+          disabled={busy}
           placeholder={`e.g. ${DEMO_LOAD}`}
           style={{
             height: 36,
@@ -113,16 +116,27 @@ function LoadForm() {
             fontSize: 15,
             fontWeight: 400,
             color: C.text,
+            opacity: busy ? 0.7 : 1,
           }}
         />
       </label>
       <button
         type="button"
-        onClick={run}
+        onClick={() => void run()}
+        disabled={busy}
         className="self-start px-3 py-1.5 rounded-md"
-        style={{ background: C.accent, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
+        style={{
+          background: C.accent,
+          color: "#fff",
+          border: "none",
+          fontFamily: "'DM Mono', monospace",
+          fontSize: 13,
+          fontWeight: 400,
+          cursor: busy ? "wait" : "pointer",
+          opacity: busy ? 0.7 : 1,
+        }}
       >
-        Find
+        {busy ? "Finding…" : "Find"}
       </button>
 
       {searched && hit && (
@@ -175,22 +189,28 @@ function FindPiecemark() {
   const [single, setSingle] = useState<ReturnType<typeof findPiece>>(null);
   const [searched, setSearched] = useState(false);
 
-  const run = () => {
-    const m = mark.trim();
-    const j = job.trim();
-    setSearched(true);
-    if (j && !m) {
-      setHits(piecesForJob(j));
-      setSingle(null);
-      return;
-    }
-    // Prefer job+mark; if that misses, fall back to piecemark alone so demos always work
-    let rec = findPiece({ piecemark: m, jobNumber: j || undefined });
-    if (!rec && m) rec = findPiece({ piecemark: m });
-    if (!rec && m) rec = findPiece({ entry: m });
-    setSingle(rec);
-    setHits(null);
-  };
+  const { run, busy } = useAsyncAction(
+    async () => {
+      await delay(200);
+      const m = mark.trim();
+      const j = job.trim();
+      setSearched(true);
+      if (j && !m) {
+        const list = piecesForJob(j);
+        setHits(list);
+        setSingle(null);
+        return list;
+      }
+      if (!m && !j) throw new Error("Enter a piecemark or job number");
+      let rec = findPiece({ piecemark: m, jobNumber: j || undefined });
+      if (!rec && m) rec = findPiece({ piecemark: m });
+      if (!rec && m) rec = findPiece({ entry: m });
+      setSingle(rec);
+      setHits(null);
+      return rec;
+    },
+    { toastError: false },
+  );
 
   return (
     <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full">
@@ -204,8 +224,9 @@ function FindPiecemark() {
           value={job}
           onChange={(e) => setJob(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") run();
+            if (e.key === "Enter" && !busy) void run();
           }}
+          disabled={busy}
           placeholder="e.g. 092356 (optional)"
           style={{
             height: 36,
@@ -226,8 +247,9 @@ function FindPiecemark() {
           value={mark}
           onChange={(e) => setMark(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") run();
+            if (e.key === "Enter" && !busy) void run();
           }}
+          disabled={busy}
           placeholder={`e.g. ${DEMO_MARK}`}
           style={{
             height: 36,
@@ -244,11 +266,21 @@ function FindPiecemark() {
       </label>
       <button
         type="button"
-        onClick={run}
+        onClick={() => void run()}
+        disabled={busy}
         className="self-start px-3 py-1.5 rounded-md"
-        style={{ background: C.accent, color: "#fff", border: "none", fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, cursor: "pointer" }}
+        style={{
+          background: C.accent,
+          color: "#fff",
+          border: "none",
+          fontFamily: "'DM Mono', monospace",
+          fontSize: 13,
+          fontWeight: 400,
+          cursor: busy ? "wait" : "pointer",
+          opacity: busy ? 0.7 : 1,
+        }}
       >
-        Find
+        {busy ? "Finding…" : "Find"}
       </button>
 
       {searched && single && (
@@ -309,15 +341,35 @@ function FindPiecemark() {
 
 function DangerConfirm({ title, body }: { title: string; body: string }) {
   const [epoch, bump] = useFormEpoch();
+  const [checked, setChecked] = useState(false);
+  const { run, busy } = useAsyncAction(
+    async () => {
+      if (!checked) throw new Error("Confirm to continue");
+      await delay(400);
+    },
+    { toastError: true, errorMessage: "Action failed — please try again" },
+  );
+
   return (
     <div className="p-5 flex flex-col gap-3 max-w-xl mx-auto w-full" style={{ background: C.dangerBg }}>
       <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 400, fontSize: 18, color: C.danger }}>{title}</p>
       <p style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text, lineHeight: 1.6 }}>{body}</p>
       <label key={epoch} className="flex items-center gap-2" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>
-        <TokenCheckbox />
+        <TokenCheckbox checked={checked} onChange={setChecked} />
         I understand this cannot be undone
       </label>
-      <FormActions primary={{ label: "Confirm", successMessage: "Successful save", onSaved: bump }} />
+      <FormActions
+        primary={{
+          label: "Confirm",
+          busyLabel: "Working…",
+          successMessage: "Successful save",
+          onClick: run,
+          onSaved: () => {
+            setChecked(false);
+            bump();
+          },
+        }}
+      />
     </div>
   );
 }
@@ -567,6 +619,13 @@ export function renderOperation(opId: OperationId): ReactNode {
         />
       );
     default:
-      return null;
+      return (
+        <div className="p-5 max-w-xl mx-auto w-full">
+          <EmptyState
+            title="Operation unavailable"
+            body="This menu item could not be loaded. Close the window and try again from the sidebar."
+          />
+        </div>
+      );
   }
 }

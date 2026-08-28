@@ -5,6 +5,7 @@ import { ResultCard, ResultField } from "./components/ResultCard";
 import { SubmitButton } from "./components/ModeChips";
 import { ShopKeyScope } from "./keypad/ShopKeyScope";
 import { useShopSave } from "./useShopSave";
+import { EmptyState } from "./components/EmptyState";
 import { StatusPill } from "../viz/chrome";
 
 export type LogMode = "inspection" | "labor" | "saw" | "transaction";
@@ -16,7 +17,7 @@ const MODES: { id: LogMode; label: string }[] = [
   { id: "transaction", label: "Transaction" },
 ];
 
-export function LogActionPage({ onSaved }: { onSaved?: (summary: string) => void }) {
+export function LogActionPage({ onSaved, online = true }: { onSaved?: (summary: string) => void; online?: boolean }) {
   const [mode, setMode] = useState<LogMode>("inspection");
   const [entry, setEntry] = useState("");
   const [station, setStation] = useState("");
@@ -27,7 +28,7 @@ export function LogActionPage({ onSaved }: { onSaved?: (summary: string) => void
   const [percent, setPercent] = useState("");
   const [grade, setGrade] = useState("");
   const [heat, setHeat] = useState("");
-  const { busy, result, save } = useShopSave(onSaved);
+  const { busy, result, notFound, save } = useShopSave(onSaved);
 
   const submit = () => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.piecemark}`);
 
@@ -57,7 +58,13 @@ export function LogActionPage({ onSaved }: { onSaved?: (summary: string) => void
             <ShopInput letter="H" label="Heat" value={heat} onChange={setHeat} />
           </>
         )}
-        <SubmitButton label="Save action" busy={busy} onClick={submit} />
+        <SubmitButton label="Save action" busy={busy} disabled={!online} onClick={submit} />
+        {notFound && (
+          <EmptyState
+            title="Entry not found"
+            body="No piece matches that scan. Try SC-2847 or B-1042-A."
+          />
+        )}
         {result && (
           <ResultCard title="Piece">
             <ResultField label="Locn Pcs" value={result.locnPcs} />

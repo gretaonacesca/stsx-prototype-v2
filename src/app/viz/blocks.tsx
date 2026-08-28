@@ -10,6 +10,7 @@ import {
 } from "../data/mock";
 import { PANEL_META, panelJewel, type VizWidgetId } from "../dashboard/widgetCatalog";
 import { StatusPill, loadStatusTone, queueStatusTone, PanelHeader } from "./chrome";
+import { WidgetResourceBody, EmptyState } from "../feedback";
 import {
   ThroughputFunnel, BottleneckSankey, BacklogBurndown, KpiHero,
   ExecutiveScorecard, StoryStrip, YardMapLite,
@@ -229,7 +230,12 @@ export function RecentScansTable({
         ))}
       </div>
       <div className="flex-1 overflow-y-auto" data-widget-scroll>
-        {rows.map((s) => (
+        {rows.length === 0 ? (
+          <div className="p-3">
+            <EmptyState title="No scans in this range" body="Try widening the time filter or changing the status filter." />
+          </div>
+        ) : (
+          rows.map((s) => (
           <div key={s.id} className="flex items-center py-1.5" style={{ borderBottom: `1px solid ${C.border}` }}>
             <div className="w-[72px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, color: C.primary }}>{s.id}</div>
             <div className="w-[74px] shrink-0 px-2" style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 400, color: C.text }}>{s.part}</div>
@@ -242,15 +248,24 @@ export function RecentScansTable({
               {s.status === "failed" && <XCircle size={14} color={C.danger} />}
             </div>
           </div>
-        ))}
+        ))
+        )}
       </div>
     </div>
   );
 }
 
 export function ActiveLoadsTable({ timeRange = "all" }: { timeRange?: TimeRange }) {
-  const rows = useMemo(() => filterByTimeRange(ACTIVE_LOADS, timeRange), [timeRange]);
   return (
+    <WidgetResourceBody
+      loader={async () => filterByTimeRange(ACTIVE_LOADS, timeRange ?? "all")}
+      isEmpty={(rows) => rows.length === 0}
+      deps={[timeRange]}
+      simulateDelayMs={300}
+      emptyTitle="No active loads"
+      emptyBody="No loads match the selected time range."
+    >
+      {(rows) => (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1.5" data-widget-scroll>
         {rows.map((l) => (
@@ -267,11 +282,21 @@ export function ActiveLoadsTable({ timeRange = "all" }: { timeRange?: TimeRange 
         ))}
       </div>
     </div>
+      )}
+    </WidgetResourceBody>
   );
 }
 
 export function EmployeesTable() {
   return (
+    <WidgetResourceBody
+      loader={async () => EMPLOYEES}
+      isEmpty={(rows) => rows.length === 0}
+      simulateDelayMs={300}
+      emptyTitle="No employees"
+      emptyBody="Employee roster will appear here when loaded."
+    >
+      {(employees) => (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <div className="flex-none flex px-3 py-1.5" style={{ borderBottom: `1.5px solid ${C.border}`, background: C.surfaceAlt }}>
         {["Name", "Role", "Station", "Shift"].map((h) => (
@@ -279,7 +304,7 @@ export function EmployeesTable() {
         ))}
       </div>
       <div className="flex-1 overflow-y-auto" data-widget-scroll>
-        {EMPLOYEES.map((e) => (
+        {employees.map((e) => (
           <div key={e.name} className="flex px-3 py-2" style={{ borderBottom: `1px solid ${C.border}` }}>
             <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>{e.name}</div>
             <div className="flex-1" style={{ fontFamily: "'Lato', sans-serif", fontSize: 15, fontWeight: 400, color: C.text }}>{e.role}</div>
@@ -289,12 +314,22 @@ export function EmployeesTable() {
         ))}
       </div>
     </div>
+      )}
+    </WidgetResourceBody>
   );
 }
 
 export function ImportQueueTable({ timeRange = "all" }: { timeRange?: TimeRange }) {
-  const rows = useMemo(() => filterByTimeRange(IMPORT_EXPORT_QUEUE, timeRange), [timeRange]);
   return (
+    <WidgetResourceBody
+      loader={async () => filterByTimeRange(IMPORT_EXPORT_QUEUE, timeRange ?? "all")}
+      isEmpty={(rows) => rows.length === 0}
+      deps={[timeRange]}
+      simulateDelayMs={300}
+      emptyTitle="No import/export jobs"
+      emptyBody="The queue is empty for this time range."
+    >
+      {(rows) => (
     <div className="flex flex-col h-full min-h-0 overflow-y-auto p-2 gap-1.5" data-widget-scroll>
       {rows.map((q) => (
         <div key={q.id} className="flex items-center gap-2 px-2 py-2 rounded-md" style={{ background: C.surfaceAlt, border: `1.5px solid ${C.border}` }}>
@@ -306,6 +341,8 @@ export function ImportQueueTable({ timeRange = "all" }: { timeRange?: TimeRange 
         </div>
       ))}
     </div>
+      )}
+    </WidgetResourceBody>
   );
 }
 

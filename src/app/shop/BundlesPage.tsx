@@ -5,6 +5,7 @@ import { ResultCard, ResultField } from "./components/ResultCard";
 import { SubmitButton } from "./components/ModeChips";
 import { ShopKeyScope } from "./keypad/ShopKeyScope";
 import { useShopSave } from "./useShopSave";
+import { EmptyState } from "./components/EmptyState";
 
 export type BundlesMode = "build" | "checklist" | "status" | "cut";
 
@@ -15,7 +16,7 @@ const MODES: { id: BundlesMode; label: string }[] = [
   { id: "cut", label: "Cut" },
 ];
 
-export function BundlesPage({ onSaved }: { onSaved?: (summary: string) => void }) {
+export function BundlesPage({ onSaved, online = true }: { onSaved?: (summary: string) => void; online?: boolean }) {
   const [mode, setMode] = useState<BundlesMode>("build");
   const [entry, setEntry] = useState("");
   const [station, setStation] = useState("");
@@ -41,7 +42,7 @@ export function BundlesPage({ onSaved }: { onSaved?: (summary: string) => void }
   const [asn, setAsn] = useState("");
   const [width, setWidth] = useState("");
   const [length, setLength] = useState("");
-  const { busy, result, save } = useShopSave(onSaved);
+  const { busy, result, notFound, save } = useShopSave(onSaved);
 
   const submit = () => save(entry, (r) => `${MODES.find((m) => m.id === mode)?.label} · ${r.material}`);
 
@@ -96,7 +97,10 @@ export function BundlesPage({ onSaved }: { onSaved?: (summary: string) => void }
             <ShopInput letter="N" label="Length" value={length} onChange={setLength} />
           </>
         )}
-        <SubmitButton label="Save" busy={busy} onClick={submit} />
+        <SubmitButton label="Save" busy={busy} disabled={!online} onClick={submit} />
+        {notFound && (
+          <EmptyState title="Entry not found" body="No piece matches that scan. Try SC-2847 or B-1042-A." />
+        )}
         {result && mode === "build" && (
           <ResultCard title="Bundle">
             <ResultField label="Bndl Number #" value={result.bundleNumber} />
