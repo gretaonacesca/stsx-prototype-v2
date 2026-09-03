@@ -19,7 +19,7 @@ type WidgetResourceBodyProps<T> = {
 export function WidgetResourceBody<T>({
   loader,
   isEmpty,
-  simulateDelayMs = 400,
+  simulateDelayMs = 0,
   deps,
   emptyTitle,
   emptyBody,
@@ -28,8 +28,9 @@ export function WidgetResourceBody<T>({
 }: WidgetResourceBodyProps<T>) {
   const { status, data, refetch } = useResourceState(loader, { isEmpty, simulateDelayMs, deps });
 
-  if (status === "loading") return <TableSkeleton rows={4} />;
-  if (status === "error") {
+  // Skeleton only on first load — keep prior content visible during soft refetch.
+  if (status === "loading" && data == null) return <TableSkeleton rows={4} />;
+  if (status === "error" && data == null) {
     return <RetryBlock message={errorMessage} onRetry={() => void refetch()} />;
   }
   if (status === "empty") {

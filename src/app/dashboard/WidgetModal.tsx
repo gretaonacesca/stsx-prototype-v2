@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { C, JEWEL } from "../colorTokens";
 import { PANEL_META, type VizWidgetId } from "./widgetCatalog";
-import { VizBody, VizPanelFrame } from "../viz/blocks";
+import { VizBody } from "../viz/blocks";
 
 export function WidgetModal({
   widgetId,
@@ -12,7 +12,6 @@ export function WidgetModal({
 }) {
   const meta = PANEL_META[widgetId];
   const title = meta?.title ?? widgetId;
-  const isStat = widgetId.startsWith("stat") || widgetId === "kpi-hero";
   const indigo = JEWEL.indigo.base;
 
   return (
@@ -41,15 +40,15 @@ export function WidgetModal({
             onClick={onClose}
             className="w-8 h-8 rounded-md flex items-center justify-center"
             style={{ background: "rgba(255,255,255,0.15)", border: "none", cursor: "pointer", color: "#fff" }}
+            aria-label="Close"
           >
             <X size={16} />
           </button>
         </div>
+        {/* Body only — modal chrome already provides the title; skip VizPanelFrame header. */}
         <div className="flex-1 min-h-0 overflow-hidden p-4">
-          <div className="h-full min-h-0">
-            <VizPanelFrame id={widgetId} isStat={isStat}>
-              <VizBody id={widgetId} />
-            </VizPanelFrame>
+          <div className="h-full min-h-0 overflow-hidden rounded-md" style={{ background: C.surface }}>
+            <VizBody id={widgetId} />
           </div>
         </div>
       </div>

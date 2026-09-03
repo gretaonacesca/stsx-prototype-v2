@@ -14,6 +14,7 @@ export type UseResourceStateOptions<T> = {
 
 /**
  * Wrap async data loaders for lists/widgets. Backend replaces loader with fetch.
+ * Stable across parent re-renders — only reloads when `deps` change or refetch() is called.
  */
 export function useResourceState<T>(
   loader: () => Promise<T>,
@@ -21,21 +22,27 @@ export function useResourceState<T>(
 ) {
   const loaderRef = useRef(loader);
   loaderRef.current = loader;
+  const isEmptyRef = useRef(options.isEmpty);
+  isEmptyRef.current = options.isEmpty;
+  const delayRef = useRef(options.simulateDelayMs);
+  delayRef.current = options.simulateDelayMs;
 
   const [status, setStatus] = useState<ResourceStatus>("loading");
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<AppError | null>(null);
-  const deps = options.deps ?? [];
 
-  const load = useCallback(async () => {
-    setStatus("loading");
+  // Serialize deps so identity doesn't thrash when callers pass a new array literal.
+  const depsKey = JSON.stringify(options.deps ?? []);
+
+  const load = useCallback(async (opts?: { soft?: boolean }) => {
+    // Soft refetch keeps prior content visible (no skeleton flash).
+    if (!opts?.soft) setStatus("loading");
     setError(null);
     try {
-      if (options.simulateDelayMs) {
-        await new Promise((r) => setTimeout(r, options.simulateDelayMs));
-      }
+      const ms = delayRef.current;
+      if (ms) await new Promise((r) => setTimeout(r, ms));
       const result = await loaderRef.current();
-      const empty = options.isEmpty?.(result) ?? false;
+      const empty = isEmptyRef.current?.(result) ?? false;
       setData(result);
       setStatus(empty ? "empty" : "ready");
       return result;
@@ -44,12 +51,13 @@ export function useResourceState<T>(
       setStatus("error");
       return null;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- deps forwarded from caller
-  }, [options.isEmpty, options.simulateDelayMs, ...deps]);
+  }, [depsKey]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  return { status, data, error, refetch: load };
+  const refetch = useCallback(() => load({ soft: true }), [load]);
+
+  return { status, data, error, refetch };
 }

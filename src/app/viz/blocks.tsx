@@ -261,7 +261,6 @@ export function ActiveLoadsTable({ timeRange = "all" }: { timeRange?: TimeRange 
       loader={async () => filterByTimeRange(ACTIVE_LOADS, timeRange ?? "all")}
       isEmpty={(rows) => rows.length === 0}
       deps={[timeRange]}
-      simulateDelayMs={300}
       emptyTitle="No active loads"
       emptyBody="No loads match the selected time range."
     >
@@ -292,7 +291,6 @@ export function EmployeesTable() {
     <WidgetResourceBody
       loader={async () => EMPLOYEES}
       isEmpty={(rows) => rows.length === 0}
-      simulateDelayMs={300}
       emptyTitle="No employees"
       emptyBody="Employee roster will appear here when loaded."
     >
@@ -325,7 +323,6 @@ export function ImportQueueTable({ timeRange = "all" }: { timeRange?: TimeRange 
       loader={async () => filterByTimeRange(IMPORT_EXPORT_QUEUE, timeRange ?? "all")}
       isEmpty={(rows) => rows.length === 0}
       deps={[timeRange]}
-      simulateDelayMs={300}
       emptyTitle="No import/export jobs"
       emptyBody="The queue is empty for this time range."
     >
